@@ -1,0 +1,16 @@
+.topbar {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  background-color: #78ad83; 
+  color: white;
+  gap: 1rem;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+
+  height: 70px; // <-- ajoute la hauteur souhaitée
+
+  button {
+    color: white !important;
+  }
+}

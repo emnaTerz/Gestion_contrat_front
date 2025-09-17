@@ -1,0 +1,118 @@
+
+ <div class="custom-container">
+  <div class="card">
+        <p-confirmDialog header="Confirmation" [style]="{width: '400px'}"></p-confirmDialog>
+    <p-dialog header="Modifier l'utilisateur" [(visible)]="displayEditDialog" [modal]="true" [closable]="true" [style]="{width: '400px'}">
+  <form [formGroup]="editForm" (ngSubmit)="submitEdit()">
+    <div class="field">
+      <label for="firstName">Prénom</label>
+      <input id="firstName" type="text" pInputText formControlName="firstName"/>
+    </div>
+    <div class="field">
+      <label for="lastName">Nom</label>
+      <input id="lastName" type="text" pInputText formControlName="lastName"/>
+    </div>
+    <div class="field">
+      <label for="email">Nom d'utilisateur</label>
+      <input id="email" type="email" pInputText formControlName="email"/>
+    </div>
+
+ <div class="field">
+  <label for="role">Rôle</label>
+  <select id="role" formControlName="role">
+    <option value="ADMIN">Administrateur</option>
+    <option value="USER">Utilisateur</option>
+  </select>
+</div>
+
+    <div class="flex justify-end mt-3">
+      <button pButton type="button" label="Annuler" class="p-button-text" (click)="displayEditDialog=false"></button>
+<button type="submit" pButton class="p-button-success ml-2">Enregistrer</button>
+    </div>
+  </form>
+</p-dialog>
+
+<p-dialog header="Créer un utilisateur" [(visible)]="displayCreateDialog" [modal]="true" [closable]="true" [style]="{width: '400px'}">
+  <form [formGroup]="createForm" (ngSubmit)="submitCreate()">
+    <div class="field">
+      <label for="firstNameCreate">Prénom</label>
+      <input id="firstNameCreate" type="text" pInputText formControlName="firstName"/>
+    </div>
+    <div class="field">
+      <label for="lastNameCreate">Nom</label>
+      <input id="lastNameCreate" type="text" pInputText formControlName="lastName"/>
+    </div>
+    <div class="field">
+      <label for="emailCreate">Nom d'utilisateur</label>
+      <input id="emailCreate" type="email" pInputText formControlName="email"/>
+    </div>
+    <div class="field">
+      <label for="roleCreate">Rôle</label>
+      <select id="roleCreate" formControlName="role">
+        <option value="ADMIN">Administrateur</option>
+        <option value="USER">Utilisateur</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="passwordCreate">Mot de passe</label>
+      <input id="passwordCreate" type="password" pInputText formControlName="password"/>
+    </div>
+
+    <div class="flex justify-end mt-3">
+      <button pButton type="button" label="Annuler" class="p-button-text" (click)="displayCreateDialog=false"></button>
+      <button type="submit" pButton class="p-button-success ml-2">Enregistrer</button>
+    </div>
+  </form>
+</p-dialog>
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-xl font-semibold">Liste des utilisateurs</h2>
+      <div class="flex items-center gap-2">
+        <input #filter pInputText type="text" placeholder="Recherche globale" (input)="onGlobalFilter($event)" />
+        <button pButton type="button" label="Clear" icon="pi pi-filter-slash" class="p-button-outlined" (click)="clearFilter()"></button>
+            <button pButton type="button"  icon="pi pi-plus" class="p-button-success" (click)="openCreateDialog()"></button>
+
+      </div>
+    </div>
+
+    <p-table #dt [value]="filteredUsers" [paginator]="true" [rows]="10" [loading]="loading"
+             [globalFilterFields]="['firstName', 'lastName', 'email', 'role']" [showGridlines]="true" [rowHover]="true">
+      
+      <ng-template pTemplate="header">
+        <tr>
+          <th pSortableColumn="firstName">Prénom <p-sortIcon field="firstName"></p-sortIcon></th>
+          <th pSortableColumn="lastName">Nom <p-sortIcon field="lastName"></p-sortIcon></th>
+          <th pSortableColumn="email">Non d'utilisateur <p-sortIcon field="email"></p-sortIcon></th>
+          <th pSortableColumn="role">Rôle <p-sortIcon field="role"></p-sortIcon></th>
+          <th>Actions</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-user>
+        <tr>
+          <td>{{ user.firstName || 'N/A' }}</td>
+          <td>{{ user.lastName || 'N/A' }}</td>
+          <td>{{ user.email || 'N/A' }}</td>
+          <td>{{ getRoleLabel(user.role) }}</td>
+          <td class="actions" style="display:flex; justify-content:center; gap:0.5rem;">
+            <button pButton type="button" icon="pi pi-pencil" class="p-button-text p-button-sm"
+        (click)="openEditDialog(user)">
+</button>
+
+            <button pButton 
+                    type="button" 
+                    icon="pi pi-trash" 
+                    class="p-button-text p-button-sm p-button-danger"
+                    (click)="deleteUser(user.id, user.firstName + ' ' + user.lastName)">
+            </button>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="5">Aucun utilisateur trouvé.</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+</div>

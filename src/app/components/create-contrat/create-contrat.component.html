@@ -1,0 +1,91 @@
+
+<p-toast></p-toast>
+
+<div class="contrat-upload-container">
+  <div class="card">
+       <div class="card-title">Importer votre Contrat </div>
+
+    <p-fileUpload
+      name="contrat[]"
+      (onUpload)="onUpload($event)"
+      [multiple]="true"
+      accept=".pdf,.doc,.docx"
+      maxFileSize="5000000"
+      mode="advanced"
+      url="https://www.primefaces.org/cdn/api/upload.php">
+
+      <ng-template #empty>
+        <div class="empty-message">
+          Glissez-déposez vos fichiers ici ou cliquez pour sélectionner.
+        </div>
+      </ng-template>
+    </p-fileUpload>
+  </div>
+</div>
+
+<!-- Formulaire Contrat -->
+<div class="contrat-form-container">
+  <div class="card">
+    <div class="card-title">Informations du Contrat</div>
+    <form (ngSubmit)="submitForm($event)">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Code Adhérent</label>
+          <input type="text" pInputText [(ngModel)]="contrat.codeAdherent" name="codeAdherent" />
+        </div>
+        <div class="form-group">
+          <label>Nom Souscripteur</label>
+          <input type="text" pInputText [(ngModel)]="contrat.nomSouscripteur" name="nomSouscripteur" />
+        </div>
+        <div class="form-group">
+          <label>Activité</label>
+          <input type="text" pInputText [(ngModel)]="contrat.activite" name="activite" />
+        </div>
+        <div class="form-group">
+          <label>Adresse</label>
+          <input type="text" pInputText [(ngModel)]="contrat.adresse" name="adresse" />
+        </div>
+        <div class="form-group">
+          <label>Ville</label>
+          <input type="text" pInputText [(ngModel)]="contrat.ville" name="ville" />
+        </div>
+        <div class="form-group">
+          <label>Code Postal</label>
+          <input type="text" pInputText [(ngModel)]="contrat.codePostal" name="codePostal" />
+        </div>
+        <div class="form-group">
+          <label>Numéro Tel</label>
+          <input type="text" pInputText [(ngModel)]="contrat.numeroTel" name="numeroTel" />
+        </div>
+        <div class="form-group">
+          <label>Numéro Police</label>
+          <input type="text" pInputText [(ngModel)]="contrat.numPolice" name="numPolice" />
+        </div>
+        <div class="form-group">
+          <label>Date Début Contrat</label>
+          <input type="date" pInputText [(ngModel)]="contrat.dateDebut" name="dateDebut" />
+        </div>
+        <div class="form-group">
+          <label>Date Fin Contrat</label>
+          <input type="date" pInputText [(ngModel)]="contrat.dateFin" name="dateFin" />
+        </div>
+        <div class="form-group">
+          <label>Fractionnement</label>
+          <input type="text" pInputText [(ngModel)]="contrat.fractionnement" name="fractionnement" />
+        </div>
+        <div class="form-group">
+          <label>Prime Unique</label>
+          <input type="text" pInputText [(ngModel)]="contrat.primeUnique" name="primeUnique" />
+        </div>
+        <div class="form-group">
+          <label>Code Agence</label>
+          <input type="text" pInputText [(ngModel)]="contrat.codeAgence" name="codeAgence" />
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button pButton type="submit" label="Soumettre" class="submit-btn"></button>
+      </div>
+    </form>
+  </div>
+</div>

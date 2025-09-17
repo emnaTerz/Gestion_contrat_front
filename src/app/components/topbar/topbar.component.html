@@ -1,0 +1,6 @@
+<div *ngIf="showTopbar" class="topbar">
+  <button *ngIf="isAdmin" pButton icon="pi pi-chart-bar" class="p-button-text"
+          (click)="navigateToDashboard()" title="Dashboard"></button>
+  <button *ngIf="isAdmin" pButton icon="pi pi-history" class="p-button-text"
+          (click)="navigateToHistory()" title="Historique"></button>
+</div>
