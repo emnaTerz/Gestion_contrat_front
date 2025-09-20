@@ -10,6 +10,7 @@ import { UsersComponent } from '@/components/users/users.component';
 import { ActionHistoryComponent } from '@/components/action-history/action-history.component';
 import { AuthGuard } from '@/layout/service/AuthGuard';
 import { EmptyLayoutComponent } from '@/components/EmptyLayoutComponent';
+import { ContratComponent } from '@/components/contrat-component/contrat-component.component';
 
 /* export const appRoutes: Routes = [
     {
@@ -44,7 +45,9 @@ export const appRoutes: Routes = [
         children: [
             { path: 'action-history', component: ActionHistoryComponent, canActivate: [AuthGuard], data: { expectedRole: 'ADMIN' } },
             { path: 'users', component: UsersComponent, canActivate: [AuthGuard], data: { expectedRole: 'ADMIN' } },
-            { path: 'CreateContrat', component: CreateContratComponent, canActivate: [AuthGuard], data: { expectedRole: 'USER' } }
+            { path: 'CreateContrat', component: CreateContratComponent, canActivate: [AuthGuard], data: { expectedRole: 'USER' } },
+            { path: 'Contrat', component: ContratComponent, canActivate: [AuthGuard], data: { expectedRole: 'USER' } }
+
         ]
     },
 

@@ -64,7 +64,7 @@ export class LoginComponent {
         if (role === 'ADMIN') {
           this.router.navigate(['/users']);
         } else if (role === 'USER') {
-          this.router.navigate(['/CreateContrat']);
+          this.router.navigate(['/Contrat']);
         } else {
           this.errorMessage = 'Rôle inconnu';
         }

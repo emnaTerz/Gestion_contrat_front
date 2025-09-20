@@ -3,4 +3,7 @@
           (click)="navigateToDashboard()" title="Dashboard"></button>
   <button *ngIf="isAdmin" pButton icon="pi pi-history" class="p-button-text"
           (click)="navigateToHistory()" title="Historique"></button>
+<button pButton icon="pi pi-sign-out" class="p-button-text p-button-danger"
+          (click)="logout()" title="Logout"></button>
+
 </div>

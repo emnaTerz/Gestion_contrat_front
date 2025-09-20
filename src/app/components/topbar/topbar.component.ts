@@ -42,4 +42,9 @@ export class TopbarComponent {
   navigateToHistory() {
     this.router.navigate(['/action-history']);
   }
+    logout(): void {
+    localStorage.removeItem('token');
+    localStorage.removeItem('userRole');
+    this.router.navigate(['/login']); // redirection vers login
+  }
 }
