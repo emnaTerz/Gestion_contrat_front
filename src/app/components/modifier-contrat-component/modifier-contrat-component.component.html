@@ -1,0 +1,217 @@
+<div class="contrat-container">
+  <p-toast></p-toast>
+
+  <p-steps [model]="steps" [(activeIndex)]="currentStep"></p-steps>
+
+  <!-- Étape 1 : Informations générales -->
+  <div *ngIf="currentStep === 0" class="contrat-section">
+    <h3>Informations générales</h3>
+    <label>Numéro de police:</label>
+    <input type="text" [(ngModel)]="numPolice">
+
+    <label>Nom de l'assuré:</label>
+    <input type="text" [(ngModel)]="nom_assure">
+
+    <h4>Adhérent</h4>
+    <label>Code ID:</label>
+    <input type="text" [(ngModel)]="adherent.codeId">
+    <label>Nom / Raison sociale:</label>
+    <input type="text" [(ngModel)]="adherent.nomRaison">
+    <label>Adresse:</label>
+    <input type="text" [(ngModel)]="adherent.adresse">
+    <label>Activité:</label>
+    <input type="text" [(ngModel)]="adherent.activite">
+
+    <label>Fractionnement:</label>
+    <select [(ngModel)]="fractionnement">
+      <option *ngFor="let opt of fractionnementOptions" [value]="opt.value">{{ opt.label }}</option>
+    </select>
+
+    <label>Code Renouvellement:</label>
+    <select [(ngModel)]="codeRenouvellement">
+      <option *ngFor="let opt of codeRenouvellementOptions" [value]="opt.value">{{ opt.label }}</option>
+    </select>
+
+    <label>Branche:</label>
+    <select [(ngModel)]="branche">
+      <option *ngFor="let opt of brancheOptions" [value]="opt.value">{{ opt.label }}</option>
+    </select>
+
+    <label>Type de contrat:</label>
+    <select [(ngModel)]="typeContrat">
+      <option *ngFor="let opt of typeContratOptions" [value]="opt.value">{{ opt.label }}</option>
+    </select>
+
+    <label>Date début:</label>
+    <input type="date" [(ngModel)]="dateDebut">
+    <label>Date fin:</label>
+    <input type="date" [(ngModel)]="dateFin">
+
+    <div style="margin-top: 10px; display: flex; gap: 1rem;">
+      <button pButton label="Suivant →" (click)="currentStep=1"></button>
+      <button 
+  pButton 
+  label="Annuler" 
+  class="p-button-danger" 
+  (click)="cancel()">
+</button>
+
+    
+    </div>
+  </div>
+
+
+<!-- Étape 2 : Situations de Risque -->
+<div *ngIf="currentStep === 1" class="contrat-section">
+  <h3>Situations de risque</h3>
+
+  <div *ngFor="let s of situationRisques; let i = index" class="situation-card">
+    <div class="situation-header">
+      <h4>Situation {{i+1}} : {{s.identification}}</h4>
+      <i class="pi pi-trash delete-icon" (click)="removeSituation(i)" title="Supprimer"></i>
+    </div>
+
+    <label>Identification:</label>
+    <input type="text" [(ngModel)]="s.identification">
+
+    <label>Adresse:</label>
+    <input type="text" [(ngModel)]="s.adresse">
+
+    <label>Nature construction:</label>
+    <input type="text" [(ngModel)]="s.natureConstruction">
+
+    <label>Contiguïté:</label>
+    <input type="text" [(ngModel)]="s.contiguite">
+
+    <label>Avoisinage:</label>
+    <input type="text" [(ngModel)]="s.avoisinage">
+  </div>
+
+  <!-- Ajouter situation -->
+  <button pButton label="Ajouter situation" (click)="addSituation()" class="add-btn"></button>
+
+  <!-- Navigation -->
+  <div class="navigation">
+    <button pButton label="← Précédent" (click)="currentStep=0"></button>
+    <button pButton label="Suivant →" (click)="currentStep=2"></button>
+    <button 
+  pButton 
+  label="Annuler" 
+  class="p-button-danger" 
+  (click)="cancel()">
+</button>
+
+  </div>
+</div>
+
+
+<!-- Étape 3 : Garanties -->
+<div *ngIf="currentStep === 2" class="contrat-section">
+  <h3>Garanties</h3>
+
+  <div *ngFor="let s of situationRisques; let i=index" class="situation-card">
+    <h4>Situation {{i+1}} : {{s.identification}}</h4>
+
+    <div *ngFor="let g of s.garanties; let j=index" class="garantie-card">
+      <div class="garantie-header">
+         <label>Garantie: {{getGarantieName(g.sousGarantieId)}}</label>
+    
+        <i class="pi pi-trash delete-icon" (click)="removeGarantie(s,j)" title="Supprimer"></i>
+      </div>
+
+     
+      <select [(ngModel)]="g.sousGarantieId" (change)="loadExclusionsForGarantie(g)">
+        <option [value]="0">Sélectionner</option>
+        <option *ngFor="let sg of sousGarantiesOptions" [value]="sg.value">{{sg.label}}</option>
+      </select>
+
+      <label>Franchise</label>
+      <input type="number" [(ngModel)]="g.franchise">
+
+      <label>Limite</label>
+      <input type="number" [(ngModel)]="g.limite">
+
+      <label>Maximum</label>
+      <input type="number" [(ngModel)]="g.maximum">
+
+      <label>Minimum</label>
+      <input type="number" [(ngModel)]="g.minimum">
+
+      <label>Capitale</label>
+      <input type="number" [(ngModel)]="g.capitale">
+
+      <label>Prime NET</label>
+      <input type="number" [(ngModel)]="g.primeNET">
+    </div>
+
+    <!-- Ajouter garantie -->
+    <button pButton label="Ajouter garantie" (click)="addGarantie(s)" class="add-btn"></button>
+  </div>
+
+  <!-- Navigation -->
+  <div style="margin-top:10px; display:flex; justify-content: space-between;">
+    <button pButton label="← Précédent" (click)="currentStep=1"></button>
+    <button pButton label="Suivant →" (click)="currentStep=3"></button>
+     <button 
+  pButton 
+  label="Annuler" 
+  class="p-button-danger" 
+  (click)="cancel()">
+</button>
+  </div>
+</div>
+
+
+ <!-- Étape 4 : Exclusions pour chaque garantie -->
+<div *ngIf="currentStep === 3">
+  <div class="contrat-section">
+    <h3>Exclusions par garantie</h3>
+
+    <div *ngFor="let s of situationRisques; let i = index" class="situation-card">
+      <h4 class="situation-title">Situation {{ i + 1 }} : {{ s.identification }}</h4>
+      
+      <div *ngFor="let g of s.garanties; let j = index" class="garantie-card">
+        <div class="garantie-header">
+          <h5>{{ getGarantieName(g.sousGarantieId) }}</h5>
+          <span class="garantie-badge">Garantie {{ j + 1 }}</span>
+        </div>
+        
+        <div *ngIf="g.exclusionsOptions && g.exclusionsOptions.length > 0" class="exclusions-container">
+          <label class="exclusions-label">Sélectionner les exclusions applicables :</label>
+          <div class="exclusions-scroll-container">
+            <div class="exclusions-list">
+              <div *ngFor="let exclusion of g.exclusionsOptions" class="exclusion-item">
+                <input 
+                  type="checkbox" 
+                  [id]="'exclusion_' + g.sousGarantieId + '_' + exclusion.id"
+                  [checked]="g.exclusionsIds?.includes(exclusion.id)"
+                  (change)="toggleExclusion(g, exclusion.id)"
+                  class="exclusion-checkbox">
+                <label 
+                  [for]="'exclusion_' + g.sousGarantieId + '_' + exclusion.id" 
+                  class="exclusion-text">
+                  {{ exclusion.nom }}
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div *ngIf="!g.exclusionsOptions || g.exclusionsOptions.length === 0" class="no-exclusions">
+          <p>⚠️ Aucune exclusion disponible pour cette garantie.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:10px; display:flex; gap:10px;">
+    <button pButton label="← Précédent" (click)="currentStep=2"></button>
+    <button pButton label="Soumettre" (click)="submit()"></button>
+     <button 
+  pButton 
+  label="Annuler" 
+  class="p-button-danger" 
+  (click)="cancel()">
+</button>
+  </div>
+</div>

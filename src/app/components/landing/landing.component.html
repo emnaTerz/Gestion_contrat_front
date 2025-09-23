@@ -1,0 +1,47 @@
+
+<div class="landing-wrapper">
+  <!-- Logo -->
+  <div class="logo-container">
+    <img src="assets/images/mae_logo.png" alt="MAE Logo" />
+  </div>
+
+  <h1>Bienvenue sur votre espace</h1>
+  <p>Choisissez une action pour gérer vos contrats :</p>
+
+  <!-- Actions avec cartes -->
+  <div class="actions-grid">
+    <div class="action-card p-shadow-3" (click)="showModifyDialog()">
+      <i class="pi pi-pencil pi-3x"></i>
+      <h3>Mettre à jour Contrat</h3>
+      <p>Modifiez les informations de vos contrats existants.</p>
+    </div>
+    <div class="action-card p-shadow-3" (click)="goToCreateContrat()">
+      <i class="pi pi-plus pi-3x"></i>
+      <h3>Créer Contrat</h3>
+      <p>Créez un nouveau contrat rapidement et facilement.</p>
+    </div>
+    <div class="action-card p-shadow-3">
+      <i class="pi pi-download pi-3x"></i>
+      <h3>Télécharger Contrat</h3>
+      <p>Téléchargez vos contrats au format PDF.</p>
+    </div>
+  </div>
+
+<p-dialog  [(visible)]="displayModifyDialog" 
+          [modal]="true" [closable]="true" [style]="{width: '400px'}" 
+          class="modify-dialog">
+  <form (ngSubmit)="onSubmitNumPolice()">
+    <div class="field">
+      <p>SVP, entrez le numéro de police que vous souhaitez modifier :</p>
+      <input type="text" pInputText [(ngModel)]="numPoliceInput" name="numPolice" placeholder="Numéro de police" />
+      <small class="error" *ngIf="errorMessage">{{ errorMessage }}</small>
+    </div>
+
+    <div class="flex justify-end mt-3">
+      <button pButton type="button" label="Annuler" class="p-button-text" (click)="displayModifyDialog=false"></button>
+      <button type="submit" pButton label="Valider" class="p-button-success ml-2"></button>
+    </div>
+  </form>
+</p-dialog>
+
+</div>

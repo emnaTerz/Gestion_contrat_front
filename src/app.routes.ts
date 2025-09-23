@@ -11,27 +11,11 @@ import { ActionHistoryComponent } from '@/components/action-history/action-histo
 import { AuthGuard } from '@/layout/service/AuthGuard';
 import { EmptyLayoutComponent } from '@/components/EmptyLayoutComponent';
 import { ContratComponent } from '@/components/contrat-component/contrat-component.component';
+import { ModifierContratComponent } from '@/components/modifier-contrat-component/modifier-contrat-component.component';
+import { LandingComponent } from '@/components/landing/landing.component';
+import { ForceResetPasswordComponent } from '@/components/force-reset-password/force-reset-password.component';
 
-/* export const appRoutes: Routes = [
-    {
-        path: '',
-        component: AppLayout,
-        children: [
-            { path: '', component: Dashboard },
-            { path: 'uikit', loadChildren: () => import('./app/pages/uikit/uikit.routes') },
-            { path: 'documentation', component: Documentation },
-            { path: 'pages', loadChildren: () => import('./app/pages/pages.routes') },
-        ]
-    },
-    { path: 'landing', component: Landing },
-    { path: 'notfound', component: Notfound },
-    { path: 'login', component: LoginComponent },
-    { path: 'CreateContrat', component: CreateContratComponent },
-    { path: 'users', component: UsersComponent },
-    { path: 'action-history', component: ActionHistoryComponent },
 
-    { path: '**', redirectTo: '/notfound' }
-]; */
 export const appRoutes: Routes = [
     // Pages publiques
     { path: 'landing', component: Landing },
@@ -46,7 +30,11 @@ export const appRoutes: Routes = [
             { path: 'action-history', component: ActionHistoryComponent, canActivate: [AuthGuard], data: { expectedRole: 'ADMIN' } },
             { path: 'users', component: UsersComponent, canActivate: [AuthGuard], data: { expectedRole: 'ADMIN' } },
             { path: 'CreateContrat', component: CreateContratComponent, canActivate: [AuthGuard], data: { expectedRole: 'USER' } },
-            { path: 'Contrat', component: ContratComponent, canActivate: [AuthGuard], data: { expectedRole: 'USER' } }
+            { path: 'Contrat', component: ContratComponent, canActivate: [AuthGuard], data: { expectedRole: 'USER' } },
+            { path: 'Modif_Contrat/:numPolice', component: ModifierContratComponent, canActivate: [AuthGuard], data: { expectedRole: 'USER' } },
+            { path: 'Landing', component: LandingComponent, canActivate: [AuthGuard], data: { expectedRole: 'USER' } },
+            { path: 'force-reset-password', component: ForceResetPasswordComponent, canActivate: [AuthGuard], data: { expectedRole: 'USER' } }
+
 
         ]
     },

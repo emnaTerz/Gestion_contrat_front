@@ -360,10 +360,8 @@ toggleExclusion(garantie: Garantie, exclusionId: number) {
   garantie.exclusionsIds = [...garantie.exclusionsIds];
 }
 // Ajouter cette méthode pour gérer la conversion franchise string → number
-private convertFranchise(garantie: any): number {
-  if (garantie.franchise === 'Oui') {
-    return garantie.limite || 0;
-  }
-  return 0;
+private convertFranchise(garantie: Garantie): number {
+  return garantie.franchise ?? 0;
 }
+
 }

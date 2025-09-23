@@ -11,7 +11,7 @@ import { DialogModule } from 'primeng/dialog';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { MessageService, ConfirmationService } from 'primeng/api';
 import { Router } from '@angular/router';
-import { User, UserService } from '@/layout/service/UserService';
+import { ResetPasswordDTO, User, UserService } from '@/layout/service/UserService';
 
 @Component({
   selector: 'app-users',
@@ -42,7 +42,6 @@ export class UsersComponent implements OnInit {
   filteredUsers: User[] = [];
   globalFilter: string = '';
   loading: boolean = true;
-
   constructor(
     private userService: UserService,
     private messageService: MessageService,
@@ -201,4 +200,32 @@ export class UsersComponent implements OnInit {
       }
     });
   }
+resetPassword(user: User) {
+  if (!user.id) return; // protection contre undefined
+
+  // Construire le DTO attendu par le backend
+  const dto: ResetPasswordDTO = {
+    userId: user.id,
+    newPassword: '123'  // valeur par défaut
+  };
+
+  this.userService.resetPassword(dto).subscribe(
+    () => {
+      this.messageService.add({
+        severity: 'success',
+        summary: 'Succès',
+        detail: `Mot de passe de ${user.firstName} ${user.lastName} réinitialisé à 123`
+      });
+    },
+    (err) => {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Erreur',
+        detail: `Impossible de réinitialiser le mot de passe de ${user.firstName} ${user.lastName}`
+      });
+      console.error(err);
+    }
+  );
+}
+
 }

@@ -1,0 +1,219 @@
+
+/* ========================== Container ========================== */
+.contrat-container {
+  max-width: 900px;
+  margin: 50px auto;
+  padding: 2.5rem;
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 6px 15px rgba(56, 142, 60, 0.2);
+  font-family: Arial, sans-serif;
+  color: #1b5e20;
+}
+
+/* ========================== Sections ========================== */
+.contrat-section {
+  margin-bottom: 2.5rem;
+
+  &:first-of-type {
+    margin-top: 2rem;
+  }
+
+  h3, h4 {
+    color: #2e7d32;
+    margin-bottom: 0.8rem;
+  }
+
+  input, select {
+    width: 100%;
+    padding: 0.6rem 0.8rem;
+    margin-bottom: 1.5rem;
+    border: 1px solid #c8e6c9;
+    border-radius: 6px;
+    outline: none;
+    color: #1b5e20;
+    background-color: #ffffff;
+    transition: border-color 0.3s, box-shadow 0.3s;
+    font-size: 1rem;
+    appearance: none;
+
+    &:focus {
+      border-color: #66bb6a;
+      box-shadow: 0 0 3px rgba(102, 187, 106, 0.5);
+    }
+  }
+
+  select {
+    background-image: url("data:image/svg+xml;charset=US-ASCII,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'><path fill='%23388e3c' d='M7 10l5 5 5-5H7z'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 0.8rem center;
+    background-size: 12px 12px;
+    padding-right: 2rem;
+  }
+
+  label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+  }
+}
+
+/* ========================== Stepper ========================== */
+.p-steps {
+  margin-bottom: 3rem;
+
+  .p-steps-item {
+    color: #1b5e20;
+  }
+
+  .p-steps-number {
+    background-color: #a5d6a7;
+    border-color: #66bb6a;
+    color: #1b5e20;
+  }
+
+  .p-highlight {
+    color: #ffffff !important;
+    background-color: #388e3c !important;
+    border-color: #2e7d32 !important;
+  }
+}
+
+/* ========================== Buttons ========================== */
+.p-button, button[pButton], .add-btn {
+  color: #1b5e20;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.p-button.p-highlight, button[pButton], .add-btn {
+  background-color: #388e3c;
+  border-color: #2e7d32;
+  color: white;
+  padding: 0.6rem 1.2rem;
+}
+
+.p-button:hover, button[pButton]:hover, .add-btn:hover {
+  background-color: #2e7d32;
+  color: white;
+}
+
+/* ========================== Cards ========================== */
+.situation-card,
+.garantie-card {
+  position: relative;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  background-color: #e8f5e9;
+  border-radius: 8px;
+  border: 1px solid #a5d6a7;
+
+  input, select {
+    width: 100%;
+    padding: 0.6rem 0.8rem;
+    margin-bottom: 1rem;
+    border: 1px solid #c8e6c9;
+    border-radius: 6px;
+    outline: none;
+    color: #1b5e20;
+    background-color: #ffffff;
+    transition: border-color 0.3s, box-shadow 0.3s;
+    font-size: 1rem;
+    appearance: none;
+
+    &:focus {
+      border-color: #66bb6a;
+      box-shadow: 0 0 3px rgba(102, 187, 106, 0.5);
+    }
+  }
+
+  select {
+    background-image: url("data:image/svg+xml;charset=US-ASCII,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'><path fill='%23388e3c' d='M7 10l5 5 5-5H7z'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 0.8rem center;
+    background-size: 12px 12px;
+    padding-right: 2rem;
+  }
+}
+
+.situation-header,
+.garantie-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: #2e7d32;
+}
+
+.garantie-header .delete-icon,
+.situation-header .delete-icon {
+  cursor: pointer;
+  font-size: 1.2rem;
+  transition: color 0.2s;
+}
+
+.garantie-header .delete-icon {
+  color: #388e3c;
+}
+
+.garantie-header .delete-icon:hover {
+  color: #2e7d32;
+}
+
+.situation-header .delete-icon {
+  color: #1a7c40;
+}
+
+.situation-header .delete-icon:hover {
+  color: #0e6813;
+}
+/* ========================== Exclusions ========================== */
+.exclusions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0.5rem 0;
+}
+
+.exclusion-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0.6rem 0.8rem;
+  border-radius: 6px;
+  background-color: white;
+  border: 1px solid #deecdf;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: white;
+  }
+
+  .exclusion-checkbox {
+    width: 18px;
+    height: 18px;
+    accent-color: #388e3c;
+    cursor: pointer;
+    margin: 0;
+    appearance: checkbox;
+    -webkit-appearance: checkbox;
+    -moz-appearance: checkbox;
+  }
+
+  .exclusion-text {
+    margin: 0;
+    font-size: 0.95rem;
+    color: #1b5e20;
+    cursor: pointer;
+    user-select: none;
+    flex: 1;
+  }
+}
+
+/* ========================== Navigation ========================== */
+.contrat-section .navigation {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 15px;
+}

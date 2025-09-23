@@ -19,6 +19,7 @@ export interface AdherentDTO {
 
 export interface ExclusionGarantieDTO {
   exclusionId: number;
+  
 }
 
 export interface GarantieSectionDTO {
@@ -30,6 +31,7 @@ export interface GarantieSectionDTO {
   minimum?: number;
   capitale?: number;
   primeNET?: number;
+  primeNet?: number;
   primeTTC?: number;
   exclusions: ExclusionGarantieDTO[];
 }
@@ -113,5 +115,60 @@ const token = localStorage.getItem('token');
 checkContratExists(numPolice: string): Observable<boolean> {
     return this.http.get<boolean>(`${this.baseUrl}/exists/${numPolice}`);
   }
+  getHistoriqueContrat(): Observable<any[]> {
+  const token = localStorage.getItem('token');
+  const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
+  return this.http.get<any[]>(`${this.baseUrl}/historique`, { headers })
+    .pipe(
+      catchError(err => {
+        console.error('Erreur récupération historique contrat', err);
+        return throwError(() => err);
+      })
+    );
+}
+getContrat(numPolice: string): Observable<ContratDTO> {
+  const token = localStorage.getItem('token');
+  const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
+  return this.http.get<ContratDTO>(`${this.baseUrl}/${numPolice}`, { headers })
+    .pipe(
+      catchError(err => {
+        console.error('Erreur récupération contrat', err);
+        return throwError(() => err);
+      })
+    );
+}
+lockContrat(numPolice: string): Observable<ContratDTO> {
+  const token = localStorage.getItem('token');
+  const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
+  return this.http.post<ContratDTO>(`${this.baseUrl}/lock/${numPolice}`, {}, { headers });
+}
+
+
+unlockContrat(numPolice: string, cancelled: boolean, startTime: string): Observable<string> {
+  const token = localStorage.getItem('token');
+  const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
+
+  const params = { cancelled: cancelled.toString(), startTime };
+
+  return this.http.post(`${this.baseUrl}/unlock/${numPolice}`, null, { 
+    headers, 
+    params,
+    responseType: 'text' // 👈 important pour que Angular accepte le texte
+  });
+}
+
+
+
+modifierContrat(contrat: ContratDTO): Observable<ContratDTO> {
+  const token = localStorage.getItem('token');
+  const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
+  return this.http.put<ContratDTO>(`${this.baseUrl}/modifier`, contrat, { headers })
+    .pipe(
+      catchError(err => {
+        console.error('Erreur modification contrat', err);
+        return throwError(() => err);
+      })
+    );
+}
 
 }

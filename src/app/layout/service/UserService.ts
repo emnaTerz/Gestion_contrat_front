@@ -11,6 +11,13 @@ export interface User {
   role: string;
   password?: string;
 }
+export interface CurrentUser {
+  id: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  role: string;
+}
 export interface SignUpRequest {
   firstName: string;
   lastName: string;
@@ -25,6 +32,11 @@ export interface UserActionHistory {
   endpoint: string;
   method: string;
   timestamp: string;
+}
+
+export interface ResetPasswordDTO {
+  userId: number;
+  newPassword: string;
 }
 
 @Injectable({
@@ -65,4 +77,22 @@ getActionHistory(): Observable<UserActionHistory[]> {
   const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
   return this.http.get<UserActionHistory[]>(`${this.apiUrl}/action-history`, { headers });
 }
+resetPassword(dto: ResetPasswordDTO): Observable<string> {
+  const token = localStorage.getItem('token');
+  const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
+  return this.http.put(`${this.apiUrl}/reset-password`, dto, { headers, responseType: 'text' });
+}
+ getCurrentUser(): Observable<CurrentUser> {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('Utilisateur non connecté');
+    }
+
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${token}`
+    });
+
+    return this.http.get<CurrentUser>(`${this.apiUrl}/me`, { headers });
+  }
+
 }

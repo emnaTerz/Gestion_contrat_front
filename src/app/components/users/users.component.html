@@ -1,4 +1,4 @@
-
+<p-toast></p-toast>
  <div class="custom-container">
   <div class="card">
         <p-confirmDialog header="Confirmation" [style]="{width: '400px'}"></p-confirmDialog>
@@ -104,6 +104,12 @@
                     class="p-button-text p-button-sm p-button-danger"
                     (click)="deleteUser(user.id, user.firstName + ' ' + user.lastName)">
             </button>
+             <button pButton type="button"
+              icon="pi pi-refresh" 
+              class="p-button-text p-button-sm p-button-warning" 
+              (click)="resetPassword(user)"> 
+             </button>
+
           </td>
         </tr>
       </ng-template>

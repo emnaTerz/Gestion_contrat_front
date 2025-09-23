@@ -1,37 +1,143 @@
-.custom-container {
+.history-container {
   display: flex;
   justify-content: center;
-  margin-top: 2rem;
-}
+  padding: 2rem;
 
-.history-card {
-  width: 100%;
-  max-width: 1500px; // plus large que la card par défaut
-}
+  .card {
+    width: 90%;
+    max-width: 1000px;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    background-color: #fff;
 
-.bg-green-100 {
-  background-color: #d4edda !important; // vert clair
-}
- .flex.items-center.gap-2 {
-      margin-top: 0.5rem;
+    .tabs {
+      display: flex;
+      justify-content: flex-start;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
 
-      input[pInputText] {
-        width: 250px;
-        padding: 0.5rem 0.75rem;
-        border: 1px solid #ccc;
-        border-radius: 0.375rem;
-        font-size: 0.95rem;
-        transition: all 0.2s ease-in-out;
+      .tab {
+        cursor: pointer;
+        padding: 0.5rem 1.5rem;
+        font-weight: 600;
+        color: #555;
+        border-radius: 8px 8px 0 0;
+        background-color: #f5f5f5;
+        transition: 0.2s;
 
-        &:focus {
-          outline: none;
-          border-color: #78c983; // couleur du focus
-          box-shadow: 0 0 0 2px rgba(2, 209, 54, 0.2);
+        &:hover {
+          background-color: #e0e0e0;
         }
 
-        &::placeholder {
-          color: #999;
+        &.active {
+          background-color: #25683e; // vert vif onglet actif
+          color: #fff;
+          box-shadow: 0 2px 6px rgba(0,0,0,0.15);
         }
       }
     }
-  
+
+    /* FILTRE INPUT */
+    .flex input.p-inputtext {
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      font-size: 0.95rem;
+      transition: 0.2s;
+
+      &::placeholder {
+        color: #999;
+      }
+
+      &:focus {
+        border-color: #78ad83;
+        box-shadow: 0 0 5px rgba(37,104,62,0.5);
+        outline: none;
+      }
+    }
+
+    /* BOUTON EFFACER */
+    .btn-clear {
+      background-color: #f0f0f0;
+      color: #333;
+      border: none;
+      padding: 0.4rem 1rem;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.2s;
+      font-size: 0.95rem;
+
+      &:hover {
+        background-color: #25683e;
+        color: #fff;
+      }
+    }
+
+    p-table {
+      border-radius: 8px;
+      overflow: hidden;
+      margin: 0 auto;
+
+      .p-datatable-thead > tr > th {
+        background-color: #d1f0d6; // header vert clair
+        color: #065f46;
+        font-weight: 600;
+        text-align: center;
+      }
+
+      .p-datatable-tbody > tr {
+        &:nth-child(even) {
+          background-color: #f9f9f9;
+        }
+      }
+
+      .user-group-header {
+        background-color: #dcfce7; // vert très clair pour group header
+        font-weight: bold;
+        text-align: center;
+      }
+    }
+  }
+}
+/* Container des filtres */
+.filters-container {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin-bottom: 1rem;
+}
+
+/* Input texte stylé */
+.filters-container input[pInputText] {
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  border: 1px solid #ccc;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
+  transition: all 0.2s ease-in-out;
+}
+
+.filters-container input[pInputText]:focus {
+  border-color: #02d18c;
+  box-shadow: 0 0 4px rgba(2, 209, 64, 0.4);
+  outline: none;
+}
+
+/* Bouton effacer */
+.btn-clear {
+  background-color: #3f973f !important;
+  border: none !important;
+  color: white !important;
+  border-radius: 8px;
+  min-width: 140px;
+  padding: 0.5rem 1rem;
+  transition: background 0.3s;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+.btn-clear:hover {
+  background-color: #2fd345 !important;
+}
