@@ -6,61 +6,77 @@
   <p-steps [model]="steps" [(activeIndex)]="currentStep"></p-steps>
 
   <div *ngIf="currentStep === 0">
-    <div class="contrat-section">
-      <h3>Informations générales</h3>
-      <label>Numéro de police:</label>
-      <input type="text" [(ngModel)]="numPolice">
-      <label>Nom de l'assuré:</label>
-      <input type="text" [(ngModel)]="nom_assure">
-    </div>
+  
+  <!-- Adhérent en premier -->
+  <div class="contrat-section">
+    <h3>Informations générales</h3>
+    <h4>Adhérent</h4>
+    <label>Code ID:</label>
+    <input type="text" [(ngModel)]="adherent.codeId">
+    <label>Nom / Raison sociale:</label>
+    <input type="text" [(ngModel)]="adherent.nomRaison">
+    <label>Adresse:</label>
+    <input type="text" [(ngModel)]="adherent.adresse">
+    <label>Activité:</label>
+    <input type="text" [(ngModel)]="adherent.activite">
+    <label>
+      <input type="checkbox" [(ngModel)]="adherent.nouveau">
+      Nouvel adhérent ?
+    </label>
+  </div>
+  
 
-    <div class="contrat-section">
-      <h4>Adhérent</h4>
-      <label>Code ID:</label>
-      <input type="text" [(ngModel)]="adherent.codeId">
-      <label>Nom / Raison sociale:</label>
-      <input type="text" [(ngModel)]="adherent.nomRaison">
-      <label>Adresse:</label>
-      <input type="text" [(ngModel)]="adherent.adresse">
-      <label>Activité:</label>
-      <input type="text" [(ngModel)]="adherent.activite">
-    </div>
+  <!-- Branche ensuite -->
+  <div class="contrat-section">
+    <label for="branche">Branche:</label>
+    <select id="branche" [(ngModel)]="branche">
+      <option *ngFor="let opt of brancheOptions" [value]="opt.value">{{ opt.label }}</option>
+    </select>
+  </div>
 
-<div class="contrat-section">
-  <label for="fractionnement">Fractionnement:</label>
-  <select id="fractionnement" [(ngModel)]="fractionnement">
-    <option *ngFor="let opt of fractionnementOptions" [value]="opt.value">{{ opt.label }}</option>
-  </select>
+  <!-- Numéro police + infos générales -->
+  <div class="contrat-section">
+    
+    <label>Numéro de police:</label>
+    <input type="text" [(ngModel)]="numPolice">
+    <label>Nom de l'assureur:</label>
+    <input type="text" [(ngModel)]="nom_assure">
+    <label>Code Agence:</label>
+    <input type="text" [(ngModel)]="codeAgence">
+  </div>
 
-  <label for="codeRenouvellement">Code Renouvellement:</label>
-  <select id="codeRenouvellement" [(ngModel)]="codeRenouvellement">
-    <option *ngFor="let opt of codeRenouvellementOptions" [value]="opt.value">{{ opt.label }}</option>
-  </select>
+  <!-- Fractionnement, renouvellement, type contrat -->
+  <div class="contrat-section">
+    <label for="fractionnement">Fractionnement:</label>
+    <select id="fractionnement" [(ngModel)]="fractionnement">
+      <option *ngFor="let opt of fractionnementOptions" [value]="opt.value">{{ opt.label }}</option>
+    </select>
 
-  <label for="branche">Branche:</label>
-  <select id="branche" [(ngModel)]="branche">
-    <option *ngFor="let opt of brancheOptions" [value]="opt.value">{{ opt.label }}</option>
-  </select>
+    <label for="codeRenouvellement">Code Renouvellement:</label>
+    <select id="codeRenouvellement" [(ngModel)]="codeRenouvellement">
+      <option *ngFor="let opt of codeRenouvellementOptions" [value]="opt.value">{{ opt.label }}</option>
+    </select>
 
-  <label for="typeContrat">Type de contrat:</label>
-  <select id="typeContrat" [(ngModel)]="typeContrat">
-    <option *ngFor="let opt of typeContratOptions" [value]="opt.value">{{ opt.label }}</option>
-  </select>
+    <label for="typeContrat">Type de contrat:</label>
+    <select id="typeContrat" [(ngModel)]="typeContrat">
+      <option *ngFor="let opt of typeContratOptions" [value]="opt.value">{{ opt.label }}</option>
+    </select>
+  </div>
+
+  <!-- Dates -->
+  <div class="contrat-section">
+    <label>Date de début:</label>
+    <input type="date" [(ngModel)]="dateDebut">
+    <label>Date de fin:</label>
+    <input type="date" [(ngModel)]="dateFin">
+  </div>
+
+  <!-- Bouton suivant -->
+  <div style="margin-top: 10px; display: flex; gap: 1rem;">
+    <button pButton label="Suivant →" (click)="nextStep()"></button>
+  </div>
 </div>
 
-
-
-    <div class="contrat-section">
-      <label>Date de début:</label>
-      <input type="date" [(ngModel)]="dateDebut">
-      <label>Date de fin:</label>
-      <input type="date" [(ngModel)]="dateFin">
-    </div>
-
-    <div style="margin-top: 10px; display: flex; gap: 1rem;">
-      <button pButton label="Suivant →" (click)="nextStep()"></button>
-    </div>
-  </div>
 
   <div *ngIf="currentStep === 1">
     <div class="contrat-section">
@@ -83,25 +99,29 @@
 
       <div style="margin-top: 10px; display: flex; gap: 1rem;">
         <button pButton label="← Précédent" (click)="prevStep()"></button>
-        <button pButton label="Ajouter cette situation" (click)="addSituation()"></button>
+        <button pButton [label]="editIndex !== null ? 'Valider la modification' : 'Ajouter cette situation'" (click)="addSituation()">
+  </button>
         <button pButton label="Suivant →" (click)="nextStep()"></button>
       </div>
     </div>
 
-    <div *ngIf="situationRisques.length > 0" style="margin-top: 2rem;">
-      <h4>Situations ajoutées :</h4>
-      <ul>
-        <li *ngFor="let s of situationRisques; let i = index">
-          {{ i + 1 }}. {{ s.identification }} - {{ s.adresse }}
-          <i class="pi pi-trash" 
-             style="color: #388e3c; cursor: pointer; font-size: 1rem;" 
-             (click)="removeSituation(i)" 
-             title="Supprimer"></i>
-        </li>
-      </ul>
-    </div>
+   <div *ngIf="situationRisques.length > 0" style="margin-top: 2rem;">
+  <h4>Situations ajoutées :</h4>
+  <ul>
+    <li *ngFor="let s of situationRisques; let i = index">
+      <span 
+        style="cursor: pointer; text-decoration: underline; color: #02bd4a;" 
+        (click)="editSituation(i)">
+        {{ i + 1 }}. {{ s.identification }} - {{ s.adresse }}
+      </span>
+      <i class="pi pi-trash" 
+         style=" color: #388e3c; cursor: pointer; font-size: 1rem; margin-left: 10px;" 
+         (click)="removeSituation(i)" 
+         title="Supprimer"></i>
+    </li>
+  </ul>
+</div>
   </div>
-
 <!-- Étape 3 : Garanties pour toutes les situations -->
 <div *ngIf="currentStep === 2">
   <div class="contrat-section">
@@ -120,23 +140,21 @@
           <option *ngFor="let opt of sousGarantiesOptions" [value]="opt.value">{{ opt.label }}</option>
         </select>
 
-        <!-- Franchise remplacé par input number -->
-        <label for="franchise">Franchise:</label>
-        <input type="number" id="franchise" [(ngModel)]="g.franchise" placeholder="Saisir la franchise">
+        <!-- Capital avant Franchise -->
+        <label>Capitale Assuré:</label>
+        <input type="number" [(ngModel)]="g.capitale">
+
+        <!-- Franchise avec Min avant Max -->
+        <label>Franchise:</label>
+        <input type="number" [(ngModel)]="g.franchise" placeholder="Saisir la franchise">
 
         <div class="franchise-fields">
-          <label>Limite:</label>
-          <input type="number" [(ngModel)]="g.limite">
+          <label>Minimum:</label>
+          <input type="number" [(ngModel)]="g.minimum">
 
           <label>Maximum:</label>
           <input type="number" [(ngModel)]="g.maximum">
-
-          <label>Minimum:</label>
-          <input type="number" [(ngModel)]="g.minimum">
         </div>
-
-        <label>Capitale:</label>
-        <input type="number" [(ngModel)]="g.capitale">
 
         <label>Prime NET:</label>
         <input type="number" [(ngModel)]="g.primeNET">
@@ -158,6 +176,7 @@
     <button pButton label="Suivant →" (click)="nextStep()"></button>
   </div>
 </div>
+
 <!-- Étape 4 : Exclusions pour chaque garantie -->
 <div *ngIf="currentStep === 3">
   <div class="contrat-section">

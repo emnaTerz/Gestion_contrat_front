@@ -15,6 +15,7 @@ export interface AdherentDTO {
   nomRaison: string;
   adresse: string;
   activite: string;
+  nouveau: boolean;
 }
 
 export interface ExclusionGarantieDTO {
@@ -26,13 +27,10 @@ export interface GarantieSectionDTO {
   sectionId?: number;
   franchise: number;
   sousGarantieId: number;
-  limite?: number;
   maximum?: number;
   minimum?: number;
   capitale?: number;
-  primeNET?: number;
   primeNet?: number;
-  primeTTC?: number;
   exclusions: ExclusionGarantieDTO[];
 }
 
@@ -53,6 +51,7 @@ export interface ContratDTO {
   codeRenouvellement: CodeRenouvellement;
   branche: Branche;
   nom_assure: string ;
+  codeAgence: string
   typeContrat: TypeContrat;
   primeTTC?: number;
   dateDebut: string;
@@ -62,7 +61,8 @@ export interface ContratDTO {
 }
 export enum Fractionnement {
   ZERO = 'ZERO',
-  UN = 'UN'
+  UN = 'UN',
+  DEUX = 'DEUX'
 }
 
 export enum CodeRenouvellement {
@@ -75,6 +75,13 @@ export enum Branche {
   R = 'R',
   I = 'I'
 }
+
+export interface ContratVerrouille {
+  numPolice: string;
+  editingUser: string;
+  editingStart: string;
+}
+
 
 export enum TypeContrat {
   APPEL_D_OFFRE = 'APPEL_D_OFFRE',
@@ -169,6 +176,12 @@ modifierContrat(contrat: ContratDTO): Observable<ContratDTO> {
         return throwError(() => err);
       })
     );
+}
+getLockedContrats(): Observable<ContratVerrouille[]> {
+  const token = localStorage.getItem('token'); // récupérer le JWT du localStorage
+  const headers = { Authorization: `Bearer ${token}` };
+
+  return this.http.get<ContratVerrouille[]>(`${this.baseUrl}/locked`, { headers });
 }
 
 }

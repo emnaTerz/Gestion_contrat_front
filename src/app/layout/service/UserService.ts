@@ -9,6 +9,7 @@ export interface User {
   lastName: string;
   email: string;
   role: string;
+  codeAgence?: string; 
   password?: string;
 }
 export interface CurrentUser {
@@ -23,7 +24,13 @@ export interface SignUpRequest {
   lastName: string;
   email: string;
   role: string;
+  codeAgence: string; 
   password: string;
+}
+export interface Agence {
+  code: string;
+  name: string;
+  enumName: string;
 }
 export interface UserActionHistory {
   id?: number;

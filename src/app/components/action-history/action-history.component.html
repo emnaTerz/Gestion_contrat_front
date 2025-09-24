@@ -1,52 +1,35 @@
-<div class="history-container">
+
+ <div class="history-container">
   <div class="card">
 
     <!-- Onglets -->
     <div class="tabs">
-      <div (click)="switchMode('user')" 
-           [class.active]="mode==='user'" 
-           class="tab">Historique Utilisateurs</div>
-      <div (click)="switchMode('contrat')" 
-           [class.active]="mode==='contrat'" 
-           class="tab">Historique Contrats</div>
+      <div (click)="switchMode('user')" [class.active]="mode==='user'" class="tab">Historique Utilisateurs</div>
+      <div (click)="switchMode('contrat')" [class.active]="mode==='contrat'" class="tab">Historique Contrats</div>
+      <div (click)="switchMode('locked')" [class.active]="mode==='locked'" class="tab">Contrats Verrouillés</div>
     </div>
 
     <!-- Filtres -->
-<div class="filters-container">
-  <!-- Input texte -->
-  <span class="p-input-icon-left">
-    <input #filter 
-           pInputText 
-           type="text" 
-           placeholder="Rechercher dans l’historique..." 
-           (input)="historyTable.filterGlobal($event.target.value, 'contains')" />
-  </span>
+    <div class="filters-container">
+      <span class="p-input-icon-left">
+        <input #filter pInputText type="text" placeholder="Rechercher..." 
+               (input)="historyTable.filterGlobal($event.target.value, 'contains')" />
+      </span>
 
-  <!-- Datepicker -->
-  <p-datepicker  
-    [(ngModel)]="selectedDate"   
-    dateFormat="dd/mm/yy" 
-    placeholder="Filtrer par date"  
-    (onSelect)="filterByDate()">
-  </p-datepicker>
+      <p-datepicker [(ngModel)]="selectedDate" dateFormat="dd/mm/yy" 
+                    placeholder="Filtrer par date" (onSelect)="filterByDate()">
+      </p-datepicker>
 
-  <!-- Bouton effacer -->
-  <button (click)="clearHistoryFilter()"  label="Effacer filtres" class="btn-clear"> Effacer </button>
-
-</div>
-
+      <button (click)="clearHistoryFilter()" class="btn-clear">Effacer</button>
+    </div>
 
     <!-- Tableau -->
     <ng-container *ngIf="history$ | async as history">
-      <p-table #historyTable
-               [value]="history"
-               [scrollable]="true"
-               scrollHeight="450px"
-               [tableStyle]="{ 'min-width': '800px' }"
+      <p-table #historyTable [value]="history" [scrollable]="true" scrollHeight="450px"
+               [tableStyle]="{'min-width':'800px'}"
                [rowGroupMode]="mode==='user' ? 'subheader' : undefined"
                [groupRowsBy]="mode==='user' ? 'username' : undefined"
-               sortField="username"
-               sortMode="single"
+               sortField="username" sortMode="single"
                [globalFilterFields]="mode==='user' ? ['action','timestamp'] : ['action','username','date']">
 
         <!-- Header -->
@@ -59,6 +42,10 @@
             <th *ngIf="mode==='contrat'">Utilisateur</th>
             <th *ngIf="mode==='contrat'">Date</th>
             <th *ngIf="mode==='contrat'">Temps de Réalisation</th>
+
+            <th *ngIf="mode==='locked'">Numéro Contrat</th>
+            <th *ngIf="mode==='locked'">Utilisateur</th>
+            <th *ngIf="mode==='locked'">Date de verrouillage</th>
           </tr>
         </ng-template>
 
@@ -75,23 +62,32 @@
         <ng-template #body let-historyItem>
           <tr *ngIf="mode==='user'">
             <td>{{ historyItem.action }}</td>
-           <td>{{ historyItem.timestamp | date:'dd/MM/yyyy HH:mm' }}</td>
-
+            <td>{{ historyItem.timestamp | date:'dd/MM/yyyy HH:mm' }}</td>
           </tr>
+
           <tr *ngIf="mode==='contrat'">
             <td>{{ historyItem.action }}</td>
             <td>{{ historyItem.username }}</td>
-            <td>{{ parseDate(historyItem.date) | date:'dd/MM/yyyy' }}</td>
+            <td>{{ parseDate(historyItem.date) | date:'dd/MM/yyyy HH:mm' }}</td>
             <td>{{ formatTempsRealisation(historyItem.tempsRealisation) }}</td>
+          </tr>
+
+          <tr *ngIf="mode==='locked'">
+            <td>{{ historyItem.numPolice }}</td>
+            <td>{{ historyItem.editingUser }}</td>
+            <td>{{ parseDate(historyItem.editingStart) | date:'dd/MM/yyyy HH:mm' }}</td>
           </tr>
         </ng-template>
 
         <!-- Empty message -->
-        <ng-template #emptymessage>
-          <tr>
-            <td colspan="4">Aucun historique trouvé.</td>
-          </tr>
-        </ng-template>
+      <ng-template #emptymessage>
+  <tr>
+    <td [attr.colspan]="mode==='contrat' || mode==='user' ? 4 : 3">
+      {{ mode==='locked' ? 'Aucun contrat verrouillé.' : 'Aucun historique trouvé.' }}
+    </td>
+  </tr>
+</ng-template>
+
 
       </p-table>
     </ng-container>

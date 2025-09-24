@@ -10,6 +10,7 @@ import { MultiSelectModule } from 'primeng/multiselect';
 import { Branche, CodeRenouvellement, ContratDTO, ContratService, Fractionnement, TypeContrat } from '@/layout/service/contrat';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
+import { CheckboxModule } from 'primeng/checkbox';
 
 interface Exclusion {
   id: number;
@@ -20,7 +21,6 @@ interface Garantie {
   sectionId: number;
   sousGarantieId: number;
   franchise?: number; // Long
-  limite?: number;
   maximum?: number;
   minimum?: number;
   capitale?: number;
@@ -50,7 +50,8 @@ interface SituationRisque {
     StepsModule,
     SelectButtonModule,
     MultiSelectModule,
-    ToastModule
+    ToastModule,
+    CheckboxModule
   ],
   templateUrl: './contrat-component.component.html',
   styleUrls: ['./contrat-component.component.scss']
@@ -60,7 +61,7 @@ export class ContratComponent implements OnInit {
 
   // Étape 1 : Informations générales
   numPolice: string = '';
-  adherent = { codeId: '', nomRaison: '', adresse: '', activite: '' };
+  adherent = { codeId: '', nomRaison: '', adresse: '', activite: '' , nouveau: true };
   fractionnement: string = '';
   codeRenouvellement: string = '';
   branche: string = '';
@@ -69,10 +70,12 @@ export class ContratComponent implements OnInit {
   dateDebut: string = '';
   dateFin: string = '';
  startTime: string = '';
+ codeAgence: string = '';
 
   fractionnementOptions = [
-    { label: 'Oui', value: 'ZERO' },
-    { label: 'Non', value: 'UN' }
+    { label: 'Annuel', value: 'ZERO' },
+    { label: 'Semestriel', value: 'UN' },
+     { label: 'Trimestriel', value: 'DEUX' }
   ];
   codeRenouvellementOptions = [
     { label: 'T', value: 'T' },
@@ -112,7 +115,7 @@ export class ContratComponent implements OnInit {
   };
 
   sousGarantiesOptions: { label: string; value: number }[] = [];
-
+  editIndex: number | null = null;  
   constructor(private contratService: ContratService, private messageService: MessageService) {}
 
   ngOnInit(): void {
@@ -139,7 +142,13 @@ console.log('Heure locale format ISO sans décalage:', this.startTime);
   }
 
 
+editSituation(index: number) {
+  // Charger la situation sélectionnée dans currentSituationRisque
+  this.currentSituationRisque = { ...this.situationRisques[index] };
 
+  // Facultatif : stocker l'index si tu veux remplacer au lieu de réajouter
+  this.editIndex = index;
+}
 
     loadExclusionsForGarantie(garantie: Garantie): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -224,7 +233,7 @@ nextStep() {
     if (this.currentStep > 0) this.currentStep--;
   }
 
-  addSituation() {
+  /* addSituation() {
     this.currentSituationRisque.numPolice = this.numPolice;
     this.situationRisques.push({ ...this.currentSituationRisque });
 
@@ -237,7 +246,30 @@ nextStep() {
       avoisinage: '',
       garanties: []
     };
+  } */
+
+    addSituation() {
+  if (this.editIndex !== null) {
+    // On est en mode édition → mettre à jour l'élément existant
+    this.situationRisques[this.editIndex] = { ...this.currentSituationRisque };
+    this.editIndex = null; // sortir du mode édition
+  } else {
+    // Mode ajout
+    this.situationRisques.push({ ...this.currentSituationRisque });
   }
+
+  // Réinitialiser le formulaire
+  this.currentSituationRisque = {
+      numPolice: '',
+      identification: '',
+      adresse: '',
+      natureConstruction: '',
+      contiguite: '',
+      avoisinage: '',
+      garanties: []
+    };
+}
+
 
   removeSituation(index: number) {
     this.situationRisques.splice(index, 1);
@@ -267,53 +299,52 @@ nextStep() {
     }
   }
 
-submit() {
-  const contratData: ContratDTO = {
-    numPolice: this.numPolice,
-    nom_assure: this.nom_assure,
-    adherent: this.adherent,
-    fractionnement: this.fractionnement as Fractionnement,
-    codeRenouvellement: this.codeRenouvellement as CodeRenouvellement,
-    branche: this.branche as Branche,
-    typeContrat: this.typeContrat as TypeContrat,
-    dateDebut: this.dateDebut,
-    dateFin: this.dateFin,
-    startTime: this.startTime,   // ✅ ICI au niveau contrat
-    sections: this.situationRisques.map(situation => ({
-      identification: situation.identification,
-      adresse: situation.adresse,
-      natureConstruction: situation.natureConstruction,
-      contiguite: situation.contiguite,
-      avoisinage: situation.avoisinage,
+
+
+
+   submit() {
+    const contratData: ContratDTO = {
       numPolice: this.numPolice,
-      garanties: situation.garanties.map(garantie => ({
-        franchise: this.convertFranchise(garantie),
-        sousGarantieId: Number(garantie.sousGarantieId),
-        limite: garantie.limite ? Number(garantie.limite) : undefined,
-        maximum: garantie.maximum ? Number(garantie.maximum) : undefined,
-        minimum: garantie.minimum ? Number(garantie.minimum) : undefined,
-        capitale: garantie.capitale ? Number(garantie.capitale) : undefined,
-        primeNET: garantie.primeNET ? Number(garantie.primeNET) : undefined,
-        exclusions: (garantie.exclusionsIds || []).map(exclusionId => ({
-          exclusionId: Number(exclusionId)   // ✅ correction du typo (avant tu avais `xclusionId`)
+      nom_assure: this.nom_assure,
+      codeAgence: this.codeAgence,
+      adherent: this.adherent,
+      fractionnement: this.fractionnement as Fractionnement,
+      codeRenouvellement: this.codeRenouvellement as CodeRenouvellement,
+      branche: this.branche as Branche,
+      typeContrat: this.typeContrat as TypeContrat,
+      dateDebut: this.dateDebut,
+      dateFin: this.dateFin,
+      startTime: this.startTime,
+      sections: this.situationRisques.map(situation => ({
+        identification: situation.identification,
+        adresse: situation.adresse,
+        natureConstruction: situation.natureConstruction,
+        contiguite: situation.contiguite,
+        avoisinage: situation.avoisinage,
+        numPolice: this.numPolice,
+        garanties: situation.garanties.map(garantie => ({
+          franchise: garantie.franchise ?? 0,
+          sousGarantieId: Number(garantie.sousGarantieId),
+          maximum: garantie.maximum ? Number(garantie.maximum) : undefined,
+          minimum: garantie.minimum ? Number(garantie.minimum) : undefined,
+          capitale: garantie.capitale ? Number(garantie.capitale) : undefined,
+          primeNET: garantie.primeNET ? Number(garantie.primeNET) : undefined,
+          exclusions: (garantie.exclusionsIds || []).map(exclusionId => ({ exclusionId: Number(exclusionId) }))
         }))
       }))
-    }))
-  };
+    };
 
-  console.log('Contrat à soumettre:', JSON.stringify(contratData, null, 2));
+    console.log('Contrat à créer:', JSON.stringify(contratData, null, 2));
 
-  this.contratService.createContrat(contratData).subscribe({
-    next: (response) => {
-      alert('Contrat créé avec succès !');
-      console.log('Réponse du serveur:', response);
-    },
-    error: (error) => {
-      console.error('Erreur détaillée:', error);
-      this.handleError(error);
-    }
-  });
-}
+    this.contratService.createContrat(contratData).subscribe({
+      next: (response) => {
+        alert('Contrat créé avec succès !');
+        console.log('Réponse du serveur:', response);
+      },
+      error: (error) => this.handleError(error)
+    });
+  }
+
 
 
 private handleError(error: any): void {

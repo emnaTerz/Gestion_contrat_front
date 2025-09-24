@@ -301,3 +301,16 @@ button.add-garantie:hover {
 .exclusions-scroll-container::-webkit-scrollbar-thumb:hover {
   background: #a8a8a8;
 }
+.custom-checkbox {
+  width: 18px;
+  height: 18px;
+  margin-right: 8px;
+  accent-color: #0288d1; /* change la couleur du check */
+}
+
+.custom-checkbox-label {
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  color: #26721f;
+}
