@@ -314,3 +314,190 @@ button.add-garantie:hover {
   font-size: 14px;
   color: #26721f;
 }
+.exclusions-rc-container {
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid #ccc;
+  padding: 8px;
+  margin-bottom: 12px;
+}
+.ajout-exclusion {
+  border-left: 4px solid #038b19;
+}
+
+.exclusion-item {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 0.5rem;
+  padding: 0.5rem;
+  border-radius: 4px;
+}
+
+.exclusion-item:hover {
+  background-color: #f5f5f5;
+}
+
+.exclusion-checkbox {
+  margin-right: 0.5rem;
+  margin-top: 0.2rem;
+}
+
+.exclusion-text {
+  flex: 1;
+  cursor: pointer;
+}
+.bouton-ajout-exclusion {
+  height: 38px; // Hauteur standard pour inputs
+  min-width: 100px;
+  padding: 0 1rem;
+  background: #116b39;
+  border: 1px solid #1eb457;
+  border-radius: 4px;
+  color: white;
+  font-size: 0.875rem;
+  font-weight: 500;
+  
+  // S'assurer que l'alignement vertical est correct
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  &:hover {
+    background: #18ac5a;
+    border-color: #18a860;
+  }
+  
+  .pi-plus {
+    margin-right: 0.4rem;
+    font-size: 0.8rem;
+  }
+}
+/* === Préambule Section === */
+.preambule-section {
+  textarea {
+    width: 100%;
+    padding: 1rem;
+    font-size: 1rem;
+    line-height: 1.5;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+    background: #fafafa;
+    color: #333;
+    transition: all 0.3s ease;
+
+    /* Ajout d'une ombre douce */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+
+    &:focus {
+      outline: none;
+      border-color: #02d140;
+      background: #fff;
+      box-shadow: 0 0 6px rgba(5, 194, 5, 0.4);
+    }
+  }
+
+  /* Style du compteur caractères si tu veux l’ajouter */
+  .char-counter {
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
+    color: #666;
+
+ 
+  }
+
+  /* Boutons alignés et stylés */
+}
+.contrat-upload-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 2rem;
+
+  .card {
+    width: 100%;
+    max-width: 600px;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+
+    .card-title {
+      font-weight: 600;
+      font-size: 1.25rem;
+      margin-bottom: 1rem;
+    }
+
+    ::ng-deep .p-fileupload {
+      width: 100%;
+    }
+
+    .empty-message {
+      color: #777;
+      text-align: center;
+      padding: 2rem;
+      border: 2px dashed #ccc;
+      border-radius: 0.5rem;
+    }
+  }
+
+  .uploaded-files {
+    margin-top: 1.5rem;
+    width: 100%;
+    max-width: 600px;
+
+    h3 {
+      margin-bottom: 0.5rem;
+    }
+
+    ul {
+      list-style-type: disc;
+      padding-left: 1.5rem;
+
+      li {
+        margin-bottom: 0.25rem;
+      }
+    }
+  }
+}
+.contrat-upload-container {
+  margin-bottom: 2rem;
+
+  .card {
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+
+    .card-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+    }
+
+    .empty-message {
+      padding: 2rem;
+      text-align: center;
+      border: 2px dashed #0288d1;
+      border-radius: 0.5rem;
+      color: #0288d1;
+      font-weight: 500;
+    }
+  }
+
+  .uploaded-files {
+    margin-top: 1rem;
+
+    h3 {
+      font-size: 1rem;
+      margin-bottom: 0.5rem;
+    }
+
+    ul {
+      list-style: none;
+      padding-left: 0;
+
+      li {
+        padding: 0.25rem 0;
+        font-size: 0.9rem;
+      }
+    }
+  }
+}

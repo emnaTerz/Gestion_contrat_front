@@ -232,3 +232,146 @@
   color: #26721f;
 }
 
+/* ===========================
+   RC Exploitation - Step 4
+   Modification → Création identique
+=========================== */
+.contrat-section {
+  margin-bottom: 2.5rem;
+
+  h3 {
+    color: #2e7d32;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+  }
+
+  /* Texte descriptif */
+  .card p {
+    background-color: #e8f5e9;
+    border: 1px solid #a5d6a7;
+    padding: 1rem 1.2rem;
+    border-radius: 8px;
+    color: #1b5e20;
+    font-size: 1rem;
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+  }
+
+  /* Grille pour inputs limites et franchise */
+  .grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .col-12 {
+    width: 100%;
+  }
+
+  @media (min-width: 768px) {
+    .md\:col-6 {
+      width: calc(50% - 0.5rem); /* 2 colonnes avec gap */
+    }
+  }
+
+  /* Champ individuel */
+  .field {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 1rem;
+
+    label {
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+      color: #2e7d32;
+    }
+
+    input[type="number"] {
+      width: 100%;
+      padding: 0.6rem 0.8rem;
+      border: 1px solid #c8e6c9;
+      border-radius: 6px;
+      outline: none;
+      font-size: 1rem;
+      color: #1b5e20;
+      background-color: #ffffff;
+      transition: border-color 0.3s, box-shadow 0.3s;
+    }
+
+    input[type="number"]:focus {
+      border-color: #66bb6a;
+      box-shadow: 0 0 3px rgba(102, 187, 106, 0.5);
+    }
+  }
+
+  /* Boutons Précédent / Soumettre */
+  .flex {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 1.5rem;
+
+    button[pButton] {
+      background-color: #388e3c;
+      border-color: #2e7d32;
+      color: white;
+      border-radius: 6px;
+      padding: 0.6rem 1.2rem;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: background-color 0.3s;
+    }
+
+    button[pButton]:hover {
+      background-color: #2e7d32;
+    }
+  }
+
+  /* Card pour inputs et texte */
+  .card {
+    padding: 1rem 1.2rem;
+    border-radius: 8px;
+    border: 1px solid #a5d6a7;
+    background-color: #e8f5e9;
+    margin-bottom: 1.5rem;
+  }
+}
+
+
+ .rc-exclusions-scroll {
+  max-height: 300px; 
+  overflow-y: auto;
+  padding-right: 0.5rem;
+  margin-top: 0.5rem;
+
+
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+  &::-webkit-scrollbar-track {
+    background: #e8f5e9;
+    border-radius: 6px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background-color: #388e3c;
+    border-radius: 6px;
+  }
+  .exclusions-scroll-container {
+  max-height: 200px;       /* Hauteur maximale avant scroll */
+  overflow-y: auto;        /* Active le scroll vertical */
+  border: 1px solid #ccc;  /* Bordure optionnelle */
+  padding: 0.5rem;
+  border-radius: 4px;
+  background-color: #f9f9f9;
+}
+
+.exclusion-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.3rem;
+}
+
+.exclusion-checkbox {
+  margin-right: 0.5rem;
+}
+
+}

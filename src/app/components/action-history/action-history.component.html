@@ -46,6 +46,8 @@
             <th *ngIf="mode==='locked'">Numéro Contrat</th>
             <th *ngIf="mode==='locked'">Utilisateur</th>
             <th *ngIf="mode==='locked'">Date de verrouillage</th>
+            <th *ngIf="mode==='locked'">Action</th>
+
           </tr>
         </ng-template>
 
@@ -76,7 +78,17 @@
             <td>{{ historyItem.numPolice }}</td>
             <td>{{ historyItem.editingUser }}</td>
             <td>{{ parseDate(historyItem.editingStart) | date:'dd/MM/yyyy HH:mm' }}</td>
-          </tr>
+
+<td>
+  <button pButton 
+          type="button" 
+          class="p-button-text p-button-plain p-button-sm"
+          (click)="unlock(historyItem)">
+    <i class="pi pi-lock-open" style="color: #375829;"></i>
+  </button>
+</td>
+       </tr>
+
         </ng-template>
 
         <!-- Empty message -->

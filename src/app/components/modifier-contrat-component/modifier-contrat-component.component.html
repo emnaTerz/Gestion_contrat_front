@@ -1,215 +1,403 @@
 
+
 <div class="contrat-container">
   <p-toast></p-toast>
 
   <p-steps [model]="steps" [(activeIndex)]="currentStep"></p-steps>
-<div *ngIf="currentStep === 0" class="contrat-section">
-  <!-- 1️⃣ Titre Informations générales -->
-  <h3>Informations générales</h3>
 
-  <!-- 2️⃣ Adhérent -->
-  <h4>Adhérent</h4>
-  <label>Code ID:</label>
-  <input type="text" [(ngModel)]="adherent.codeId">
-  <label>Nom / Raison sociale:</label>
-  <input type="text" [(ngModel)]="adherent.nomRaison">
-  <label>Adresse:</label>
-  <input type="text" [(ngModel)]="adherent.adresse">
-  <label>Activité:</label>
-  <input type="text" [(ngModel)]="adherent.activite">
-  <div class="custom-checkbox-label" style="margin-bottom: 1rem;">
-    <p-checkbox [(ngModel)]="adherent.nouveau" binary="true" class="custom-checkbox"> </p-checkbox>
-    <span>Nouvel adhérent ?</span>
-  </div>
+  <!-- Étape 0 -->
+  <div *ngIf="currentStep === 0" class="contrat-section">
+    <h3>Informations générales</h3>
 
-  <!-- 3️⃣ Branche -->
-  <label>Branche:</label>
-  <select [(ngModel)]="branche">
-    <option *ngFor="let opt of brancheOptions" [value]="opt.value">{{ opt.label }}</option>
-  </select>
-
-  <!-- 4️⃣ Numéro de police, Nom assuré, Code Agence -->
-  <label>Numéro de police:</label>
-  <input type="text" [(ngModel)]="numPolice">
-
-  <label>Nom de l'assuré:</label>
-  <input type="text" [(ngModel)]="nom_assure">
-
-  <label>Code Agence:</label>
-  <input type="text" [(ngModel)]="codeAgence">
-
-  <!-- 5️⃣ Le reste -->
-  <label>Fractionnement:</label>
-  <select [(ngModel)]="fractionnement">
-    <option *ngFor="let opt of fractionnementOptions" [value]="opt.value">{{ opt.label }}</option>
-  </select>
-
-  <label>Code Renouvellement:</label>
-  <select [(ngModel)]="codeRenouvellement">
-    <option *ngFor="let opt of codeRenouvellementOptions" [value]="opt.value">{{ opt.label }}</option>
-  </select>
-
-  <label>Type de contrat:</label>
-  <select [(ngModel)]="typeContrat">
-    <option *ngFor="let opt of typeContratOptions" [value]="opt.value">{{ opt.label }}</option>
-  </select>
-
-  <label>Date début:</label>
-  <input type="date" [(ngModel)]="dateDebut">
-  <label>Date fin:</label>
-  <input type="date" [(ngModel)]="dateFin">
-
-  <!-- Boutons -->
-  <div style="margin-top: 10px; display: flex; gap: 1rem;">
-    <button pButton label="Suivant →" (click)="currentStep=1"></button>
-    <button 
-      pButton 
-      label="Annuler" 
-      class="p-button-danger" 
-      (click)="cancel()">
-    </button>
-  </div>
-</div>
-
-
-<div *ngIf="currentStep === 1" class="contrat-section">
-  <h3>Situations de risque</h3>
-
-  <div *ngFor="let s of situationRisques; let i = index" class="situation-card">
-    <div class="situation-header">
-      <h4>Situation {{i+1}} : {{s.identification}}</h4>
-      <i class="pi pi-trash delete-icon" (click)="removeSituation(i)" title="Supprimer"></i>
+    <h4>Adhérent</h4>
+    <label>Code Adhérent:</label>
+    <input type="text" [(ngModel)]="adherent.codeId">
+    <label>Nom / Raison sociale:</label>
+    <input type="text" [(ngModel)]="adherent.nomRaison">
+    <label>Adresse:</label>
+    <input type="text" [(ngModel)]="adherent.adresse">
+    <label>Activité:</label>
+    <input type="text" [(ngModel)]="adherent.activite">
+    <div class="custom-checkbox-label" style="margin-bottom: 1rem;">
+      <p-checkbox [(ngModel)]="adherent.nouveau" binary="true" class="custom-checkbox"></p-checkbox>
+      <span>Nouvel adhérent ?</span>
     </div>
 
-    <label>Identification:</label>
-    <input type="text" [(ngModel)]="s.identification">
+    <label>Branche:</label>
+    <select [(ngModel)]="branche">
+      <option *ngFor="let opt of brancheOptions" [value]="opt.value">{{ opt.label }}</option>
+    </select>
 
-    <label>Adresse:</label>
-    <input type="text" [(ngModel)]="s.adresse">
+    <label>Numéro de police:</label>
+    <input type="text" [(ngModel)]="numPolice">
+    <label>Nom de l'assuré:</label>
+    <input type="text" [(ngModel)]="nom_assure">
+    <label>Code Agence:</label>
+    <input type="text" [(ngModel)]="codeAgence">
 
-    <label>Nature construction:</label>
-    <input type="text" [(ngModel)]="s.natureConstruction">
+    <label>Fractionnement:</label>
+    <select [(ngModel)]="fractionnement">
+      <option *ngFor="let opt of fractionnementOptions" [value]="opt.value">{{ opt.label }}</option>
+    </select>
 
-    <label>Contiguïté:</label>
-    <input type="text" [(ngModel)]="s.contiguite">
+    <label>Code Renouvellement:</label>
+    <select [(ngModel)]="codeRenouvellement">
+      <option *ngFor="let opt of codeRenouvellementOptions" [value]="opt.value">{{ opt.label }}</option>
+    </select>
 
-    <label>Avoisinage:</label>
-    <input type="text" [(ngModel)]="s.avoisinage">
+    <label>Type de contrat:</label>
+    <select [(ngModel)]="typeContrat">
+      <option *ngFor="let opt of typeContratOptions" [value]="opt.value">{{ opt.label }}</option>
+    </select>
+
+    <label>Date début:</label>
+    <input type="date" [(ngModel)]="dateDebut">
+    <label>Date fin:</label>
+    <input type="date" [(ngModel)]="dateFin">
+
+    <div style="margin-top: 10px; display: flex; gap: 1rem;">
+      <button pButton label="Suivant →" (click)="currentStep=1"></button>
+      <button pButton label="Annuler" class="p-button-danger" (click)="cancel()"></button>
+    </div>
   </div>
 
- 
-  <button pButton label="Ajouter situation" (click)="addSituation()" class="add-btn"></button>
 
+<!-- === Step Préambule === -->
+<div *ngIf="currentStep === 1" class="contrat-section preambule-section">
+  <h3>Préambule du contrat</h3>
+  <textarea id="preambuleTextarea"
+            class="p-inputtextarea p-component"
+            rows="10"
+            [(ngModel)]="preambule"
+            [attr.maxlength]="preambuleMaxLength"
+            style="width:100%; resize:vertical;"></textarea>
 
-  <div class="navigation">
-    <button pButton label="← Précédent" (click)="currentStep=0"></button>
-    <button pButton label="Suivant →" (click)="currentStep=2"></button>
-    <button 
-  pButton 
-  label="Annuler" 
-  class="p-button-danger" 
-  (click)="cancel()">
-</button>
-
-  </div>
+    <div class="navigation">
+      <button pButton label="← Précédent" (click)="currentStep=0"></button>
+      <button pButton label="Suivant →" (click)="currentStep=2"></button>
+      <button pButton label="Annuler" class="p-button-danger" (click)="cancel()"></button>
+    </div>
 </div>
 
 
-<div *ngIf="currentStep === 2" class="contrat-section">
-  <h3>Garanties</h3>
 
-  <div *ngFor="let s of situationRisques; let i=index" class="situation-card">
-    <h4>Situation {{i+1}} : {{s.identification}}</h4>
-
-    <div *ngFor="let g of s.garanties; let j=index" class="garantie-card">
-      <div class="garantie-header">
-         <label>Garantie: {{getGarantieName(g.sousGarantieId)}}</label>
-         <i class="pi pi-trash delete-icon" (click)="removeGarantie(s,j)" title="Supprimer"></i>
+  <!-- Étape 1 : Situations -->
+  <div *ngIf="currentStep === 2" class="contrat-section">
+    <h3>Situations de risque</h3>
+    <div *ngFor="let s of situationRisques; let i = index" class="situation-card">
+      <div class="situation-header">
+        <h4>Situation {{i+1}} : {{s.identification}}</h4>
+        <i class="pi pi-trash delete-icon" (click)="removeSituation(i)" title="Supprimer"></i>
       </div>
 
-      <select [(ngModel)]="g.sousGarantieId" (change)="loadExclusionsForGarantie(g)">
-        <option [value]="0">Sélectionner</option>
-        <option *ngFor="let sg of sousGarantiesOptions" [value]="sg.value">{{sg.label}}</option>
-      </select>
-
-      <!-- Nouvel ordre des champs -->
-      <label>Capitale Assuré</label>
-      <input type="number" [(ngModel)]="g.capitale">
-
-      <label>Franchise</label>
-      <input type="number" [(ngModel)]="g.franchise">
-
-      <label>Minimum</label>
-      <input type="number" [(ngModel)]="g.minimum">
-
-      <label>Maximum</label>
-      <input type="number" [(ngModel)]="g.maximum">
-
-      <label>Prime NET</label>
-      <input type="number" [(ngModel)]="g.primeNET">
+      <label>Identification:</label>
+      <input type="text" [(ngModel)]="s.identification">
+      <label>Adresse:</label>
+      <input type="text" [(ngModel)]="s.adresse">
+      <label>Nature construction:</label>
+      <input type="text" [(ngModel)]="s.natureConstruction">
+      <label>Contiguïté:</label>
+      <input type="text" [(ngModel)]="s.contiguite">
+      <label>Avoisinage:</label>
+      <input type="text" [(ngModel)]="s.avoisinage">
     </div>
 
-    <button pButton label="Ajouter garantie" (click)="addGarantie(s)" class="add-btn"></button>
+    <button pButton label="Ajouter situation" (click)="addSituation()" class="add-btn"></button>
+
+  <div class="navigation">
+      <button pButton label="← Précédent" (click)="currentStep=0"></button>
+      <button pButton label="Suivant →" (click)="currentStep=3"></button>
+      <button pButton label="Annuler" class="p-button-danger" (click)="cancel()"></button>
+    </div>
   </div>
 
-  <div style="margin-top:10px; display:flex; justify-content: space-between;">
-    <button pButton label="← Précédent" (click)="currentStep=1"></button>
-    <button pButton label="Suivant →" (click)="currentStep=3"></button>
-    <button  pButton label="Annuler" class="p-button-danger" (click)="cancel()"> </button>
-  </div>
-</div>
-
-
-<div *ngIf="currentStep === 3">
-  <div class="contrat-section">
-    <h3>Exclusions par garantie</h3>
-
-    <div *ngFor="let s of situationRisques; let i = index" class="situation-card">
-      <h4 class="situation-title">Situation {{ i + 1 }} : {{ s.identification }}</h4>
-      
-      <div *ngFor="let g of s.garanties; let j = index" class="garantie-card">
+  <!-- Étape 2 : Garanties -->
+  <div *ngIf="currentStep === 3" class="contrat-section">
+    <h3>Garanties</h3>
+    <div *ngFor="let s of situationRisques; let i=index" class="situation-card">
+      <h4>Situation {{i+1}} : {{s.identification}}</h4>
+      <div *ngFor="let g of s.garanties; let j=index" class="garantie-card">
         <div class="garantie-header">
-          <h5>{{ getGarantieName(g.sousGarantieId) }}</h5>
-          <span class="garantie-badge">Garantie {{ j + 1 }}</span>
+          <label>Garantie: {{getGarantieName(g.sousGarantieId)}}</label>
+          <i class="pi pi-trash delete-icon" (click)="removeGarantie(s,j)" title="Supprimer"></i>
         </div>
+
+        <select [(ngModel)]="g.sousGarantieId" (change)="loadExclusionsForGarantie(g)">
+          <option [value]="0">Sélectionner</option>
+          <option *ngFor="let sg of sousGarantiesOptions" [value]="sg.value">{{sg.label}}</option>
+        </select>
+
+        <label>Capitale Assuré</label>
+        <input type="number" [(ngModel)]="g.capitale">
+        <label>Franchise</label>
+        <input type="number" [(ngModel)]="g.franchise">
+        <label>Minimum</label>
+        <input type="number" [(ngModel)]="g.minimum">
+        <label>Maximum</label>
+        <input type="number" [(ngModel)]="g.maximum">
+        <label>Prime NET</label>
+        <input type="number" [(ngModel)]="g.primeNET">
+      </div>
+
+      <button pButton label="Ajouter garantie" (click)="addGarantie(s)" class="add-btn"></button>
+    </div>
+
+    <div style="margin-top:10px; display:flex; justify-content: space-between;">
+      <button pButton label="← Précédent" (click)="currentStep=1"></button>
+      <button pButton label="Suivant →" (click)="currentStep=4"></button>
+      <button pButton label="Annuler" class="p-button-danger" (click)="cancel()"></button>
+    </div>
+  </div>
+
+<div *ngIf="currentStep === 4" class="contrat-section">
+  <h3>Exclusions par garantie</h3>
+  
+  <!-- Indicateur de chargement -->
+  <div *ngIf="isLoadingExclusions" class="loading-indicator">
+    <p>Chargement des exclusions en cours...</p>
+  </div>
+
+  <div *ngFor="let s of situationRisques; let i = index" class="situation-container">
+    <h4>Situation {{ i + 1 }} : {{ s.identification }}</h4>
+
+    <!-- Vérification si des groupes existent -->
+    <div *ngIf="getGarantiesGroupedByParent(s).length > 0; else noGaranties">
+      
+      <!-- Parcourir les groupes de sous-garanties par garantie parent -->
+      <div *ngFor="let groupe of getGarantiesGroupedByParent(s); let groupeIndex = index" 
+           class="groupe-garantie" style="margin-bottom: 2rem; padding: 1rem; border: 1px solid #e0e0e0; border-radius: 5px;">
         
-        <div *ngIf="g.exclusionsOptions && g.exclusionsOptions.length > 0" class="exclusions-container">
-          <label class="exclusions-label">Sélectionner les exclusions applicables :</label>
-          <div class="exclusions-scroll-container">
+        <h5 style="color: #499946; margin-bottom: 1rem;">Garantie : {{ groupe.parentLibelle || 'Garantie sans nom' }}</h5>
+
+        <!-- Section pour ajouter une nouvelle exclusion -->
+        <div class="ajout-exclusion" 
+             *ngIf="groupe.garanties && groupe.garanties.length > 0 && groupe.garanties[0]"
+             style="margin-bottom: 1rem; padding: 1rem; background: #f8f9fa; border-radius: 4px;">
+          
+          <label style="font-weight: bold; display: block; margin-bottom: 0.5rem;">
+            Ajouter une nouvelle exclusion pour cette garantie :
+          </label>
+          
+          <div style="display: flex; gap: 0.5rem;">
+            <input 
+              type="text" 
+              [(ngModel)]="groupe.garanties[0].nouvelleExclusion"
+              placeholder="Saisir le nom de la nouvelle exclusion..."
+              style="flex: 1; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;"
+              (keyup.enter)="ajouterExclusionPersonnalisee(groupe.garanties[0])">
+            
+            <button 
+              pButton 
+              label="Ajouter" 
+              icon="pi pi-plus"
+              (click)="ajouterExclusionPersonnalisee(groupe.garanties[0])"
+              class="p-button-sm"
+              style="height: 38px; min-width: 100px;"
+              [disabled]="!groupe.garanties[0].nouvelleExclusion?.trim()">
+            </button>
+          </div>
+        </div>
+
+        <!-- Liste des exclusions -->
+        <div *ngIf="groupe.garanties && groupe.garanties.length > 0 && groupe.garanties[0] && 
+                    groupe.garanties[0].exclusionsOptions && groupe.garanties[0].exclusionsOptions.length > 0" 
+             class="exclusions-container">
+          
+          <label class="exclusions-label" style="font-weight: bold; display: block; margin-bottom: 0.5rem;">
+            Sélectionner les exclusions applicables :
+          </label>
+          
+          <div class="exclusions-scroll-container" tabindex="0" 
+               (keydown)="handleKeyboardExclusions($event, groupe.garanties[0])"
+               style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 1rem; border-radius: 4px;">
+            
             <div class="exclusions-list">
-              <div *ngFor="let exclusion of g.exclusionsOptions" class="exclusion-item">
+              <div *ngFor="let exclusion of groupe.garanties[0].filteredExclusionsOptions; let exclIndex = index" 
+                   class="exclusion-item" style="display: flex; align-items: center; margin-bottom: 0.5rem;">
+                
                 <input 
                   type="checkbox" 
-                  [id]="'exclusion_' + g.sousGarantieId + '_' + exclusion.id"
-                  [checked]="g.exclusionsIds?.includes(exclusion.id)"
-                  (change)="toggleExclusion(g, exclusion.id)"
-                  class="exclusion-checkbox">
+                  [id]="'exclusion_' + i + '_' + groupeIndex + '_' + exclIndex"
+                  [checked]="isExclusionSelectedForGroup(groupe.garanties, exclusion.id)"
+                  (change)="toggleExclusionForGroup(groupe.garanties, exclusion.id, $event)"
+                  class="exclusion-checkbox" style="margin-right: 0.5rem;">
+                
                 <label 
-                  [for]="'exclusion_' + g.sousGarantieId + '_' + exclusion.id" 
-                  class="exclusion-text">
+                  [for]="'exclusion_' + i + '_' + groupeIndex + '_' + exclIndex" 
+                  class="exclusion-text"
+                  style="cursor: pointer; flex: 1;">
                   {{ exclusion.nom }}
                 </label>
               </div>
             </div>
           </div>
+
+          <!-- Indicateur de filtrage clavier -->
+          <div *ngIf="groupe.garanties[0].keyboardFilterExclusions" 
+               style="font-size: 0.8rem; color: #666; margin-top: 0.5rem;">
+            Filtre actif : "{{ groupe.garanties[0].keyboardFilterExclusions }}"
+          </div>
+        </div>
+
+        <!-- Message si aucune exclusion disponible -->
+        <div *ngIf="!(groupe.garanties && groupe.garanties[0] && groupe.garanties[0].exclusionsOptions) || 
+                    (groupe.garanties && groupe.garanties[0] && groupe.garanties[0].exclusionsOptions && 
+                     groupe.garanties[0].exclusionsOptions.length === 0)">
+          <p style="color: #999; font-style: italic;">Aucune exclusion disponible pour cette garantie.</p>
+        </div>
+
+        <!-- Affichage des sous-garanties individuelles avec leurs sélections -->
+      
+      </div>
+    </div>
+
+    <ng-template #noGaranties>
+      <p style="color: #999; font-style: italic;">Aucune garantie disponible pour cette situation.</p>
+    </ng-template>
+  </div>
+
+  <div style="margin-top: 10px; display: flex; gap: 1rem;">
+    <button pButton label="← Précédent" (click)="currentStep = 3"></button>
+    <button pButton label="Suivant →" (click)="currentStep = 5"></button>
+    <button pButton label="Annuler" class="p-button-danger" (click)="cancel()"></button>
+  </div>
+</div>
+  <!-- Étape 4 : RC Exploitation -->
+  <div *ngIf="currentStep === 5" class="contrat-section">
+    <h3>RC Exploitation</h3>
+    <div class="p-fluid grid">
+      <div class="col-12">
+     <div class="card">
+  <label>Objet de la garantie</label>
+  <textarea 
+    [(ngModel)]="rcExploitation.objetDeLaGarantie" 
+    rows="5" 
+    class="p-inputtextarea p-component"
+    style="width: 100%; resize: vertical;"
+  ></textarea>
+</div>
+
+
+      </div>
+
+      <div class="col-12 md:col-6">
+        <div class="field">
+          <label for="limiteCorporels" class="block">Limite annuelle Dommages Corporels</label>
+          <input type="number" id="limiteCorporels" [(ngModel)]="rcExploitation.limiteAnnuelleDomCorporels" min="0" step="0.01" class="w-full">
+        </div>
+      </div>
+
+      <div class="col-12 md:col-6">
+        <div class="field">
+          <label for="limiteMateriels" class="block">Limite annuelle Dommages Matériels</label>
+          <input type="number" id="limiteMateriels" [(ngModel)]="rcExploitation.limiteAnnuelleDomMateriels" min="0" step="0.01" class="w-full">
+        </div>
+      </div>
+
+      <div class="col-12 md:col-6">
+        <div class="field">
+          <label for="limiteSinistre" class="block">Limite par sinistre</label>
+          <input type="number" id="limiteSinistre" [(ngModel)]="rcExploitation.limiteParSinistre" min="0" step="0.01" class="w-full">
+        </div>
+      </div>
+
+      <div class="col-12 md:col-6">
+        <div class="field">
+          <label for="franchise" class="block">Franchise</label>
+          <input type="number" id="franchise" [(ngModel)]="rcExploitation.franchise" min="0" step="0.01" class="w-full">
+        </div>
+      </div>
+        <div class="col-12 md:col-6">
+        <div class="field">
+          <label for="primeNET" class="block">prime Net</label>
+          <input type="number" id="primeNET" [(ngModel)]="rcExploitation.primeNET" min="0" step="0.01" class="w-full">
+        </div>
+      </div>
+
+
+
+      <div class="col-12">
+        <div class="card">
+          <h4>Situations couvertes :</h4>
+          <div class="grid">
+            <div *ngFor="let s of situationRisques; let i = index" class="col-12 md:col-6">
+              <div class="field-checkbox">
+               <p-checkbox  
+  [inputId]="'situation_' + i" 
+  [(ngModel)]="rcExploitation.situationsIds" 
+  [value]="i"
+  binary="false" 
+  (change)="onSituationToggle(i, $event)">
+</p-checkbox>
+
+                <label [for]="'situation_' + i" class="ml-2">{{ s.identification }}</label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- Section pour ajouter une nouvelle exclusion RC -->
+
+<div class="ajout-exclusion" 
+     style="margin-bottom: 1rem; padding: 1rem; background: #f8f9fa; border-radius: 4px; width: 100%;">
+  <label style="font-weight: bold; display: block; margin-bottom: 0.5rem;">
+     Ajouter une nouvelle exclusion RC :
+  </label>
+  <div style="display: flex; gap: 0.5rem;">
+    <input 
+      type="text" 
+      [(ngModel)]="nouvelleExclusionRC"
+      placeholder="Saisir le nom de la nouvelle exclusion RC..."
+      style="flex: 1; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;"
+      (keyup.enter)="ajouterExclusionRC()">
+    <button 
+      pButton 
+      label="Ajouter" 
+      icon="pi pi-plus"
+      (click)="ajouterExclusionRC()"
+      class="p-button-sm bouton-ajout-exclusion"
+      style="height: 38px; min-width: 120px; display: flex; align-items: center; justify-content: center;">
+    </button>
+  </div>
+</div>
+
+
+<div *ngIf="exclusionsRC && exclusionsRC.length > 0" class="col-12">
+  <div class="card">
+    <h4>Exclusions RC :</h4>
+  
+    <div class="exclusions-scroll-container rc-exclusions-scroll">
+      <div class="exclusions-list">
+        <div *ngFor="let ex of filteredExclusionsRC" class="field-checkbox exclusion-item">
+          <p-checkbox
+            [inputId]="'exclusionRC_' + ex.id"
+            [(ngModel)]="rcExploitation.exclusionsIds"
+            [value]="ex.id">
+          </p-checkbox>
+          <label [for]="'exclusionRC_' + ex.id" class="ml-2">{{ ex.nom }}</label>
         </div>
         
-        <div *ngIf="!g.exclusionsOptions || g.exclusionsOptions.length === 0" class="no-exclusions">
-          <p>⚠️ Aucune exclusion disponible pour cette garantie.</p>
+        <div *ngIf="filteredExclusionsRC.length === 0 && keyboardFilterExclusions" class="no-results text-center p-3">
+          <small class="text-muted">Aucune exclusion trouvée pour "{{ keyboardFilterExclusions }}"</small>
         </div>
       </div>
     </div>
   </div>
+</div>
+      <div *ngIf="(!exclusionsRC || exclusionsRC.length === 0) && (rcExploitation?.situationsIds?.length || 0) > 0" class="col-12">
+        <div class="card">
+          <p class="text-500">Aucune exclusion disponible pour les situations sélectionnées.</p>
+        </div>
+      </div>
 
-  <div style="margin-top:10px; display:flex; gap:10px;">
-    <button pButton label="← Précédent" (click)="currentStep=2"></button>
-    <button pButton label="Soumettre" (click)="submit()"></button>
-     <button 
-  pButton 
-  label="Annuler" 
-  class="p-button-danger" 
-  (click)="cancel()">
-</button>
+      <div class="col-12">
+        <div class="flex justify-content-between mt-4">
+          <button pButton label="Précédent" icon="pi pi-arrow-left" (click)="currentStep = 4" class="p-button-secondary"></button>
+          <button pButton label="Soumettre" icon="pi pi-check" (click)="submit()" class="p-button-success"></button>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
-

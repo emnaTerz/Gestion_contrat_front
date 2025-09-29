@@ -1,11 +1,43 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { catchError, Observable, tap, throwError } from 'rxjs';
+import { catchError, Observable, throwError } from 'rxjs';
 
+/* export interface SousGarantie {
+  id: number;
+  nom: string;
+ garantie: Garantie;
+} */
 export interface SousGarantie {
   id: number;
   nom: string;
+  garantie: Garantie; 
+  garantieParent: Garantie;
+
+  // Pour stocker les exclusions
+  exclusionsOptions?: Exclusion[];
+  filteredExclusionsOptions?: Exclusion[];
+  exclusionsIds?: number[];
+  nouvelleExclusion?: string;
+
+  keyboardFilterExclusions?: string;
+  lastKeyTimeExclusions?: number;
+  filterTimeoutExclusions?: any;
 }
+
+export interface Garantie {
+  id: number;
+  libelle: string; // ou "nom" si tu préfères
+}
+
+interface SousGarantieWithDetails {
+  id: number;
+  nom: string;
+  garantie: {
+    id: number;
+    libelle: string;
+  };
+}
+
 export interface Exclusion {
   id: number;
   nom: string;
@@ -30,8 +62,10 @@ export interface GarantieSectionDTO {
   maximum?: number;
   minimum?: number;
   capitale?: number;
-  primeNet?: number;
+  primeNET?: number;
   exclusions: ExclusionGarantieDTO[];
+   garantieParentId?: number;
+  garantieParentLibelle?: string;
 }
 
 export interface SectionDTO {
@@ -42,8 +76,18 @@ export interface SectionDTO {
   avoisinage: string;
   numPolice: string;
   garanties: GarantieSectionDTO[];
+   rcExploitationActive?: boolean;
+   rcExploitation?: RCExploitationDTO;
 }
-
+export interface RCExploitationDTO {
+  limiteAnnuelleDomCorporels: number;
+  limiteAnnuelleDomMateriels: number;
+  limiteParSinistre: number;
+  primeNET: number;
+  franchise: number;
+  objetDeLaGarantie: string;
+  exclusionsRcIds: number[];
+}
 export interface ContratDTO {
   numPolice: string;
   adherent: AdherentDTO;
@@ -58,6 +102,7 @@ export interface ContratDTO {
   dateFin: string;
   sections: SectionDTO[];
   startTime: string;
+  preambule:string;
 }
 export enum Fractionnement {
   ZERO = 'ZERO',
@@ -87,6 +132,84 @@ export enum TypeContrat {
   APPEL_D_OFFRE = 'APPEL_D_OFFRE',
   AUTRE = 'AUTRE'
 }
+
+export interface AdherentResponseDTO {
+  codeId: string;
+  nomRaison: string;
+  adresse: string;
+  activite: string;
+  nouveau: boolean;
+}
+
+export interface ExclusionRCResponseDTO {
+  id: number;
+  nom: string;
+}
+
+export interface RCExploitationResponseDTO {
+  limiteAnnuelleDomCorporels: number;
+  limiteAnnuelleDomMateriels: number;
+  limiteParSinistre: number;
+  franchise: number;
+  primeNET: number;
+
+  objetDeLaGarantie: string;
+  exclusionsRc: ExclusionRCResponseDTO[];
+}
+
+export interface GarantieResponseDTO {
+  id: number;
+  sectionId: number;
+  sousGarantieId: number;
+  franchise: number;
+  maximum: number;
+  minimum: number;
+  capitale: number;
+  primeNet: number;
+  exclusions: { id: number; garantieSectionId: number; exclusionId: number }[];
+   garantieParent?: {  // ✅ Nouveau champ
+    id: number;
+    libelle: string;
+  };
+}
+
+
+export interface Garantie {
+  id: number;
+  nom: string;
+}
+
+export interface SectionResponseDTO {
+  id: number;
+  identification: string;
+  adresse: string;
+  natureConstruction: string;
+  contiguite: string;
+  avoisinage: string;
+  numPolice: string;
+  garanties: GarantieResponseDTO[];
+  rcExploitationActive: boolean;
+  rcExploitation: RCExploitationResponseDTO;
+}
+
+export interface ContratResponseDTO {
+  numPolice: string;
+  adherent: AdherentResponseDTO;
+  fractionnement: string;
+  codeRenouvellement: string;
+  branche: string;
+  typeContrat: string;
+  preambule: string;
+  primeTTC: number;
+  dateDebut: string;
+  dateFin: string;
+  editingUser: string;
+  editingStart: string;
+  sections: SectionResponseDTO[];
+  codeAgence: string;
+  nom_assure: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -104,12 +227,25 @@ private baseUrl = 'http://localhost:8081/contrat';
     formData.append('file', file);
     return this.http.post<{ lines: string[] }>(this.extractApiUrl, formData);
   }
-
+ getGaranties(): Observable<Garantie[]> {
+    return this.http.get<Garantie[]>('http://localhost:8081/contrat/catalogue/garantie').pipe(
+      catchError(err => {
+        console.error('Erreur récupération garanties', err);
+        return throwError(() => err);
+      })
+    );
+  }
   // Méthode pour récupérer toutes les sous-garanties
   getSousGaranties(): Observable<SousGarantie[]> {
     return this.http.get<SousGarantie[]>(this.sousGarantieApiUrl);
   }
+createExclusion(exclusion: any): Observable<Exclusion> {
+  return this.http.post<Exclusion>('http://localhost:8081/contrat/catalogue/exclusion', exclusion);
+}
 
+createExclusionRC(request: any): Observable<Exclusion> {
+  return this.http.post<Exclusion>('http://localhost:8081/contrat/catalogue/exclusion-rc', request);
+}
   // Nouvelle méthode pour récupérer les exclusions d'une garantie spécifique
   getExclusionsByGarantie(garantieId: number): Observable<Exclusion[]> {
     return this.http.get<Exclusion[]>(`${this.exclusionApiUrl}/${garantieId}`);
@@ -133,10 +269,11 @@ checkContratExists(numPolice: string): Observable<boolean> {
       })
     );
 }
-getContrat(numPolice: string): Observable<ContratDTO> {
+getContrat(numPolice: string): Observable<ContratResponseDTO> {
   const token = localStorage.getItem('token');
   const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
-  return this.http.get<ContratDTO>(`${this.baseUrl}/${numPolice}`, { headers })
+  
+  return this.http.get<ContratResponseDTO>(`${this.baseUrl}/${numPolice}`, { headers })
     .pipe(
       catchError(err => {
         console.error('Erreur récupération contrat', err);
@@ -144,12 +281,16 @@ getContrat(numPolice: string): Observable<ContratDTO> {
       })
     );
 }
+
 lockContrat(numPolice: string): Observable<ContratDTO> {
   const token = localStorage.getItem('token');
   const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
   return this.http.post<ContratDTO>(`${this.baseUrl}/lock/${numPolice}`, {}, { headers });
 }
-
+// Dans votre ContratService
+checkLockStatus(numPolice: string): Observable<boolean> {
+  return this.http.get<boolean>(`http://localhost:8081/contrat/${numPolice}/lock-status`);
+}
 
 unlockContrat(numPolice: string, cancelled: boolean, startTime: string): Observable<string> {
   const token = localStorage.getItem('token');
@@ -162,6 +303,10 @@ unlockContrat(numPolice: string, cancelled: boolean, startTime: string): Observa
     params,
     responseType: 'text' // 👈 important pour que Angular accepte le texte
   });
+}
+// Ajouter cette méthode pour récupérer toutes les exclusions RC
+getExclusionsRC(): Observable<Exclusion[]> {
+  return this.http.get<Exclusion[]>(`http://localhost:8081/contrat/catalogue/exclusion-rc`);
 }
 
 

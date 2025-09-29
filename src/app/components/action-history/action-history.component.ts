@@ -40,7 +40,7 @@ export interface ContratVerrouille {
 export class ActionHistoryComponent implements OnInit {
 
   @ViewChild('historyTable') historyTable!: Table;
-
+  startTime = '';
   mode: 'user' | 'contrat' | 'locked' = 'user';
   history$!: Observable<any[]>;
   selectedDate: Date | null = null;
@@ -64,6 +64,40 @@ export class ActionHistoryComponent implements OnInit {
              rowDate.getDate() === filterDate.getDate();
     });
   }
+
+
+  unlock(historyItem: ContratVerrouille) {
+  console.log('HistoryItem:', historyItem);
+  console.log('numPolice:', historyItem.numPolice);
+  
+  // Vérifiez que numPolice n'est pas null/undefined
+  if (!historyItem.numPolice) {
+    console.error('numPolice est null ou undefined');
+    return;
+  }
+
+  const startTime = new Date().toISOString();
+  console.log('Appel unlock avec:', {
+    numPolice: historyItem.numPolice,
+    cancelled: true,
+    startTime: startTime
+  });
+  
+  this.contratService.unlockContrat(historyItem.numPolice, true, startTime).subscribe({
+    next: (res) => {
+      console.log('Contrat déverrouillé:', res);
+      this.loadHistory();
+    },
+    error: (err) => {
+      console.error('Erreur lors du déverrouillage:', err);
+      // Affichez plus de détails sur l'erreur
+      console.error('Status:', err.status);
+      console.error('Message:', err.message);
+      console.error('Error body:', err.error);
+    }
+  });
+}
+
 
   // Charger l'historique selon le mode
   loadHistory() {
