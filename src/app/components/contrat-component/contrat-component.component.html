@@ -155,8 +155,9 @@
   </ul>
 </div>
   </div>
-  <!-- Étape 2 : Garanties -->
-  <div *ngIf="currentStep === 3">
+
+<!-- Étape 2 : Garanties -->
+<div *ngIf="currentStep === 3">
   <div class="contrat-section">
     <h3>Garanties par situation de risque</h3>
 
@@ -168,7 +169,7 @@
         <input type="hidden" [(ngModel)]="g.sectionId">
 
         <label for="sousGarantie">Garanties:</label>
-<select id="sousGarantie" [(ngModel)]="g.sousGarantieId" (change)="onGarantieChange(g)">
+        <select id="sousGarantie" [(ngModel)]="g.sousGarantieId" (change)="onGarantieChange(g)">
           <option [value]="0">Sélectionner une garantie</option>
           <option *ngFor="let opt of sousGarantiesOptions" [value]="opt.value">{{ opt.label }}</option>
         </select>
@@ -176,17 +177,24 @@
         <label>Capitale Assuré:</label>
         <input type="number" [(ngModel)]="g.capitale">
 
-      
-        <label>Franchise:</label>
-        <input type="number" [(ngModel)]="g.franchise" placeholder="Saisir la franchise">
+        <!-- Checkbox Franchise -->
+       <div style="margin-bottom: 1rem;">
+        <label>
+          <input type="checkbox" [(ngModel)]="g.hasFranchise"> Franchise
+        </label>
+      </div>
 
-        <div class="franchise-fields">
-          <label>Minimum:</label>
-          <input type="number" [(ngModel)]="g.minimum">
+    <!-- Champs Franchise affichés seulement si checkbox coché -->
+    <div class="franchise-fields" *ngIf="g.hasFranchise">
+      <label>Franchise (%):</label>
+      <input type="number" [(ngModel)]="g.franchise" placeholder="Pourcentage">
 
-          <label>Maximum:</label>
-          <input type="number" [(ngModel)]="g.maximum">
-        </div>
+      <label>Minimum:</label>
+      <input type="number" [(ngModel)]="g.minimum" placeholder="Montant minimum">
+
+      <label>Maximum:</label>
+      <input type="number" [(ngModel)]="g.maximum" placeholder="Montant maximum">
+    </div>
 
         <label>Prime NET:</label>
         <input type="number" [(ngModel)]="g.primeNET">
@@ -208,7 +216,6 @@
     <button pButton label="Suivant →" (click)="nextStep()"></button>
   </div>
 </div>
-
 
 <div *ngIf="currentStep === 4" class="contrat-section">
   <h3>Exclusions par garantie</h3>

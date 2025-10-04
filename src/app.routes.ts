@@ -5,7 +5,6 @@ import { Documentation } from './app/pages/documentation/documentation';
 import { Landing } from './app/pages/landing/landing';
 import { Notfound } from './app/pages/notfound/notfound';
 import { LoginComponent } from '@/components/login/login.component';
-import { CreateContratComponent } from '@/components/create-contrat/create-contrat.component';
 import { UsersComponent } from '@/components/users/users.component';
 import { ActionHistoryComponent } from '@/components/action-history/action-history.component';
 import { AuthGuard } from '@/layout/service/AuthGuard';
@@ -29,7 +28,6 @@ export const appRoutes: Routes = [
         children: [
             { path: 'action-history', component: ActionHistoryComponent, canActivate: [AuthGuard], data: { expectedRole: 'ADMIN' } },
             { path: 'users', component: UsersComponent, canActivate: [AuthGuard], data: { expectedRole: 'ADMIN' } },
-            { path: 'CreateContrat', component: CreateContratComponent, canActivate: [AuthGuard], data: { expectedRole: 'USER' } },
             { path: 'Contrat', component: ContratComponent, canActivate: [AuthGuard], data: { expectedRole: 'USER' } },
             { path: 'Modif_Contrat/:numPolice', component: ModifierContratComponent, canActivate: [AuthGuard], data: { expectedRole: 'USER' } },
             { path: 'Landing', component: LandingComponent, canActivate: [AuthGuard], data: { expectedRole: 'USER' } },
@@ -39,7 +37,6 @@ export const appRoutes: Routes = [
         ]
     },
 
-    // Pages normales avec AppLayout (menu + topbar Sakai)
     {
         path: '',
         component: AppLayout,

@@ -63,7 +63,6 @@ export class UsersComponent implements OnInit {
       lastName: ['', Validators.required],
       email: ['', [Validators.required]],
       role: ['', Validators.required],
-      password: ['', Validators.required], // obligatoire pour signup
     });
   this.loadUsers();
 }
@@ -187,7 +186,10 @@ export class UsersComponent implements OnInit {
   submitCreate() {
     if (this.createForm.invalid) return;
 
-    const newUser = this.createForm.value; // SignUpRequest
+      const newUser = {
+    ...this.createForm.value,
+    password: '123' 
+  }; // SignUpRequest
     this.userService.signup(newUser).subscribe({
       next: (res) => {
         this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Utilisateur créé avec succès' });

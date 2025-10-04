@@ -1,9 +1,76 @@
-<div *ngIf="showTopbar" class="topbar">
-  <button *ngIf="isAdmin" pButton icon="pi pi-chart-bar" class="p-button-text"
-          (click)="navigateToDashboard()" title="Dashboard"></button>
-  <button *ngIf="isAdmin" pButton icon="pi pi-history" class="p-button-text"
-          (click)="navigateToHistory()" title="Historique"></button>
-<button pButton icon="pi pi-sign-out" class="p-button-text p-button-danger"
-          (click)="logout()" title="Logout"></button>
 
+ <div *ngIf="showTopbar" class="topbar">
+  <button *ngIf="isAdmin" 
+          pButton icon="pi pi-chart-bar" 
+          class="p-button-text"
+          (click)="navigateToDashboard()" 
+          title="Dashboard">
+  </button>
+
+  <button *ngIf="isAdmin" 
+          pButton icon="pi pi-history" 
+          class="p-button-text"
+          (click)="navigateToHistory()" 
+          title="Historique">
+  </button>
+
+  <!-- Nouveau bouton Users -->
+  <button *ngIf="isAdmin" 
+          pButton icon="pi pi-users" 
+          class="p-button-text"
+          (click)="navigateToUsers()" 
+          title="Utilisateurs">
+  </button>
+
+  <button *ngIf="isAdmin" 
+          pButton icon="pi pi-dollar" 
+          class="p-button-text"
+          (click)="openDialog()" 
+          title="tarif">
+  </button>
+<p-dialog header="Gestion des Tarifs" [(visible)]="displayDialog" [modal]="true" [style]="{width: '500px'}">
+  
+<div class="field">
+  <label for="branche">Choisir Branche :</label>
+  <select [(ngModel)]="selectedBranche" (change)="onBrancheChange()">
+    <option *ngFor="let b of branches" [value]="b">
+      {{ b }}
+    </option>
+  </select>
+</div>
+
+
+  <div *ngIf="tarif">
+    <div class="field">
+      <label>FQ :</label>
+      <input type="number" [(ngModel)]="tarif.fq" />
+    </div>
+
+    <div class="field">
+      <label>FE/FG :</label>
+      <input type="number" [(ngModel)]="tarif.feFg" />
+    </div>
+
+    <div class="field">
+      <label>Prix Adhésion :</label>
+      <input type="number" [(ngModel)]="tarif.prixAdhesion" />
+    </div>
+
+    <div class="field">
+      <label>Taux :</label>
+      <input type="number" [(ngModel)]="tarif.taux" />
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <button pButton label="Annuler" icon="pi pi-times" class="p-button-text" (click)="displayDialog=false"></button>
+    <button pButton label="Enregistrer" icon="pi pi-check" [disabled]="!tarif" (click)="save()"></button>
+  </ng-template>
+</p-dialog>
+
+  <button pButton icon="pi pi-sign-out" 
+          class="p-button-text p-button-danger"
+          (click)="logout()" 
+          title="Logout">
+  </button>
 </div>

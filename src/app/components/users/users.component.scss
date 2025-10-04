@@ -1,10 +1,11 @@
 .custom-container {
   display: flex;
-  justify-content: center;   
-  align-items: flex-start;   /* colle en haut */
+  justify-content: center;  /* centre horizontalement */
+  align-items: center;      /* centre verticalement */
   width: 100%;
-  min-height: 100vh;
+  min-height: 100vh;        /* prend toute la hauteur de la page */
   padding: 2rem;
+  box-sizing: border-box;
 }
 
 .card {
@@ -13,10 +14,14 @@
   box-shadow: 0 4px 8px rgba(0,0,0,0.15);
   padding: 2rem;
 
-  width: 90%;
+  width: 100%;
   max-width: 1200px;
   margin: auto;
+
+  display: flex;
+  flex-direction: column;
 }
+
 
 .actions {
   display: flex;
@@ -28,8 +33,9 @@
 
 p-table {
   width: 100%;
-  min-height: 60vh;
+  overflow-x: auto; /* scroll horizontal si trop large */
 }
+
 
 .text-xl { font-size: 1.25rem; }
 .flex { display: flex; }

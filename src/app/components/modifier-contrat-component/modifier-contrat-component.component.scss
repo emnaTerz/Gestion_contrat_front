@@ -373,5 +373,14 @@
 .exclusion-checkbox {
   margin-right: 0.5rem;
 }
+.checkbox-container {
+  margin-bottom: 1rem; /* espace entre la checkbox et les champs suivants */
+}
+
+.franchise-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem; /* espace entre chaque champ */
+}
 
 }

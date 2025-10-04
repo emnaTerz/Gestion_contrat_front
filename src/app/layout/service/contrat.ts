@@ -209,6 +209,15 @@ export interface ContratResponseDTO {
   codeAgence: string;
   nom_assure: string;
 }
+export interface Tarif {
+  id: number;
+  branche: Branche;
+  fq: number;
+  feFg: number;
+  prixAdhesion: number;
+  taux: number;
+}
+
 
 @Injectable({
   providedIn: 'root'
@@ -219,6 +228,7 @@ export class ContratService {
   private sousGarantieApiUrl = 'http://localhost:8081/contrat/catalogue/sous-garantie'; // ton API sous-garanties
   private exclusionApiUrl = 'http://localhost:8081/contrat/catalogue/exclusion/garantie'; // API exclusions
 private baseUrl = 'http://localhost:8081/contrat';
+  private tarifApiUrl = 'http://localhost:8081/contrat/tarifs';
   constructor(private http: HttpClient) { }
 
   // Méthode existante pour uploader PDF
@@ -281,7 +291,23 @@ getContrat(numPolice: string): Observable<ContratResponseDTO> {
       })
     );
 }
-
+ downloadContratPdf(numPolice: string): Observable<Blob> {
+    const token = localStorage.getItem('token');
+    const headers = new HttpHeaders({ 
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    });
+    
+    return this.http.get(`http://localhost:8081/contrat/${numPolice}/pdf`, {
+      headers: headers,
+      responseType: 'blob'
+    }).pipe(
+      catchError(err => {
+        console.error('Erreur téléchargement PDF', err);
+        return throwError(() => err);
+      })
+    );
+  }
 lockContrat(numPolice: string): Observable<ContratDTO> {
   const token = localStorage.getItem('token');
   const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
@@ -309,7 +335,27 @@ getExclusionsRC(): Observable<Exclusion[]> {
   return this.http.get<Exclusion[]>(`http://localhost:8081/contrat/catalogue/exclusion-rc`);
 }
 
+  getTarifByBranche(branche: Branche): Observable<Tarif> {
+    return this.http.get<Tarif>(`${this.tarifApiUrl}/${branche}`).pipe(
+      catchError(err => {
+        console.error('Erreur récupération tarif', err);
+        return throwError(() => err);
+      })
+    );
+  }
 
+  // 🔹 Mettre à jour un tarif par ID
+  updateTarif(id: number, tarif: Tarif): Observable<Tarif> {
+    const token = localStorage.getItem('token');
+    const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
+
+    return this.http.put<Tarif>(`${this.tarifApiUrl}/${id}`, tarif, { headers }).pipe(
+      catchError(err => {
+        console.error('Erreur mise à jour tarif', err);
+        return throwError(() => err);
+      })
+    );
+  }
 
 modifierContrat(contrat: ContratDTO): Observable<ContratDTO> {
   const token = localStorage.getItem('token');

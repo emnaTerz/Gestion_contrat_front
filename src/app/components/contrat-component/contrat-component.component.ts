@@ -32,6 +32,7 @@ interface GarantieSection {
   minimum?: number;
   capitale?: number;
   primeNET?: number;
+  hasFranchise?: boolean;
 
   // 🔹 Champs liés aux exclusions
   exclusionsIds?: number[];
@@ -96,6 +97,7 @@ export class ContratComponent implements OnInit {
   dateFin: string = '';
   startTime: string = '';
 preambule: string = '';
+
 preambuleMaxLength: number = 2000;
 selectedPdfFile: File | null = null;
 pdfLines: string[] = [];  // lignes extraites du PDF
@@ -226,7 +228,7 @@ uploadSelectedPdf() {
         this.fractionnement = fractionnementMap[lines[10]] || '';
 
         // Code renouvellement
-        const codeRenouvellementMap : any = {'T': 'T', 'R': 'R', 'L':'T'};
+        const codeRenouvellementMap : any = {'T': 'T', 'R': 'R', 'L':'T', 'By': 'T'};
         this.codeRenouvellement =codeRenouvellementMap[lines[11] ] || '';
 
         // Dates
@@ -544,10 +546,23 @@ ajouterExclusionPersonnalisee(garantie: GarantieSection) {
     this.situationRisques.splice(index, 1);
   }
 
-  addGarantie(situation: SituationRisque) {
+ /*  addGarantie(situation: SituationRisque) {
     const nouvelleGarantie: GarantieSection = { sectionId: 0, sousGarantieId: 0, franchise: 0, exclusionsIds: [], exclusionsOptions: [] };
     situation.garanties.push(nouvelleGarantie);
-  }
+  } */
+addGarantie(situation: SituationRisque) {
+  const nouvelleGarantie: GarantieSection = { 
+    sectionId: 0, 
+    sousGarantieId: 0, 
+    franchise: 0, 
+    minimum: 0,          // valeur par défaut
+    maximum: 0,          // valeur par défaut
+    hasFranchise: false, // checkbox décoché par défaut
+    exclusionsIds: [], 
+    exclusionsOptions: [] 
+  };
+  situation.garanties.push(nouvelleGarantie);
+}
 
   removeGarantie(situation: SituationRisque, index: number) {
     situation.garanties.splice(index, 1);

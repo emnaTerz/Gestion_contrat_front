@@ -1,14 +1,16 @@
 
-<div class="landing-wrapper">
+
+ <div class="landing-wrapper">
   <!-- Logo -->
   <div class="logo-container">
     <img src="assets/images/mae_logo.png" alt="MAE Logo" />
   </div>
 
-  <h1>Bienvenue sur votre espace</h1>
+  <h1>Bienvenue sur votre espace </h1>
   <p>Choisissez une action pour gérer vos contrats :</p>
 
   <!-- Actions avec cartes -->
+ 
   <div class="actions-grid">
     <div class="action-card p-shadow-3" (click)="showModifyDialog()">
       <i class="pi pi-pencil pi-3x"></i>
@@ -20,8 +22,7 @@
       <h3>Créer Contrat</h3>
       <p>Créez un nouveau contrat rapidement et facilement.</p>
     </div>
-    <div class="action-card p-shadow-3">
-      <i class="pi pi-download pi-3x"></i>
+<div class="action-card p-shadow-3" (click)="showDownloadDialog()">      <i class="pi pi-download pi-3x"></i>
       <h3>Télécharger Contrat</h3>
       <p>Téléchargez vos contrats au format PDF.</p>
     </div>
@@ -44,4 +45,29 @@
   </form>
 </p-dialog>
 
+  <!-- Dialogue pour le téléchargement PDF -->
+  <p-dialog [(visible)]="displayDownloadDialog" 
+            header="Télécharger Contrat PDF"
+            [modal]="true" [closable]="true" [style]="{width: '400px'}" 
+            class="download-dialog">
+    <form (ngSubmit)="onDownloadContrat()">
+      <div class="field">
+        <p>SVP, entrez le numéro de police du contrat à télécharger :</p>
+        <input type="text" pInputText [(ngModel)]="downloadNumPoliceInput" 
+               name="downloadNumPolice" placeholder="Numéro de police" required />
+        <small class="error" *ngIf="downloadErrorMessage">{{ downloadErrorMessage }}</small>
+      </div>
+
+      <div class="flex justify-end mt-3">
+        <button pButton type="button" label="Annuler" class="p-button-text" 
+                (click)="displayDownloadDialog=false"></button>
+        <button type="submit" pButton label="" 
+                class="p-button-success ml-2" 
+                [disabled]="isDownloading">
+          <i class="pi pi-spin pi-spinner" *ngIf="isDownloading"></i>
+          {{ isDownloading ? 'Téléchargement...' : 'Télécharger' }}
+        </button>
+      </div>
+    </form>
+  </p-dialog>
 </div>

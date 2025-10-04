@@ -112,7 +112,7 @@
   </div>
 
   <!-- Étape 2 : Garanties -->
-  <div *ngIf="currentStep === 3" class="contrat-section">
+ <!--  <div *ngIf="currentStep === 3" class="contrat-section">
     <h3>Garanties</h3>
     <div *ngFor="let s of situationRisques; let i=index" class="situation-card">
       <h4>Situation {{i+1}} : {{s.identification}}</h4>
@@ -147,7 +147,65 @@
       <button pButton label="Suivant →" (click)="currentStep=4"></button>
       <button pButton label="Annuler" class="p-button-danger" (click)="cancel()"></button>
     </div>
+  </div> -->
+  <!-- Étape 3 : Garanties -->
+<div *ngIf="currentStep === 3" class="contrat-section">
+  <h3>Garanties</h3>
+  <div *ngFor="let s of situationRisques; let i=index" class="situation-card">
+    <h4>Situation {{i+1}} : {{s.identification}}</h4>
+    <div *ngFor="let g of s.garanties; let j=index" class="garantie-card">
+      <div class="garantie-header">
+        <label>Garantie: {{getGarantieName(g.sousGarantieId)}}</label>
+        <i class="pi pi-trash delete-icon" (click)="removeGarantie(s,j)" title="Supprimer"></i>
+      </div>
+
+      <select [(ngModel)]="g.sousGarantieId" (change)="loadExclusionsForGarantie(g)">
+        <option [value]="0">Sélectionner</option>
+        <option *ngFor="let sg of sousGarantiesOptions" [value]="sg.value">{{sg.label}}</option>
+      </select>
+
+      <label>Capitale Assuré</label>
+      <input type="number" [(ngModel)]="g.capitale">
+      
+      <!-- Checkbox Franchise avec affichage conditionnel -->
+      <div class="checkbox-container">
+           <label>
+        <p-checkbox 
+          [(ngModel)]="g.hasFranchise" 
+          [binary]="true" 
+          inputId="franchise{{i}}{{j}}"
+          label="Franchise">
+        </p-checkbox>
+        Franchise
+        </label>
+      </div>
+
+      <!-- Champs franchise/minimum/maximum conditionnels -->
+      <div *ngIf="g.hasFranchise" class="franchise-fields">
+        <label>Franchise (%)</label>
+        <input type="number" [(ngModel)]="g.franchise" min="0">
+        
+        <label>Minimum</label>
+        <input type="number" [(ngModel)]="g.minimum" min="0">
+        
+        <label>Maximum</label>
+        <input type="number" [(ngModel)]="g.maximum" min="0">
+      </div>
+
+      <label>Prime NET</label>
+      <input type="number" [(ngModel)]="g.primeNET">
+
+    </div>
+
+    <button pButton label="Ajouter garantie" (click)="addGarantie(s)" class="add-btn"></button>
   </div>
+
+  <div style="margin-top:10px; display:flex; justify-content: space-between;">
+    <button pButton label="← Précédent" (click)="currentStep=2"></button>
+    <button pButton label="Suivant →" (click)="currentStep=4"></button>
+    <button pButton label="Annuler" class="p-button-danger" (click)="cancel()"></button>
+  </div>
+</div>
 
 <div *ngIf="currentStep === 4" class="contrat-section">
   <h3>Exclusions par garantie</h3>

@@ -76,7 +76,13 @@ export class ActionHistoryComponent implements OnInit {
     return;
   }
 
-  const startTime = new Date().toISOString();
+  const  now = new Date(); // date locale
+   const startTime = now.getFullYear() + '-' +
+  String(now.getMonth()+1).padStart(2,'0') + '-' +
+  String(now.getDate()).padStart(2,'0') + 'T' +
+  String(now.getHours()).padStart(2,'0') + ':' +
+  String(now.getMinutes()).padStart(2,'0') + ':' +
+  String(now.getSeconds()).padStart(2,'0');
   console.log('Appel unlock avec:', {
     numPolice: historyItem.numPolice,
     cancelled: true,
@@ -107,6 +113,7 @@ export class ActionHistoryComponent implements OnInit {
       this.history$ = this.contratService.getHistoriqueContrat();
     } else if (this.mode === 'locked') {
       this.history$ = this.contratService.getLockedContrats(); // JWT inclus dans le service
+      console.log(this.history$)
     }
   }
 

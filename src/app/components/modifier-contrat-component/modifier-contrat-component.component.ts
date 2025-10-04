@@ -54,6 +54,7 @@ interface GarantieComposant  {
   keyboardFilterGaranties?: string;
   lastKeyTimeGaranties?: number;
   filterTimeoutGaranties?: any;
+   hasFranchise?: boolean;
 }
 
 interface SituationRisque {
@@ -256,7 +257,7 @@ private checkLockStatus(): void {
     // Rediriger après un délai
     setTimeout(() => {
       this.router.navigate(['/Landing']);
-    }, 3000);
+    }, 1500);
   }
 
   // Ajouter cette méthode pour arrêter le timer
@@ -412,6 +413,7 @@ loadContrat(numPolice: string) {
           franchise: g.franchise,
           maximum: g.maximum,
           minimum: g.minimum,
+          hasFranchise: (g.franchise ?? 0) > 0,
           capitale: g.capitale,
           primeNET: g.primeNet,
           exclusionsIds: g.exclusions?.map(e => e.exclusionId) || [],
@@ -759,7 +761,7 @@ addSituation() {
   this.situationRisques.push(newSituation);
 }
   removeSituation(index: number) { this.situationRisques.splice(index, 1); }
-  addGarantie(situation: SituationRisque) { situation.garanties.push({ sectionId: 0, sousGarantieId: 0, exclusionsIds: [], exclusionsOptions: [] }); }
+  addGarantie(situation: SituationRisque) { situation.garanties.push({ sectionId: 0, sousGarantieId: 0, exclusionsIds: [], exclusionsOptions: [],hasFranchise: false }); }
   removeGarantie(situation: SituationRisque, index: number) { situation.garanties.splice(index, 1); }
 
  
