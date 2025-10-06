@@ -10,9 +10,9 @@ import { ActionHistoryComponent } from '@/components/action-history/action-histo
 import { AuthGuard } from '@/layout/service/AuthGuard';
 import { EmptyLayoutComponent } from '@/components/EmptyLayoutComponent';
 import { ContratComponent } from '@/components/contrat-component/contrat-component.component';
-import { ModifierContratComponent } from '@/components/modifier-contrat-component/modifier-contrat-component.component';
 import { LandingComponent } from '@/components/landing/landing.component';
 import { ForceResetPasswordComponent } from '@/components/force-reset-password/force-reset-password.component';
+import { ModifierContratComponent } from '@/components/modifier-contrat-component/modifier-contrat-component.component';
 
 
 export const appRoutes: Routes = [

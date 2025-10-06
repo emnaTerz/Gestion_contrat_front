@@ -2,11 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { catchError, Observable, throwError } from 'rxjs';
 
-/* export interface SousGarantie {
-  id: number;
-  nom: string;
- garantie: Garantie;
-} */
+
 export interface SousGarantie {
   id: number;
   nom: string;
@@ -76,17 +72,23 @@ export interface SectionDTO {
   avoisinage: string;
   numPolice: string;
   garanties: GarantieSectionDTO[];
-   rcExploitationActive?: boolean;
-   rcExploitation?: RCExploitationDTO;
+
 }
-export interface RCExploitationDTO {
+
+
+
+// Dans votre service/contrat.ts
+export interface RcConfigurationDTO {
+  id?: number;
+  objetDeLaGarantie: string;
   limiteAnnuelleDomCorporels: number;
   limiteAnnuelleDomMateriels: number;
   limiteParSinistre: number;
-  primeNET: number;
   franchise: number;
-  objetDeLaGarantie: string;
+  primeNET: number;
   exclusionsRcIds: number[];
+  sectionIds?: number[]; // Rendre optionnel
+  sectionIdentifications?: string[]; // Ajouter cette propriété
 }
 export interface ContratDTO {
   numPolice: string;
@@ -103,6 +105,7 @@ export interface ContratDTO {
   sections: SectionDTO[];
   startTime: string;
   preambule:string;
+  rcConfigurations: RcConfigurationDTO[];
 }
 export enum Fractionnement {
   ZERO = 'ZERO',
@@ -208,6 +211,8 @@ export interface ContratResponseDTO {
   sections: SectionResponseDTO[];
   codeAgence: string;
   nom_assure: string;
+  rcConfigurations: RcConfigurationDTO[];
+
 }
 export interface Tarif {
   id: number;

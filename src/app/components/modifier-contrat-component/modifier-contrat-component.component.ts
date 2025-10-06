@@ -8,7 +8,7 @@ import { StepsModule } from 'primeng/steps';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ContratService, ContratDTO, Fractionnement, CodeRenouvellement, Branche, TypeContrat, SectionDTO, ContratResponseDTO, GarantieResponseDTO, SectionResponseDTO } from '@/layout/service/contrat';
+import { ContratService, ContratDTO, Fractionnement, CodeRenouvellement, Branche, TypeContrat, SectionDTO, ContratResponseDTO, GarantieResponseDTO, SectionResponseDTO,RcConfigurationDTO } from '@/layout/service/contrat';
 import { CheckboxModule } from 'primeng/checkbox';
 import { InputNumberModule } from 'primeng/inputnumber';
 
@@ -67,17 +67,20 @@ interface SituationRisque {
   garanties: GarantieComposant[]; // ← Changer ici
 }
 
+// CORRIGER l'interface RCExploitation
 interface RCExploitation {
-  limiteAnnuelleDomCorporels?: number;
-  limiteAnnuelleDomMateriels?: number;
-  limiteParSinistre?: number;
-  franchise?: number;
-  situationsIds?: number[];
-  exclusionsIds?: number[];
-  objetDeLaGarantie?: string;
-  primeNET?: number;
+  id?: number;
+  limiteAnnuelleDomCorporels: number;
+  limiteAnnuelleDomMateriels: number;
+  limiteParSinistre: number;
+  franchise: number;
+  primeNET: number;
+  situations: SituationRisque[];
+  exclusionsIds: number[]; // ← CORRIGER: exclusionsIds (pas exclusionsRcIds)
+  objetDeLaGarantie: string; // ← CORRIGER: rendre obligatoire
+  sectionIds?: number[]; // ← AJOUTER si nécessaire pour le mapping
+  
 }
-
 
 @Component({
   selector: 'app-modifier-contrat',
@@ -98,7 +101,8 @@ interface RCExploitation {
 export class ModifierContratComponent implements OnInit {
 
 sousGarantiesWithDetails: SousGarantieWithDetails[] = [];
-
+rcExploitations: RCExploitation[] = [];
+currentRcExploitation: RCExploitation = this.createNewRcExploitation();
  isLoadingExclusions = false;
   currentStep = 0;
   numPolice = '';
@@ -112,16 +116,22 @@ sousGarantiesWithDetails: SousGarantieWithDetails[] = [];
   dateDebut = '';
   dateFin = '';
   startTime = '';
-  rcExploitation: RCExploitation = {
-    situationsIds: [],
-    exclusionsIds: [],
-    limiteAnnuelleDomCorporels: 0,
-    limiteAnnuelleDomMateriels: 0,
-    limiteParSinistre: 0,
-    franchise: 0,
-    primeNET: 0,
-    objetDeLaGarantie : ''
-  };
+
+
+
+// CORRIGER cette initialisation :
+rcExploitation: RCExploitation = {
+  limiteAnnuelleDomCorporels: 0,
+  limiteAnnuelleDomMateriels: 0,
+  limiteParSinistre: 0,
+  franchise: 0,
+  primeNET: 0,
+  objetDeLaGarantie: '',
+  exclusionsIds: [], // ← CORRIGER: exclusionsIds au lieu de exclusionsRcIds
+  situations: [] // ← AJOUTER: situations est obligatoire dans l'interface
+};
+
+
   selectedExclusionsRC: number[] = []; 
  nouvelleExclusionRC: string = '';
   exclusionsRC: Exclusion[] = [];
@@ -637,54 +647,76 @@ initializeFilterProperties(garantie: GarantieComposant ) {
     garantie.exclusionsIds = [...garantie.exclusionsIds];
   }
 
+ initializeRCExploitation(contrat: ContratResponseDTO) {
+  console.log('=== 🎯 INITIALISATION RC EXPLOITATION (AVEC IDs) ===');
+  console.log('Contrat reçu:', contrat);
+  console.log('RC Configurations:', contrat.rcConfigurations);
+  console.log('Sections:', contrat.sections);
 
-initializeRCExploitation(contrat: ContratResponseDTO) {
-  // Réinitialiser RC Exploitation
-  this.rcExploitation = { 
-    situationsIds: [], 
-    exclusionsIds: [], 
-    limiteAnnuelleDomCorporels: 0, 
-    limiteAnnuelleDomMateriels: 0, 
-    limiteParSinistre: 0, 
-    franchise: 0 ,
-    primeNET : 0,
-  };
-  this.selectedSituationsNames = '';
+  // Réinitialiser
+  this.rcExploitations = [];
+  this.currentRcExploitation = this.createNewRcExploitation();
   this.exclusionsRC = [];
 
-  contrat.sections?.forEach((section, index) => {
-    if (section.rcExploitationActive && section.rcExploitation) {
-      const rc = section.rcExploitation;
-
-      // Ajouter l'index de la situation
-      this.rcExploitation.situationsIds!.push(index);
-
-      // Mettre à jour les limites et franchise avec la première section RC
-      if (this.rcExploitation.limiteAnnuelleDomCorporels === 0) this.rcExploitation.limiteAnnuelleDomCorporels = rc.limiteAnnuelleDomCorporels || 0;
-      if (this.rcExploitation.limiteAnnuelleDomMateriels === 0) this.rcExploitation.limiteAnnuelleDomMateriels = rc.limiteAnnuelleDomMateriels || 0;
-      if (this.rcExploitation.limiteParSinistre === 0) this.rcExploitation.limiteParSinistre = rc.limiteParSinistre || 0;
-      if (this.rcExploitation.franchise === 0) this.rcExploitation.franchise = rc.franchise || 0;
-      if (this.rcExploitation.primeNET === 0) this.rcExploitation.primeNET = rc.primeNET || 0;
-      // Ajouter les IDs des exclusions déjà sélectionnées
-      if (rc.exclusionsRc && rc.exclusionsRc.length > 0) {
-        rc.exclusionsRc.forEach(e => {
-          if (!this.rcExploitation.exclusionsIds!.includes(e.id)) {
-            this.rcExploitation.exclusionsIds!.push(e.id);
+  // 🔥 CORRECTION: Les sectionIds sont des IDs de section, pas des indexes
+  if (contrat.rcConfigurations && contrat.rcConfigurations.length > 0) {
+    this.rcExploitations = contrat.rcConfigurations.map(rcConfig => {
+      const situations: SituationRisque[] = [];
+      
+      console.log(`Traitement RC Config ${rcConfig.id} avec sectionIds:`, rcConfig.sectionIds);
+      
+      if (rcConfig.sectionIds && contrat.sections) {
+        rcConfig.sectionIds.forEach(sectionId => {
+          console.log(`Recherche section avec ID ${sectionId}`);
+          
+          // 🔥 CORRECTION: Rechercher par ID de section, pas par index
+          const section = contrat.sections.find(s => s.id === sectionId);
+          if (section) {
+            console.log(`✅ Section trouvée:`, section);
+            
+            const situation: SituationRisque = {
+              numPolice: this.numPolice,
+              identification: section.identification,
+              adresse: section.adresse,
+              natureConstruction: section.natureConstruction,
+              contiguite: section.contiguite,
+              avoisinage: section.avoisinage,
+              garanties: [] // Les garanties ne sont pas nécessaires pour RC
+            };
+            situations.push(situation);
+          } else {
+            console.warn(`❌ Section non trouvée pour l'ID ${sectionId}`);
           }
         });
       }
-    }
-  });
 
-  this.updateObjetDeLaGarantie();
-  
-  // Charger toutes les exclusions RC pour affichage complet
+      const rcExploitation: RCExploitation = {
+        id: rcConfig.id,
+        limiteAnnuelleDomCorporels: rcConfig.limiteAnnuelleDomCorporels || 0,
+        limiteAnnuelleDomMateriels: rcConfig.limiteAnnuelleDomMateriels || 0,
+        limiteParSinistre: rcConfig.limiteParSinistre || 0,
+        franchise: rcConfig.franchise || 0,
+        primeNET: rcConfig.primeNET || 0,
+        situations: situations,
+        exclusionsIds: rcConfig.exclusionsRcIds || [],
+        objetDeLaGarantie: rcConfig.objetDeLaGarantie || this.objetGarantieRc
+      };
+
+      console.log(`✅ RC Exploitation ${rcConfig.id} créée avec ${situations.length} situations:`, rcExploitation);
+      return rcExploitation;
+    });
+
+    console.log('✅ RC Exploitations finales:', this.rcExploitations);
+  } else {
+    console.log('ℹ️ Aucune configuration RC trouvée dans le contrat');
+  }
+
+  // Charger toutes les exclusions RC
   this.contratService.getExclusionsRC().subscribe({
     next: (exclusions: Exclusion[]) => {
       this.exclusionsRC = exclusions;
-      // 🔹 INITIALISER filteredExclusionsRC ICI, après le chargement asynchrone
       this.filteredExclusionsRC = [...this.exclusionsRC];
-      this.cd.detectChanges(); // forcer affichage
+      this.cd.detectChanges();
     },
     error: () => {
       this.exclusionsRC = [];
@@ -692,36 +724,11 @@ initializeRCExploitation(contrat: ContratResponseDTO) {
     }
   });
 }
-updateObjetDeLaGarantie() {
-  // Recalculer les noms des situations sélectionnées
-  this.selectedSituationsNames = this.rcExploitation.situationsIds
-    ?.map(i => this.situationRisques[i]?.identification)
-    .filter((name): name is string => !!name)
-    .join(', ') || '';
-
-  // Mettre à jour l'objet de la garantie
-  this.rcExploitation.objetDeLaGarantie = 
-    `Cette assurance a pour objet de garantir les conséquences pécuniaires de la responsabilité civile pouvant incomber à l'adhérent ${this.adherent.nomRaison}  et ce en raison des dommages corporels et matériels causés aux tiers. A savoir : ${this.selectedSituationsNames || 'Aucune'}`;
+// Objet de garantie unique
+get objetGarantieRc(): string {
+  const nomAdherent = this.adherent?.nomRaison || 'l\'adhérent';
+  return `Cette assurance a pour objet de garantir les conséquences pécuniaires de la responsabilité civile pouvant incomber à ${nomAdherent} et ce en raison des dommages corporels et matériels causés aux tiers.`;
 }
-
-onSituationToggle(index: number, event: any) {
-  if (event.target.checked) {
-    // Ajouter l'index si coché
-    if (!this.rcExploitation.situationsIds?.includes(index)) {
-      this.rcExploitation.situationsIds?.push(index);
-    }
-  } else {
-    // Supprimer l'index si décoché
-    const position = this.rcExploitation.situationsIds?.indexOf(index);
-    if (position !== undefined && position > -1) {
-      this.rcExploitation.situationsIds?.splice(position, 1);
-    }
-  }
-  
-  // Mettre à jour l'objet de la garantie
-  this.updateObjetDeLaGarantie();
-}
-
 
    loadExclusionsRC(exclusionsIds: number[]) {
   this.contratService.getExclusionsRC().subscribe({
@@ -771,12 +778,55 @@ addSituation() {
     return sg ? sg.label : '';
   }
 
+ 
  submit() {
+  console.log('=== 🚀 DÉBUT MODIFICATION CONTRAT ===');
+
   // Déverrouiller le contrat avant soumission
   this.contratService.unlockContrat(this.numPolice, false, this.startTime).subscribe({
     next: () => {
+      // Construction des sections
+      const sections = this.situationRisques.map((situation, index) => ({
+        identification: situation.identification,
+        adresse: situation.adresse,
+        natureConstruction: situation.natureConstruction,
+        contiguite: situation.contiguite,
+        avoisinage: situation.avoisinage,
+        numPolice: this.numPolice,
+        garanties: situation.garanties.map(garantie => ({
+          sectionId: garantie.sectionId || 0,
+          sousGarantieId: Number(garantie.sousGarantieId) || 0,
+          franchise: garantie.franchise ?? 0,
+          maximum: garantie.maximum ?? 0,
+          minimum: garantie.minimum ?? 0,
+          capitale: garantie.capitale ?? 0,
+          primeNET: garantie.primeNET ?? 0,
+          exclusions: (garantie.exclusionsIds || []).map(id => ({ exclusionId: Number(id) }))
+        }))
+      }));
 
-      // Construction du DTO complet pour l'API
+      // 🔥 CORRECTION: Construction des RC Configurations avec sectionIdentifications
+      const rcConfigurations: RcConfigurationDTO[] = this.rcExploitations.map(rcExploitation => {
+        // Utiliser les identifications des situations directement
+        const sectionIdentifications = rcExploitation.situations
+          .map(situation => situation.identification)
+          .filter(identification => identification); // Filtrer les identifications vides
+
+        return {
+          id: rcExploitation.id,
+          limiteAnnuelleDomCorporels: rcExploitation.limiteAnnuelleDomCorporels,
+          limiteAnnuelleDomMateriels: rcExploitation.limiteAnnuelleDomMateriels,
+          limiteParSinistre: rcExploitation.limiteParSinistre,
+          franchise: rcExploitation.franchise,
+          primeNET: rcExploitation.primeNET,
+          objetDeLaGarantie: rcExploitation.objetDeLaGarantie,
+          exclusionsRcIds: rcExploitation.exclusionsIds,
+          // 🔥 ENVOYER sectionIdentifications AU LIEU DE sectionIds
+          sectionIdentifications: sectionIdentifications
+        };
+      });
+
+      // Construction du DTO complet
       const contratData: ContratDTO = {
         numPolice: this.numPolice,
         nom_assure: this.nom_assure,
@@ -790,41 +840,18 @@ addSituation() {
         dateFin: this.dateFin,
         startTime: this.startTime,
         preambule: this.preambule,
-        sections: this.situationRisques.map((s, index) => ({
-          identification: s.identification,
-          adresse: s.adresse,
-          natureConstruction: s.natureConstruction,
-          contiguite: s.contiguite,
-          avoisinage: s.avoisinage,
-          numPolice: this.numPolice,
-          garanties: s.garanties.map(g => ({
-            sectionId: g.sectionId || 0,
-            sousGarantieId: Number(g.sousGarantieId) || 0,
-            franchise: g.franchise ?? 0,
-            maximum: g.maximum ?? 0,
-            minimum: g.minimum ?? 0,
-            capitale: g.capitale ?? 0,
-            primeNET: g.primeNET ?? 0,
-            exclusions: (g.exclusionsIds || []).map(id => ({ exclusionId: Number(id) }))
-          })),
-          rcExploitationActive: this.rcExploitation.situationsIds?.includes(index) || false,
-          rcExploitation: this.rcExploitation.situationsIds?.includes(index) ? {
-            limiteAnnuelleDomCorporels: this.rcExploitation.limiteAnnuelleDomCorporels ?? 0,
-            limiteAnnuelleDomMateriels: this.rcExploitation.limiteAnnuelleDomMateriels ?? 0,
-            limiteParSinistre: this.rcExploitation.limiteParSinistre ?? 0,
-            franchise: this.rcExploitation.franchise ?? 0,
-            primeNET:this.rcExploitation.primeNET ?? 0,
-            exclusionsRcIds: this.rcExploitation.exclusionsIds || [],
-            objetDeLaGarantie: this.rcExploitation.objetDeLaGarantie || ''
-
-            
-          } : undefined
-        })) as SectionDTO[]
+        sections: sections,
+        rcConfigurations: rcConfigurations
       };
+
+      console.log('=== 📦 DONNÉES ENVOYÉES POUR MODIFICATION ===');
+      console.log('ContratData:', contratData);
+      console.log('RC Configurations:', rcConfigurations);
 
       // Appel du service pour modifier le contrat
       this.contratService.modifierContrat(contratData).subscribe({
-        next: () => {
+        next: (response) => {
+          console.log('=== ✅ SUCCÈS MODIFICATION ===');
           this.messageService.add({
             severity: 'success',
             summary: 'Contrat mis à jour',
@@ -832,16 +859,22 @@ addSituation() {
           });
           this.router.navigate(['/Landing']);
         },
-        error: err => {
+        error: (err) => {
+          console.error('=== ❌ ERREUR MODIFICATION ===', err);
+          let errorMessage = 'Impossible de mettre à jour le contrat';
+          if (err.error?.message) {
+            errorMessage += ': ' + err.error.message;
+          }
           this.messageService.add({
             severity: 'error',
             summary: 'Erreur',
-            detail: err.error?.message || 'Impossible de mettre à jour le contrat.'
+            detail: errorMessage
           });
         }
       });
     },
-    error: err => {
+    error: (err) => {
+      console.error('Erreur déverrouillage:', err);
       this.messageService.add({
         severity: 'error',
         summary: 'Erreur',
@@ -850,7 +883,7 @@ addSituation() {
     }
   });
 }
-
+ 
   cancel() {
     this.contratService.unlockContrat(this.numPolice, true, this.startTime).subscribe({
       next: () => this.router.navigate(['/Landing']),
@@ -858,42 +891,10 @@ addSituation() {
     });
   }
 
- toggleRcSituation(situation: SituationRisque, event: any) {
-  const index = this.situationRisques.indexOf(situation);
-  if (!this.rcExploitation.situationsIds) this.rcExploitation.situationsIds = [];
 
-  if (event.target.checked) {
-    if (!this.rcExploitation.situationsIds.includes(index)) {
-      this.rcExploitation.situationsIds.push(index);
-    }
-  } else {
-    this.rcExploitation.situationsIds = this.rcExploitation.situationsIds.filter(id => id !== index);
-  }
-
-  // Construire la chaîne des noms des situations sélectionnées sans doublons
-  this.selectedSituationsNames = Array.from(
-    new Set(
-      this.rcExploitation.situationsIds
-        .map(i => this.situationRisques[i]?.identification)
-        .filter(name => !!name)
-    )
-  ).join(', ');
+ isExclusionRCSelected(exclusionId: number): boolean {
+  return !!this.rcExploitation.exclusionsIds?.includes(exclusionId);
 }
-
-  isRcSituationSelected(situation: SituationRisque): boolean {
-    const index = this.situationRisques.indexOf(situation);
-    return !!this.rcExploitation.situationsIds?.includes(index);
-  }
-
-  toggleExclusionRC(exclusionId: number, event: any) {
-    if (!this.rcExploitation.exclusionsIds) this.rcExploitation.exclusionsIds = [];
-    if (event.target.checked) this.rcExploitation.exclusionsIds.push(exclusionId);
-    else this.rcExploitation.exclusionsIds = this.rcExploitation.exclusionsIds.filter(id => id !== exclusionId);
-  }
-
-  isExclusionRCSelected(exclusionId: number): boolean {
-    return !!this.rcExploitation.exclusionsIds?.includes(exclusionId);
-  }
 loadAllExclusionsRC() {
   this.contratService.getExclusionsRC().subscribe({
     next: (exclusions: Exclusion[]) => {
@@ -1181,5 +1182,179 @@ onDataChanged() {
   this.clearGroupingCache();
   this.cd.detectChanges();
 }
+
+createNewRcExploitation(): RCExploitation {
+  return {
+    id: Date.now(),
+    limiteAnnuelleDomCorporels: 0,
+    limiteAnnuelleDomMateriels: 0,
+    limiteParSinistre: 0,
+    franchise: 0,
+    primeNET: 0,
+    situations: [],
+    exclusionsIds: [], // ← CORRIGER
+    objetDeLaGarantie: this.objetGarantieRc // ← CORRIGER: valeur par défaut
+  };
 }
 
+addRcExploitation() {
+  if (this.currentRcExploitation.situations.length === 0) {
+    this.messageService.add({
+      severity: 'warn',
+      summary: 'Attention',
+      detail: 'Veuillez sélectionner au moins une situation'
+    });
+    return;
+  }
+
+  this.rcExploitations.push({ ...this.currentRcExploitation });
+  this.currentRcExploitation = this.createNewRcExploitation();
+  this.messageService.add({
+    severity: 'success',
+    summary: 'Succès',
+    detail: 'RC Exploitation ajoutée avec succès'
+  });
+}
+
+removeRcExploitation(index: number) {
+  this.rcExploitations.splice(index, 1);
+}
+
+// Méthodes pour gérer les situations
+toggleRcSituation(situation: SituationRisque, event: any) {
+  const isChecked = event.target.checked;
+  
+  console.log(`Toggle situation: ${situation.identification}, checked: ${isChecked}`);
+  
+  // Initialiser le tableau si nécessaire
+  if (!this.currentRcExploitation.situations) {
+    this.currentRcExploitation.situations = [];
+  }
+  
+  if (isChecked) {
+    // Ajouter la situation si elle n'est pas déjà présente
+    if (!this.currentRcExploitation.situations.some(s => s.identification === situation.identification)) {
+      this.currentRcExploitation.situations.push({...situation});
+      console.log(`✅ Situation "${situation.identification}" ajoutée`);
+    }
+  } else {
+    // Retirer la situation
+    this.currentRcExploitation.situations = this.currentRcExploitation.situations.filter(
+      s => s.identification !== situation.identification
+    );
+    console.log(`❌ Situation "${situation.identification}" retirée`);
+  }
+  
+  console.log('Situations sélectionnées:', this.currentRcExploitation.situations.map(s => s.identification));
+}
+
+
+// Méthodes utilitaires
+getRcSituationsNames(rc: RCExploitation): string {
+  if (!rc.situations || !Array.isArray(rc.situations)) {
+    return 'Aucune situation';
+  }
+  return rc.situations.map(s => s.identification).join(', ');
+}
+
+isSituationUsedInOtherRc(situation: SituationRisque, currentRcId: number | undefined): boolean {
+  const targetRcId = currentRcId === undefined ? -1 : currentRcId;
+  
+  return this.rcExploitations.some(rc => 
+    rc.id !== targetRcId && 
+    rc.situations.some(s => s.identification === situation.identification)
+  );
+}
+
+isSituationCoveredByRc(situation: SituationRisque): boolean {
+  return this.rcExploitations.some(rc => 
+    rc.situations.some(s => s.identification === situation.identification)
+  );
+}
+// Dans votre classe component
+situationSelectionStates: { [key: string]: boolean } = {};
+
+// Initialiser les états de sélection
+initializeSituationSelectionStates() {
+  this.situationSelectionStates = {};
+  this.situationRisques.forEach(situation => {
+    this.situationSelectionStates[situation.identification] = this.isRcSituationSelected(situation);
+  });
+}
+
+onRcSituationChange(situation: SituationRisque, event: any) {
+  const isChecked = event.checked;
+  
+  if (isChecked) {
+    if (!this.currentRcExploitation.situations.some(s => s.identification === situation.identification)) {
+      this.currentRcExploitation.situations.push(situation);
+    }
+  } else {
+    this.currentRcExploitation.situations = this.currentRcExploitation.situations.filter(
+      s => s.identification !== situation.identification
+    );
+  }
+  
+  // Mettre à jour l'état
+  this.situationSelectionStates[situation.identification] = isChecked;
+}
+
+isRcSituationSelected(situation: SituationRisque): boolean {
+  if (!this.currentRcExploitation.situations) {
+    this.currentRcExploitation.situations = [];
+    return false;
+  }
+  
+  return this.currentRcExploitation.situations.some(
+    s => s.identification === situation.identification
+  );
+}
+get canAddNewRc(): boolean {
+  const allSituations = this.situationRisques;
+  const usedSituations = new Set();
+  
+  this.rcExploitations.forEach(rc => {
+    rc.situations.forEach(s => usedSituations.add(s.identification));
+  });
+  
+  return allSituations.some(s => !usedSituations.has(s.identification));
+}
+
+// Gestion des exclusions pour la RC courante
+toggleCurrentRcExclusion(exclusionId: number, event: any) {
+  if (event.target.checked) {
+    if (!this.currentRcExploitation.exclusionsIds.includes(exclusionId)) {
+      this.currentRcExploitation.exclusionsIds.push(exclusionId);
+    }
+  } else {
+    this.currentRcExploitation.exclusionsIds = this.currentRcExploitation.exclusionsIds.filter(
+      id => id !== exclusionId
+    );
+  }
+}
+
+editRcExploitation(index: number) {
+  this.currentRcExploitation = { ...this.rcExploitations[index] };
+  
+  // 🔥 CORRECTION: Initialiser les états de sélection pour le RC en cours d'édition
+  this.initializeSituationSelectionForCurrentRc();
+  
+  this.rcExploitations.splice(index, 1);
+}
+
+// Méthode pour initialiser les états de sélection
+private initializeSituationSelectionForCurrentRc() {
+  // Réinitialiser tous les états
+  this.situationSelectionStates = {};
+  
+  // Marquer comme sélectionnées les situations du RC courant
+  if (this.currentRcExploitation.situations) {
+    this.currentRcExploitation.situations.forEach(situation => {
+      this.situationSelectionStates[situation.identification] = true;
+    });
+  }
+  
+  console.log('✅ États de sélection initialisés pour RC courant:', this.situationSelectionStates);
+  console.log('Situations sélectionnées:', this.currentRcExploitation.situations?.map(s => s.identification));
+}
+}

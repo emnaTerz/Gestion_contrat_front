@@ -17,6 +17,29 @@ interface Exclusion {
   id: number;
   nom: string;
 }
+interface RcConfiguration {
+  id: number;
+  limiteAnnuelleDomCorporels: number;
+  limiteAnnuelleDomMateriels: number;
+  limiteParSinistre: number;
+  franchise: number;
+  primeNET: number;
+  situations: SituationRisque[];
+  exclusionsIds: number[];
+}
+
+
+export interface RcConfigurationDTO {
+  id?: number;
+  limiteAnnuelleDomCorporels: number;
+  limiteAnnuelleDomMateriels: number;
+  limiteParSinistre: number;
+  franchise: number;
+  primeNET: number;
+  objetDeLaGarantie: string;
+  exclusionsRcIds: number[];
+  sectionIds: number[]; // IDs des sections (index dans le tableau sections)
+}
 
 
 interface Garantie {
@@ -51,7 +74,16 @@ interface GarantieSection {
   lastKeyTimeGaranties?: number;
   filterTimeoutGaranties?: any;
 }
-
+interface RcExploitation {
+  id: number;
+  limiteAnnuelleDomCorporels: number;
+  limiteAnnuelleDomMateriels: number;
+  limiteParSinistre: number;
+  franchise: number;
+  primeNET: number;
+  situations: SituationRisque[]; // Situations sélectionnées pour cette RC
+  exclusionsIds: number[];
+}
 interface SituationRisque {
   numPolice: string;
   identification: string;
@@ -97,7 +129,8 @@ export class ContratComponent implements OnInit {
   dateFin: string = '';
   startTime: string = '';
 preambule: string = '';
-
+rcExploitations: RcExploitation[] = [];
+currentRcExploitation: RcExploitation = this.createNewRcExploitation();
 preambuleMaxLength: number = 2000;
 selectedPdfFile: File | null = null;
 pdfLines: string[] = [];  // lignes extraites du PDF
@@ -163,6 +196,8 @@ filteredExclusionsRC: any[] = [];
   };
   selectedSituations: SituationRisque[] = [];
 selectedSituationsName: string = '';
+  rcConfigurations: RcConfiguration[] = [];
+  currentRcConfig: RcConfiguration = this.createNewRcConfig();
 
   constructor(private contratService: ContratService, private messageService: MessageService) {}
 
@@ -628,9 +663,7 @@ onGarantieChange(g: any) {
   }
 
 
-  isRcSituationSelected(situation: SituationRisque): boolean {
-    return this.selectedSituations.includes(situation);
-  }
+
 
  nextStep() {
   this.sousGarantiesParParentCache.clear();
@@ -669,23 +702,120 @@ get selectedSituationsNames(): string {
   if (!this.selectedSituations || this.selectedSituations.length === 0) return '';
   return this.selectedSituations.map(s => s.identification).join(', ');
 }
-get objetGarantieRc(): string {
-  if (!this.adherent?.nomRaison) return '';
-  let texte = `Cette assurance a pour objet de garantir les conséquences pécuniaires de la responsabilité civile pouvant incomber à ${this.adherent.nomRaison} du fait de l’exploitation et ce en raison des dommages corporels et matériels causés aux tiers.`;
-
-  if (this.selectedSituations && this.selectedSituations.length > 0) {
-    const situationsText = this.selectedSituations.length === 1
-      ? this.selectedSituations[0].identification
-      : this.selectedSituations.map(s => s.identification).join(', ');
-    texte += ` A savoir : ${situationsText}`;
-  }
-
-  return texte;
-}
-
 
 submit() {
-  this.updateObjetDeLaGarantie();
+  console.log('=== 🚀 DÉBUT SUBMIT CONTRAT CORRIGÉ ===');
+
+  // DEBUG: Vérification des données
+  console.log('=== 📊 DONNÉES SOURCES ===');
+  console.log('situationRisques:', this.situationRisques);
+  console.log('rcExploitations:', this.rcExploitations);
+
+  // VÉRIFICATION CRITIQUE: Avez-vous configuré des RC ?
+  if (this.rcExploitations.length === 0) {
+    console.error('❌ CRITIQUE: Aucune RC Exploitation trouvée!');
+    this.messageService.add({
+      severity: 'error',
+      summary: 'Configuration manquante',
+      detail: 'Veuillez configurer au moins une RC Exploitation avant de soumettre le contrat.'
+    });
+    return;
+  }
+
+  // Construction des sections AVEC garanties
+  console.log('=== 🏗️ CONSTRUCTION DES SECTIONS ===');
+  const sections = this.situationRisques.map((situation, index) => {
+    console.log(`🔍 Construction section ${index}: ${situation.identification}`);
+    
+    if (!situation.identification || situation.identification.trim() === '') {
+      console.error(`❌ Section ${index}: identification manquante`);
+      throw new Error(`L'identification de la section ${index} est obligatoire`);
+    }
+
+    const section = {
+      identification: situation.identification.trim(),
+      adresse: situation.adresse?.trim() || "Non spécifié",
+      natureConstruction: situation.natureConstruction?.trim() || "Non spécifié", 
+      contiguite: situation.contiguite?.trim() || "Non spécifié",
+      avoisinage: situation.avoisinage?.trim() || "Non spécifié",
+      numPolice: this.numPolice,
+      // 🔥 CORRECTION: Inclure les garanties dans la section
+      garanties: situation.garanties.map(garantie => {
+        // Valider la sous-garantie
+        if (!garantie.sousGarantieId || garantie.sousGarantieId === 0) {
+          console.error(`❌ Garantie sans sous-garantie dans section ${situation.identification}`);
+          throw new Error(`Une garantie doit avoir une sous-garantie sélectionnée dans la section "${situation.identification}"`);
+        }
+
+        return {
+          franchise: garantie.franchise ?? 0,
+          sousGarantieId: Number(garantie.sousGarantieId),
+          maximum: garantie.maximum !== null && garantie.maximum !== undefined ? Number(garantie.maximum) : undefined,
+          minimum: garantie.minimum !== null && garantie.minimum !== undefined ? Number(garantie.minimum) : undefined,
+          capitale: garantie.capitale !== null && garantie.capitale !== undefined ? Number(garantie.capitale) : undefined,
+          primeNET: garantie.primeNET !== null && garantie.primeNET !== undefined ? Number(garantie.primeNET) : undefined,
+          exclusions: (garantie.exclusionsIds || []).map(exclusionId => ({
+            exclusionId: Number(exclusionId)
+          }))
+        };
+      })
+    };
+
+    console.log(`✅ Section ${index} construite:`, section);
+    return section;
+  });
+
+  // Construction des rcConfigurations à partir de rcExploitations
+  console.log('=== 🛡️ CONSTRUCTION RC CONFIGURATIONS ===');
+  const rcConfigurations = this.rcExploitations.map((rcExploitation, rcIndex) => {
+    console.log(`🔧 Configuration RC ${rcIndex}:`, rcExploitation);
+    
+    // Valider la configuration RC
+    if (!rcExploitation.situations || rcExploitation.situations.length === 0) {
+      console.error(`❌ Configuration RC ${rcIndex}: Aucune situation associée`);
+      throw new Error(`La configuration RC ${rcIndex + 1} doit avoir au moins une situation associée`);
+    }
+
+    // 🔥 CORRECTION: Calculer les sectionIds correctement
+    const sectionIds = rcExploitation.situations
+      .map(situation => {
+        const index = this.situationRisques.findIndex(s => 
+          s.identification === situation.identification
+        );
+        console.log(`   - "${situation.identification}" → index: ${index}`);
+        
+        if (index === -1) {
+          console.error(`❌ Situation "${situation.identification}" non trouvée dans situationRisques`);
+          throw new Error(`Situation "${situation.identification}" non trouvée`);
+        }
+        
+        return index;
+      })
+      .filter(id => id !== -1);
+
+    console.log(`✅ Section IDs pour RC ${rcIndex}:`, sectionIds);
+
+    const config = {
+      // 🔥 CORRECTION: Utiliser les données de rcExploitation
+      id: rcExploitation.id,
+      limiteAnnuelleDomCorporels: rcExploitation.limiteAnnuelleDomCorporels ?? 0,
+      limiteAnnuelleDomMateriels: rcExploitation.limiteAnnuelleDomMateriels ?? 0,
+      limiteParSinistre: rcExploitation.limiteParSinistre ?? 0,
+      franchise: rcExploitation.franchise ?? 0,
+      primeNET: rcExploitation.primeNET ?? 0,
+      objetDeLaGarantie: this.objetGarantieRc, // Utiliser l'objet unique
+      exclusionsRcIds: rcExploitation.exclusionsIds || [],
+      sectionIds: sectionIds
+    };
+
+    console.log(`✅ Configuration RC ${rcIndex} finale:`, config);
+    return config;
+  });
+
+  // 🔥 CORRECTION: Formater startTime correctement
+  const formattedStartTime = this.formatStartTimeForBackend(this.startTime);
+
+  // Construction du contrat final - SANS primeTTC
   const contratData: ContratDTO = {
     numPolice: this.numPolice,
     nom_assure: this.nom_assure,
@@ -697,55 +827,147 @@ submit() {
     typeContrat: this.typeContrat as TypeContrat,
     dateDebut: this.dateDebut,
     dateFin: this.dateFin,
-    startTime: this.startTime,
-    preambule:this.preambule,
-
-    sections: this.situationRisques.map(situation => ({
-      identification: situation.identification,
-      adresse: situation.adresse,
-      natureConstruction: situation.natureConstruction,
-      contiguite: situation.contiguite,
-      avoisinage: situation.avoisinage,
-      numPolice: this.numPolice,
-
-      // ✅ Toujours boolean
-      rcExploitationActive: situation.rcExploitationActive ?? false,
-
-      // ✅ RC Exploitation avec valeurs numériques correctes
-      rcExploitation: {
-        limiteAnnuelleDomCorporels: this.rcExploitation.limiteAnnuelleDomCorporels ?? 0,
-        limiteAnnuelleDomMateriels: this.rcExploitation.limiteAnnuelleDomMateriels ?? 0,
-        limiteParSinistre: this.rcExploitation.limiteParSinistre ?? 0,
-        franchise: this.rcExploitation.franchise ?? 0,
-        primeNET:this.rcExploitation.primeNET ?? 0,
-        objetDeLaGarantie: this.rcExploitation.objetDeLaGarantie,
-        exclusionsRcIds: this.selectedExclusionsRC || []
-      },
-
-      garanties: situation.garanties.map(garantie => ({
-        franchise: garantie.franchise ?? 0,
-        sousGarantieId: Number(garantie.sousGarantieId),
-        maximum: garantie.maximum !== null && garantie.maximum !== undefined ? Number(garantie.maximum) : undefined,
-        minimum: garantie.minimum !== null && garantie.minimum !== undefined ? Number(garantie.minimum) : undefined,
-        capitale: garantie.capitale !== null && garantie.capitale !== undefined ? Number(garantie.capitale) : undefined,
-        primeNET: garantie.primeNET !== null && garantie.primeNET !== undefined ? Number(garantie.primeNET) : undefined,
-        exclusions: (garantie.exclusionsIds || []).map(exclusionId => ({
-          exclusionId: Number(exclusionId)
-        }))
-      }))
-    }))
+    startTime: formattedStartTime, // 🔥 Format corrigé
+    preambule: this.preambule,
+    // 🔥 SUPPRESSION: primeTTC est calculé côté backend
+    sections: sections,
+    rcConfigurations: rcConfigurations
   };
 
-  console.log('Contrat complet à créer:', contratData);
+  console.log('=== 📦 PAYLOAD FINAL CORRIGÉ ===');
+  console.log('ContratData:', contratData);
+
+  // VÉRIFICATION FINALE
+  console.log('=== ✅ VÉRIFICATIONS FINALES ===');
+  console.log(`Sections: ${contratData.sections.length}`);
+  console.log(`RC Configurations: ${contratData.rcConfigurations.length}`);
+  console.log(`StartTime formaté: ${contratData.startTime}`);
+  console.log(`Toutes les validations passées ✓`);
+
+  console.log('=== 🎯 ENVOI AU BACKEND ===');
 
   this.contratService.createContrat(contratData).subscribe({
-    next: () => alert('Contrat créé avec succès !'),
-    error: (error) => alert('Erreur lors de la création du contrat : ' + error.message)
+    next: (response) => {
+      console.log('=== ✅ SUCCÈS ===');
+      console.log('Contrat créé avec succès:', response);
+      this.messageService.add({
+        severity: 'success',
+        summary: 'Succès',
+        detail: 'Contrat créé avec succès !'
+      });
+    },
+    error: (error) => {
+      console.error('=== ❌ ERREUR ===');
+      console.error('Erreur complète:', error);
+      
+      let errorMessage = 'Erreur lors de la création du contrat';
+      if (error.error) {
+        console.error('Détails erreur backend:', error.error);
+        if (error.error.message) {
+          errorMessage += ': ' + error.error.message;
+        }
+        
+        // 🔥 AFFICHER LES DÉTAILS DE L'ERREUR BACKEND
+        if (error.error.errors) {
+          console.error('Erreurs de validation:', error.error.errors);
+          errorMessage += '. Détails: ' + JSON.stringify(error.error.errors);
+        }
+      }
+      
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Erreur',
+        detail: errorMessage
+      });
+    }
   });
 }
 
+// 🔥 AJOUT: Formater startTime pour le backend
+private formatStartTimeForBackend(startTime: string): string {
+  if (!startTime) {
+    const now = new Date();
+    return now.toISOString();
+  }
 
-  updateSelectedSituationsNames() {
+  // Si c'est déjà en format ISO, retourner tel quel
+  if (startTime.includes('T') && startTime.includes(':')) {
+    return new Date(startTime).toISOString();
+  }
+
+  // Sinon, créer une date ISO
+  return new Date().toISOString();
+}
+
+// Méthode de test avec données fixes
+testAvecDonneesRC() {
+  console.log('=== 🧪 CRÉATION DE DONNÉES RC DE TEST ===');
+  
+  // S'assurer qu'il y a des situations
+  if (this.situationRisques.length === 0) {
+    console.error('❌ Aucune situation de risque créée');
+    this.messageService.add({
+      severity: 'error',
+      summary: 'Erreur',
+      detail: 'Veuillez d\'abord créer des situations de risque'
+    });
+    return;
+  }
+
+  // Créer une configuration RC de test
+  this.rcConfigurations = [{
+    id: Date.now(),
+    limiteAnnuelleDomCorporels: 100000,
+    limiteAnnuelleDomMateriels: 50000,
+    limiteParSinistre: 50000,
+    franchise: 1000,
+    primeNET: 200,
+    situations: [this.situationRisques[0]], // Prendre la première situation
+    exclusionsIds: [1, 2]
+  }];
+
+  console.log('✅ Données RC de test créées:', this.rcConfigurations);
+  this.messageService.add({
+    severity: 'success',
+    summary: 'Test',
+    detail: 'Données RC de test créées. Vous pouvez maintenant soumettre.'
+  });
+}
+
+// Ajoutez un bouton de test dans votre template
+// <button pButton label="Test RC" (click)="testAvecDonneesRC()" class="p-button-help"></button>
+
+resetForm() {
+  this.currentStep = 0;
+  this.situationRisques = [];
+  this.rcConfigurations = [];
+  this.currentRcConfig = this.createNewRcConfig();
+  
+  // Réinitialiser les autres champs si nécessaire
+  this.numPolice = '';
+  this.adherent = { codeId: '', nomRaison: '', adresse: '', activite: '', nouveau: true };
+  this.fractionnement = '';
+  this.codeRenouvellement = '';
+  this.branche = '';
+  this.typeContrat = '';
+  this.dateDebut = '';
+  this.dateFin = '';
+  this.preambule = '';
+}
+createNewRcConfig(): RcConfiguration {
+  return {
+    id: Date.now(),
+    limiteAnnuelleDomCorporels: 0,
+    limiteAnnuelleDomMateriels: 0,
+    limiteParSinistre: 0,
+    franchise: 0,
+    primeNET: 0,
+    situations: [],
+    exclusionsIds: []
+  };
+}
+
+updateSelectedSituationsNames() {
   if (!this.selectedSituations || this.selectedSituations.length === 0) {
     this.selectedSituationsName = '';
   } else if (this.selectedSituations.length === 1) {
@@ -757,17 +979,7 @@ submit() {
   }
 }
 
-toggleRcSituation(situation: SituationRisque, event: any) {
-  if (event.target.checked) {
-    this.selectedSituations.push(situation);
-    situation.rcExploitationActive = true; // 🔹 active RC pour cette situation
-  } else {
-    this.selectedSituations = this.selectedSituations.filter(s => s !== situation);
-    situation.rcExploitationActive = false; // 🔹 désactive RC si décoché
-  }
-  this.updateSelectedSituationsNames();
-  this.updateObjetDeLaGarantie();
-}
+
 handleKeyboardExclusions(event: KeyboardEvent, garantie: GarantieSection) {
   // Ignorer touches ctrl, alt, meta, etc.
   if (event.ctrlKey || event.altKey || event.metaKey ||
@@ -867,7 +1079,7 @@ onTypeContratChange(newType: string) {
 }
 
 
-updatePreambule() {
+/* updatePreambule() {
   const defaultGeneral =
 `Aux conditions Générales du Contrat d’Assurance « Multirisque Professionnelle » MF N° 403/7 du 24 Novembre 1998, dont l’assuré reconnaît avoir reçu un exemplaire, ainsi qu’aux conditions particulières qui suivent et conformément au formulaire de déclaration de risque ci annexé, la MAE Assurances garantit l’assuré contre les risques énumérées et aux conditions suivantes.
 Les présentes conditions particulières prévalent sur les conditions générales susmentionnées chaque fois qu’elles-y- dérogent.`;
@@ -884,8 +1096,41 @@ Les présentes conditions particulières prévalent sur les conditions général
       this.preambule = defaultGeneral;
     }
   }
+} */
+updatePreambule() {
+  console.log('=== 📝 MISE À JOUR PRÉAMBULE ===');
+  console.log('Type de contrat:', this.typeContrat);
+  console.log('Préambule actuel:', this.preambule);
+
+  const defaultGeneral =
+`Aux conditions Générales du Contrat d'Assurance « Multirisque Professionnelle » MF N° 403/7 du 24 Novembre 1998, dont l'assuré reconnaît avoir reçu un exemplaire, ainsi qu'aux conditions particulières qui suivent et conformément au formulaire de déclaration de risque ci annexé, la MAE Assurances garantit l'assuré contre les risques énumérées et aux conditions suivantes.
+Les présentes conditions particulières prévalent sur les conditions générales susmentionnées chaque fois qu'elles-y- dérogent.`;
+
+  const defaultAppelOffre =
+`Aux conditions Générales du Contrat d'Assurance « Multirisque Professionnelle » MF N° 403/7 du 24 Novembre 1998 et aux conditions particulières qui suivent, dont l'adhérent reconnaît avoir reçu un exemplaire, et conformément aux clauses et conditions de l'Appel d'Offres Agence de Mise en Valeur de Promotion Culturelle « A.M.V. P.C »  N°03/2024 pour l'année 2023-2024-2025, et qui prévalent sur toutes autres dispositions, la M.A.E garantit l'adhérent dans les conditions et limites suivantes.
+Les présentes conditions particulières prévalent sur les conditions générales susmentionnées chaque fois qu'elles-y- dérogent.`;
+
+  // Vérifier si le préambule est vide ou contient seulement le texte par défaut
+  const isPreambuleEmpty = !this.preambule || 
+                          this.preambule.trim() === '' || 
+                          this.preambule === defaultGeneral || 
+                          this.preambule === defaultAppelOffre;
+
+  if (isPreambuleEmpty) {
+    if (this.typeContrat === 'APPEL_D_OFFRE') {
+      this.preambule = defaultAppelOffre;
+      console.log('✅ Préambule Appel d\'Offre appliqué');
+    } else {
+      this.preambule = defaultGeneral;
+      console.log('✅ Préambule Général appliqué');
+    }
+  } else {
+    console.log('ℹ️ Préambule personnalisé conservé');
+  }
+
+  console.log('Préambule final:', this.preambule);
 }
-// Retourne un tableau des groupes { parent: Garantie, sousGaranties: GarantieSection[] }
+// ReonTypeContratChangeourne un tableau des groupes { parent: Garantie, sousGaranties: GarantieSection[] }
 
 private sousGarantiesParParentCache = new Map<string, any[]>();
 private previousGarantiesHashes = new Map<string, string>();
@@ -976,6 +1221,132 @@ getGarantieName(sousGarantieId: any): string {
   
   const sg = this.sousGarantiesMap[id];
   return  sg?.nom || 'Sous-garantie inconnue';
+}
+// Créer une nouvelle RC Exploitation
+createNewRcExploitation(): RcExploitation {
+  return {
+    id: Date.now(), // ID temporaire
+    limiteAnnuelleDomCorporels: 0,
+    limiteAnnuelleDomMateriels: 0,
+    limiteParSinistre: 0,
+    franchise: 0,
+    primeNET: 0,
+    situations: [],
+    exclusionsIds: []
+  };
+}
+
+// Vérifier si une situation est déjà utilisée dans d'autres RC
+isSituationUsedInOtherRc(situation: SituationRisque, currentRcId: number): boolean {
+  return this.rcExploitations.some(rc => 
+    rc.id !== currentRcId && 
+    rc.situations.some(s => s.identification === situation.identification)
+  );
+}
+
+// Vérifier si on peut ajouter une nouvelle RC
+get canAddNewRc(): boolean {
+  const allSituations = this.situationRisques;
+  const usedSituations = new Set();
+  
+  this.rcExploitations.forEach(rc => {
+    rc.situations.forEach(s => usedSituations.add(s.identification));
+  });
+  
+  // Vérifier s'il reste des situations non utilisées
+  return allSituations.some(s => !usedSituations.has(s.identification));
+}
+
+// Objet de garantie unique
+get objetGarantieRc(): string {
+  return `Cette assurance a pour objet de garantir les conséquences pécuniaires de la responsabilité civile pouvant incomber à l'adhérent ${this.adherent.nomRaison} et ce en raison des dommages corporels et matériels causés aux tiers.`;
+}
+// Ajouter une RC Exploitation
+addRcExploitation() {
+  if (this.currentRcExploitation.situations.length === 0) {
+    this.messageService.add({
+      severity: 'warn',
+      summary: 'Attention',
+      detail: 'Veuillez sélectionner au moins une situation'
+    });
+    return;
+  }
+
+  this.rcExploitations.push({ ...this.currentRcExploitation });
+  this.currentRcExploitation = this.createNewRcExploitation();
+  this.messageService.add({
+    severity: 'success',
+    summary: 'Succès',
+    detail: 'RC Exploitation ajoutée avec succès'
+  });
+}
+
+// Modifier une RC Exploitation
+editRcExploitation(index: number) {
+  this.currentRcExploitation = { ...this.rcExploitations[index] };
+  this.rcExploitations.splice(index, 1);
+}
+
+// Supprimer une RC Exploitation
+removeRcExploitation(index: number) {
+  this.rcExploitations.splice(index, 1);
+}
+
+// Gérer la sélection des situations pour la RC courante
+toggleRcSituation(situation: SituationRisque, event: any) {
+  if (event.target.checked) {
+    this.currentRcExploitation.situations.push(situation);
+  } else {
+    this.currentRcExploitation.situations = this.currentRcExploitation.situations.filter(
+      s => s.identification !== situation.identification
+    );
+  }
+}
+
+// Vérifier si une situation est sélectionnée dans la RC courante
+isRcSituationSelected(situation: SituationRisque): boolean {
+  return this.currentRcExploitation.situations.some(
+    s => s.identification === situation.identification
+  );
+}
+toggleCurrentRcExclusion(exclusionId: number, event: any) {
+  if (event.target.checked) {
+    if (!this.currentRcExploitation.exclusionsIds.includes(exclusionId)) {
+      this.currentRcExploitation.exclusionsIds.push(exclusionId);
+    }
+  } else {
+    this.currentRcExploitation.exclusionsIds = this.currentRcExploitation.exclusionsIds.filter(
+      id => id !== exclusionId
+    );
+  }
+}
+// Méthode pour obtenir les noms des situations d'une RC
+getRcSituationsNames(rc: RcExploitation): string {
+  if (!rc.situations || !Array.isArray(rc.situations)) {
+    return 'Aucune situation';
+  }
+  return rc.situations.map(s => s.identification).join(', ');
+}
+
+// Méthode pour obtenir les identifiants des situations
+getRcSituationsIds(rc: RcExploitation): number[] {
+  if (!rc.situations || !Array.isArray(rc.situations)) {
+    return [];
+  }
+  return rc.situations.map((s, index) => index);
+}
+// Vérifier si une situation a déjà une RC
+isSituationCoveredByRc(situation: SituationRisque): boolean {
+  return this.rcExploitations.some(rc => 
+    rc.situations.some(s => s.identification === situation.identification)
+  );
+}
+
+// Obtenir toutes les situations non couvertes
+getUncoveredSituations(): SituationRisque[] {
+  return this.situationRisques.filter(situation => 
+    !this.isSituationCoveredByRc(situation)
+  );
 }
 }
  

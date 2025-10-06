@@ -71,10 +71,15 @@
       <option *ngFor="let opt of codeRenouvellementOptions" [value]="opt.value">{{ opt.label }}</option>
     </select>
 
-    <label for="typeContrat">Type de contrat:</label>
-    <select id="typeContrat" [(ngModel)]="typeContrat">
-      <option *ngFor="let opt of typeContratOptions" [value]="opt.value">{{ opt.label }}</option>
-    </select>
+  <label for="typeContrat">Type de contrat:</label>
+<select id="typeContrat" 
+        [ngModel]="typeContrat"
+        (change)="onTypeContratChange($any($event.target).value)"
+        class="form-control">
+  <option *ngFor="let opt of typeContratOptions" [value]="opt.value">
+    {{ opt.label }}
+  </option>
+</select>
   </div>
 
   <!-- Dates -->
@@ -314,95 +319,198 @@
     <button pButton label="Suivant →" (click)="nextStep()"></button>
   </div>
 </div>
-<!-- Étape 4 : RC Exploitation -->
+
+<!-- Étape 5 : RC Exploitation -->
 <div *ngIf="currentStep === 5" class="contrat-section">
   <h3>RC Exploitation</h3>
 
-  <div class="card" style="background-color: #e8f5e9;">
+  <!-- Objet de la garantie -->
+  <div class="card" style="background-color: #e8f5e9; margin-bottom: 2rem;">
     <label>Objet de la garantie</label>
     <textarea 
-      [(ngModel)]="rcExploitation.objetDeLaGarantie" 
-      rows="5" 
+      [value]="objetGarantieRc" 
+      rows="3" 
       class="p-inputtextarea p-component"
       style="width: 100%; resize: vertical;"
+      readonly
     ></textarea>
   </div>
 
-  <!-- Limites et franchise -->
-  <label>Limite annuelle Dommages Corporels</label>
-  <input type="number" [(ngModel)]="rcExploitation.limiteAnnuelleDomCorporels">
-
-  <label>Limite annuelle Dommages Matériels</label>
-  <input type="number" [(ngModel)]="rcExploitation.limiteAnnuelleDomMateriels">
-
-  <label>Limite par sinistre</label>
-  <input type="number" [(ngModel)]="rcExploitation.limiteParSinistre">
-
-  <label>Franchise</label>
-  <input type="number" [(ngModel)]="rcExploitation.franchise">
-   <label>Prime Net</label>
-  <input type="number" [(ngModel)]="rcExploitation.primeNET">
-
-  <!-- Situations couvertes -->
-  <h4>Situations couvertes :</h4>
-  <div *ngFor="let s of situationRisques">
-    <label>
-      <input type="checkbox" [checked]="isRcSituationSelected(s)" (change)="toggleRcSituation(s, $event)">
-      {{ s.identification }}
-    </label>
-  </div>
-
-
-  <!-- Section pour ajouter une nouvelle exclusion RC -->
-
-
-   <div class="ajout-exclusion" style="margin-bottom: 1rem; padding: 1rem; background: #f8f9fa; border-radius: 4px;">
-  <label style="font-weight: bold; display: block; margin-bottom: 0.5rem;">
-     Ajouter une nouvelle exclusion RC :
-  </label>
-  <div style="display: flex; gap: 0.5rem;">
-    <input 
-      type="text" 
-      [(ngModel)]="nouvelleExclusionRC"
-      placeholder="Saisir le nom de la nouvelle exclusion RC..."
-      style="flex: 1; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;"
-      (keyup.enter)="ajouterExclusionRC()">
-<button 
-      pButton 
-      label="Ajouter" 
-      icon="pi pi-plus"
-      (click)="ajouterExclusionRC()"
-      class="p-button-sm bouton-ajout-exclusion"
-      style="height: 38px; min-width: 100px; display: flex; align-items: center; justify-content: center;">
-    </button>
-  </div>
-</div>
-
-    <!-- Exclusions RC scrollable -->
-<div *ngIf="filteredExclusionsRC.length > 0" class="exclusions-container">
-  <h4 class="exclusions-label">Exclusions RC :</h4>
-  <div class="exclusions-scroll-container" tabindex="0"> <!-- 🔥 tabindex pour focus -->
-    <div class="exclusions-list">
-      <div *ngFor="let ex of filteredExclusionsRC" class="exclusion-item">
-        <input 
-          type="checkbox" 
-          [id]="'exclusionRC_' + ex.id"
-          [checked]="isExclusionRCSelected(ex.id)"
-          (change)="toggleExclusionRC(ex.id, $event)"
-          class="exclusion-checkbox">
-        <label [for]="'exclusionRC_' + ex.id" class="exclusion-text">
-          {{ ex.nom }}
-        </label>
+  <!-- Liste des RC Exploitation existantes -->
+  <div *ngIf="rcExploitations.length > 0" style="margin-top: 2rem;">
+    <h4>RC Exploitation configurées :</h4>
+    <div *ngFor="let rc of rcExploitations; let i = index" class="rc-item card" style="padding: 1rem; margin-bottom: 1rem; border-left: 4px solid #388e3c;">
+      <div style="display: flex; justify-content: space-between; align-items: start;">
+        <div>
+          <strong>RC {{ i + 1 }}</strong>
+          <div style="margin-top: 0.5rem;">
+            <strong>Paramètres :</strong><br>
+            • Dommages Corporels: {{ rc.limiteAnnuelleDomCorporels }}<br>
+            • Dommages Matériels: {{ rc.limiteAnnuelleDomMateriels }}<br>
+            • Limite/sinistre: {{ rc.limiteParSinistre }}<br>
+            • Franchise: {{ rc.franchise }}<br>
+            • Prime NET: {{ rc.primeNET }}
+          </div>
+          <div style="margin-top: 0.5rem;">
+            <strong>Situations couvertes :</strong><br>
+            {{ getRcSituationsNames(rc) }}
+          </div>
+          <div style="margin-top: 0.5rem;">
+<strong>Exclusions ({{ (rc.exclusionsIds || []).length }})</strong>          </div>
+        </div>
+        <div>
+          <i class="pi pi-pencil" 
+             style="color: #388e3c; cursor: pointer; margin-right: 10px;" 
+             (click)="editRcExploitation(i)"
+             title="Modifier"></i>
+          <i class="pi pi-trash" 
+             style="color: #e74c3c; cursor: pointer;" 
+             (click)="removeRcExploitation(i)"
+             title="Supprimer"></i>
+        </div>
       </div>
     </div>
   </div>
+
+  <!-- Formulaire pour ajouter/modifier une RC -->
+  <div class="contrat-section">
+    <h4>{{ rcExploitations.length > 0 ? 'Ajouter une autre RC Exploitation' : 'Configurer une RC Exploitation' }}</h4>
+
+    <!-- Paramètres de la RC -->
+    <div class="form-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+      <div class="form-group">
+        <label>Limite annuelle Dommages Corporels</label>
+        <input type="number" [(ngModel)]="currentRcExploitation.limiteAnnuelleDomCorporels">
+      </div>
+
+      <div class="form-group">
+        <label>Limite annuelle Dommages Matériels</label>
+        <input type="number" [(ngModel)]="currentRcExploitation.limiteAnnuelleDomMateriels">
+      </div>
+
+      <div class="form-group">
+        <label>Limite par sinistre</label>
+        <input type="number" [(ngModel)]="currentRcExploitation.limiteParSinistre">
+      </div>
+
+      <div class="form-group">
+        <label>Franchise</label>
+        <input type="number" [(ngModel)]="currentRcExploitation.franchise">
+      </div>
+
+      <div class="form-group">
+        <label>Prime Net</label>
+        <input type="number" [(ngModel)]="currentRcExploitation.primeNET">
+      </div>
+    </div>
+
+    <!-- Sélection des situations -->
+    <h5>Sélectionner les situations pour cette RC :</h5>
+    <div class="situations-list">
+    <div *ngFor="let s of situationRisques" class="situation-item" style="padding: 0.5rem; border-bottom: 1px solid #eee;">
+  <label [class.disabled]="isSituationUsedInOtherRc(s, currentRcExploitation.id)" 
+         style="display: flex; align-items: center; gap: 0.5rem;">
+    <input 
+      type="checkbox" 
+      [checked]="isRcSituationSelected(s)" 
+      (change)="toggleRcSituation(s, $event)"
+      [disabled]="isSituationUsedInOtherRc(s, currentRcExploitation.id)"
+      style="margin: 0;">
+    <div>
+      <strong>{{ s.identification }}</strong>
+      <div style="font-size: 0.8em; color: #666;">{{ s.adresse }}</div>
+      <div *ngIf="isSituationCoveredByRc(s)" style="font-size: 0.8em; color: #388e3c;">
+        ✓ Déjà couverte par une RC
+      </div>
+    </div>
+    <span *ngIf="isSituationUsedInOtherRc(s, currentRcExploitation.id)" 
+          style="color: #999; font-size: 0.8em; margin-left: auto;">
+      (déjà utilisée dans une autre RC)
+    </span>
+  </label>
 </div>
+    <!-- Exclusions -->
+    <div class="exclusions-section" style="margin-top: 2rem;">
+      <h5>Exclusions pour cette RC :</h5>
 
-     <div style="margin-top: 10px; display: flex; gap: 1rem;">
+      <div class="ajout-exclusion" style="margin-bottom: 1rem; padding: 1rem; background: #f8f9fa; border-radius: 4px;">
+        <label style="font-weight: bold; display: block; margin-bottom: 0.5rem;">
+          Ajouter une nouvelle exclusion RC :
+        </label>
+        <div style="display: flex; gap: 0.5rem;">
+          <input 
+            type="text" 
+            [(ngModel)]="nouvelleExclusionRC"
+            placeholder="Saisir le nom de la nouvelle exclusion RC..."
+            style="flex: 1; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;"
+            (keyup.enter)="ajouterExclusionRC()">
+          <button 
+            pButton 
+            label="Ajouter" 
+            icon="pi pi-plus"
+            (click)="ajouterExclusionRC()"
+            class="p-button-sm"
+            style="height: 38px; min-width: 100px;">
+          </button>
+        </div>
+      </div>
+
+      <div *ngIf="filteredExclusionsRC.length > 0" class="exclusions-container">
+        <label class="exclusions-label">Sélectionner les exclusions applicables :</label>
+        
+        <div class="exclusions-scroll-container" tabindex="0"> 
+          <div class="exclusions-list">
+            <div *ngFor="let ex of filteredExclusionsRC; let exclIndex = index" 
+                 class="exclusion-item" style="padding: 0.5rem; border-bottom: 1px solid #eee;">
+              
+              <input 
+                type="checkbox" 
+                [id]="'exclusionRC_' + ex.id"
+                [checked]="currentRcExploitation.exclusionsIds.includes(ex.id)"
+                (change)="toggleCurrentRcExclusion(ex.id, $event)"
+                class="exclusion-checkbox"
+                style="margin-right: 0.5rem;">
+              
+              <label 
+                [for]="'exclusionRC_' + ex.id" 
+                class="exclusion-text"
+                style="cursor: pointer;">
+                {{ ex.nom }}
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bouton Ajouter -->
+    <div style="margin-top: 1rem; display: flex; gap: 1rem; align-items: center;">
+      <button 
+        pButton 
+        type="button" 
+        [label]="currentRcExploitation.situations.length > 0 ? 'Ajouter cette RC' : 'Ajouter RC'" 
+        (click)="addRcExploitation()"
+        [disabled]="currentRcExploitation.situations.length === 0 || !canAddNewRc"
+        class="p-button-success"
+        style="margin-top: 1rem;">
+      </button>
+      
+      <span *ngIf="!canAddNewRc" style="color: #666; font-size: 0.9em;">
+        ❌ Toutes les situations sont déjà couvertes par une RC
+      </span>
+      
+      <span *ngIf="currentRcExploitation.situations.length === 0 && canAddNewRc" style="color: #666; font-size: 0.9em;">
+        ⚠️ Veuillez sélectionner au moins une situation
+      </span>
+    </div>
+  </div>
+
+  <!-- Navigation -->
+  <div style="margin-top: 2rem; display: flex; gap: 1rem;">
     <button pButton label="← Précédent" (click)="prevStep()"></button>
-    <button pButton label="Soumettre" (click)="submit()"></button>
-  </div>
+    <button pButton label="Soumettre" (click)="submit()" 
+            class="p-button-success"></button>
+             <button pButton label="Test RC" (click)="testAvecDonneesRC()" class="p-button-help"></button>
   </div>
 
- 
 </div>
