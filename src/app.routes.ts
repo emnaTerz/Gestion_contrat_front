@@ -13,6 +13,7 @@ import { ContratComponent } from '@/components/contrat-component/contrat-compone
 import { LandingComponent } from '@/components/landing/landing.component';
 import { ForceResetPasswordComponent } from '@/components/force-reset-password/force-reset-password.component';
 import { ModifierContratComponent } from '@/components/modifier-contrat-component/modifier-contrat-component.component';
+import { ContratListComponent } from '@/components/contrat-list/contrat-list.component';
 
 
 export const appRoutes: Routes = [
@@ -29,6 +30,7 @@ export const appRoutes: Routes = [
             { path: 'action-history', component: ActionHistoryComponent, canActivate: [AuthGuard], data: { expectedRole: 'ADMIN' } },
             { path: 'users', component: UsersComponent, canActivate: [AuthGuard], data: { expectedRole: 'ADMIN' } },
             { path: 'Contrat', component: ContratComponent, canActivate: [AuthGuard], data: { expectedRole: 'USER' } },
+            { path: 'contrat-list', component: ContratListComponent, canActivate: [AuthGuard], data: { expectedRole: 'USER' } },
             { path: 'Modif_Contrat/:numPolice', component: ModifierContratComponent, canActivate: [AuthGuard], data: { expectedRole: 'USER' } },
             { path: 'Landing', component: LandingComponent, canActivate: [AuthGuard], data: { expectedRole: 'USER' } },
             { path: 'force-reset-password', component: ForceResetPasswordComponent, canActivate: [AuthGuard], data: { expectedRole: 'USER' } }

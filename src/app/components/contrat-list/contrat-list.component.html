@@ -1,0 +1,114 @@
+<p-toast></p-toast>
+
+<div class="custom-container">
+  <div class="card">
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-xl font-semibold">Liste des contrats</h2>
+      <div class="flex items-center gap-2">
+        <input #filter pInputText type="text" placeholder="Recherche globale" (input)="onGlobalFilter($event)" />
+        <button pButton type="button" label="Clear" icon="pi pi-filter-slash" class="p-button-outlined" (click)="clearFilter()"></button>
+      </div>
+    </div>
+  <!-- Filtre par dates -->
+    <div class="date-filter">
+  <label>Date Début :</label>
+  <input type="date" [(ngModel)]="dateDebutFilter" (change)="filterByDate()" />
+
+  <label>Date Fin :</label>
+  <input type="date" [(ngModel)]="dateFinFilter" (change)="filterByDate()" />
+</div>
+
+    <p-table #dt [value]="filteredContrats" [paginator]="true" [rows]="10" [loading]="loading"
+             [globalFilterFields]="['numPolice', 'adherent.codeId', 'fractionnement', 'codeRenouvellement', 'branche', 'typeContrat', 'codeAgence']"
+             [showGridlines]="true" [rowHover]="true">
+
+      <!-- Header -->
+      <ng-template pTemplate="header">
+        <tr>
+          <th pSortableColumn="numPolice">Numéro police <p-sortIcon field="numPolice"></p-sortIcon></th>
+          <th pSortableColumn="adherent.codeId">Adhérent <p-sortIcon field="adherent.codeId"></p-sortIcon></th>
+          <th pSortableColumn="fractionnement">Fractionnement <p-sortIcon field="fractionnement"></p-sortIcon></th>
+          <th pSortableColumn="codeRenouvellement">Code Renouvellement <p-sortIcon field="codeRenouvellement"></p-sortIcon></th>
+          <th pSortableColumn="branche">Branche <p-sortIcon field="branche"></p-sortIcon></th>
+          <th pSortableColumn="typeContrat">Type Contrat <p-sortIcon field="typeContrat"></p-sortIcon></th>
+          <th pSortableColumn="codeAgence">Code Agence <p-sortIcon field="codeAgence"></p-sortIcon></th>
+          <th pSortableColumn="primeTTC">Prime TTC <p-sortIcon field="primeTTC"></p-sortIcon></th>
+          <th pSortableColumn="dateDebut">Date Début <p-sortIcon field="dateDebut"></p-sortIcon></th>
+          <th pSortableColumn="dateFin">Date Fin <p-sortIcon field="dateFin"></p-sortIcon></th>
+          <th>Actions</th>
+        </tr>
+      </ng-template>
+
+      <!-- Body -->
+      <ng-template pTemplate="body" let-contrat>
+        <tr>
+          <td>{{ contrat.numPolice || 'N/A' }}</td>
+         <td>
+            <button pButton type="button" class="p-button-text p-button-sm" 
+                    (click)="showAdherentDetails(contrat.adherent)">
+                {{ contrat.adherent?.nomRaison || 'N/A' }}
+            </button>
+            </td>
+
+          <td>{{ getFractionnementLabel(contrat.fractionnement) }}</td>
+          <td>{{ contrat.codeRenouvellement || 'N/A' }}</td>
+          <td>{{ contrat.branche || 'N/A' }}</td>
+          <td>{{ contrat.typeContrat || 'N/A' }}</td>
+          <td>{{ contrat.codeAgence || 'N/A' }}</td>
+          <td>{{ contrat.primeTTC | number:'1.2-2' }}</td>
+          <td>{{ contrat.dateDebut | date:'dd/MM/yyyy' }}</td>
+          <td>{{ contrat.dateFin | date:'dd/MM/yyyy' }}</td>
+          <td class="actions">
+            <button pButton type="button" icon="pi pi-pencil" class="p-button-text p-button-sm"
+                    (click)="editContrat(contrat)">
+            </button>
+
+            <button pButton type="button" icon="pi pi-download" class="p-button-text p-button-sm p-button-success"
+                    (click)="downloadPdf(contrat.numPolice)">
+            </button>
+          </td>
+        </tr>
+      </ng-template>
+
+      <!-- Empty message -->
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="11">Aucun contrat trouvé.</td>
+        </tr>
+      </ng-template>
+
+    </p-table>
+  </div>
+</div>
+<p-dialog [(visible)]="displayAdherentDialog" header="Détails de l'adhérent" 
+          [modal]="true" [closable]="true" [style]="{width: '480px', borderRadius: '14px'}" [baseZIndex]="10000">
+  <div class="adherent-profile" *ngIf="selectedAdherent">
+    <div class="profile-header">
+      <div class="avatar">{{ selectedAdherent.nomRaison.charAt(0) }}</div>
+      <div class="info">
+        <h3>{{ selectedAdherent.nomRaison }}</h3>
+        <span class="subtitle">{{ selectedAdherent.activite }}</span>
+      </div>
+    </div>
+
+    <div class="profile-details">
+      <div class="field">
+        <i class="pi pi-id-card"></i>
+        <span class="label">Code Adhérent:</span>
+        <span class="value">{{ selectedAdherent.codeId }}</span>
+      </div>
+      <div class="field">
+        <i class="pi pi-map-marker"></i>
+        <span class="label">Adresse:</span>
+        <span class="value">{{ selectedAdherent.adresse }}</span>
+      </div>
+      <div class="field">
+        <i class="pi pi-check-circle"></i>
+        <span class="label">Nouveau:</span>
+        <span class="value" [ngClass]="selectedAdherent.nouveau ? 'yes' : 'no'">
+          {{ selectedAdherent.nouveau ? 'Oui' : 'Non' }}
+        </span>
+      </div>
+    </div>
+  </div>
+</p-dialog>

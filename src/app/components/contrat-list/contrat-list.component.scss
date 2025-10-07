@@ -1,0 +1,135 @@
+.date-filter {
+  display: flex;
+  flex-wrap: wrap;   // permet aux éléments de passer à la ligne sur petits écrans
+  align-items: center;
+  gap: 1rem;         // espace entre les éléments
+  margin-bottom: 1rem;
+
+  label {
+    font-weight: 500;
+    margin-right: 0.25rem;
+  }
+
+  input[type="date"] {
+    padding: 0.35rem 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: 0.25rem;
+    font-size: 0.95rem;
+    min-width: 150px;
+    transition: border-color 0.2s ease-in-out;
+
+    &:focus {
+      border-color: #0288d1;   // couleur principale
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(2, 136, 209, 0.2);
+    }
+  }
+
+  @media (max-width: 600px) {
+    flex-direction: column;
+    align-items: flex-start;
+
+    input[type="date"] {
+      width: 100%;
+    }
+  }
+}
+.adherent-profile {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 1rem 1.2rem;
+  background: linear-gradient(145deg, #e6f5e6, #f0fff0); // fond vert clair
+  border-radius: 14px;
+  box-shadow: 0 6px 22px rgba(0,0,0,0.12);
+
+  .profile-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+
+    .avatar {
+      width: 50px;
+      height: 50px;
+      background-color: #03844a; // vert foncé MAE
+      color: white;
+      font-weight: 700;
+      font-size: 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    }
+
+    .info {
+      h3 {
+        margin: 0;
+        font-size: 1.2rem;
+        color: #03844a; // vert foncé MAE
+      }
+      .subtitle {
+        font-size: 0.9rem;
+        color: #4cae4c; // vert plus clair
+      }
+    }
+  }
+
+  .profile-details {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+
+    .field {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0.5rem;
+      border-radius: 8px;
+      transition: background 0.2s;
+
+      &:hover {
+        background-color: #d4f0d4; // léger vert
+      }
+
+      i {
+        color: #03844a; // vert foncé
+      }
+
+      .label {
+        font-weight: 600;
+        color: #03844a;
+        min-width: 80px;
+      }
+
+      .value {
+        font-weight: 500;
+        color: #333;
+
+        &.yes {
+          color: #4cae4c; // vert clair
+          font-weight: 600;
+        }
+
+        &.no {
+          color: #d32f2f;
+          font-weight: 600;
+        }
+      }
+    }
+  }
+}
+
+p-dialog .p-dialog-header {
+  background-color: #03844a; // vert foncé
+  color: white;
+  font-weight: 700;
+  font-size: 1.2rem;
+  border-radius: 14px 14px 0 0;
+}
+
+p-dialog .p-dialog-content {
+  padding: 0.8rem 1rem;
+  background-color: transparent;
+}
+

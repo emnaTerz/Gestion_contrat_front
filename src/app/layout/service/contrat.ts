@@ -75,7 +75,18 @@ export interface SectionDTO {
 
 }
 
-
+export interface Contrat {
+  numPolice: string;
+  adherent?: { codeId: string };
+  fractionnement: string;
+  codeRenouvellement: string;
+  branche: string;
+  typeContrat: string;
+  codeAgence: string;
+  primeTTC: number;
+  dateDebut: string;
+  dateFin: string;
+}
 
 // Dans votre service/contrat.ts
 export interface RcConfigurationDTO {
@@ -235,6 +246,16 @@ export class ContratService {
 private baseUrl = 'http://localhost:8081/contrat';
   private tarifApiUrl = 'http://localhost:8081/contrat/tarifs';
   constructor(private http: HttpClient) { }
+
+
+
+  getAllContrat(): Observable<Contrat[]> {
+  const token = localStorage.getItem('token'); // récupère le token stocké
+  const headers = { 
+    'Authorization': `Bearer ${token}` 
+  };
+  return this.http.get<Contrat[]>(`${this.baseUrl}/all`, { headers });
+}
 
   // Méthode existante pour uploader PDF
   uploadPdf(file: File): Observable<{ lines: string[] }> {

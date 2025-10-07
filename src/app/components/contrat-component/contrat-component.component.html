@@ -1,11 +1,20 @@
+<!-- 
 
-
-<div class="contrat-container">
-  <p-toast></p-toast>
+<div class="contrat-main-container" [class.split-view]="showModele"> 
+  <div class="contrat-container">
+   <p-toast></p-toast>
   <p-steps [model]="steps" [(activeIndex)]="currentStep"></p-steps>
+  <div style="display: flex; justify-content: flex-end; margin: 1rem 0;">
+      <button 
+        pButton 
+        label="{{ showModele ? 'Fermer le modèle' : 'Voir le modèle' }}" 
+        icon="{{ showModele ? 'pi pi-eye-slash' : 'pi pi-eye' }}"
+        (click)="toggleModele()" 
+        class="p-button-info"
+        [disabled]="!contratData && situationRisques.length === 0">
+      </button>
+    </div>
 
-
-<!-- Étape 0 : Informations générales -->
 <div *ngIf="currentStep === 0">
 
 <div class="contrat-upload-container contrat-section">
@@ -23,7 +32,6 @@
 </div>
 
 
-  <!-- Section Adhérent -->
   <div class="contrat-section">
     <h3>Informations générales</h3>
     <h4>Adhérent</h4>
@@ -41,7 +49,6 @@
     </label>
   </div>
 
-  <!-- Branche -->
   <div class="contrat-section">
     <label for="branche">Branche:</label>
     <select id="branche" [(ngModel)]="branche">
@@ -49,7 +56,6 @@
     </select>
   </div>
 
-  <!-- Numéro police / assureur / agence -->
   <div class="contrat-section">
     <label>Numéro de police:</label>
     <input type="text" [(ngModel)]="numPolice">
@@ -59,7 +65,6 @@
     <input type="text" [(ngModel)]="codeAgence">
   </div>
 
-  <!-- Fractionnement / Code renouvellement / Type contrat -->
   <div class="contrat-section">
     <label for="fractionnement">Fractionnement:</label>
     <select id="fractionnement" [(ngModel)]="fractionnement">
@@ -82,7 +87,6 @@
 </select>
   </div>
 
-  <!-- Dates -->
   <div class="contrat-section">
     <label>Date de début:</label>
     <input type="date" [(ngModel)]="dateDebut">
@@ -90,13 +94,11 @@
     <input type="date" [(ngModel)]="dateFin">
   </div>
 
-  <!-- Bouton Suivant -->
   <div style="margin-top: 10px; display: flex; gap: 1rem;">
     <button pButton label="Suivant →" (click)="nextStep()"></button>
   </div>
 </div>
 
-<!-- === Step Préambule === -->
 <div *ngIf="currentStep === 1" class="contrat-section preambule-section">
   <h3>Préambule du contrat</h3>
   <textarea id="preambuleTextarea"
@@ -115,7 +117,6 @@
 </div>
 
 
-  <!-- Étape 1 : Situations -->
   <div *ngIf="currentStep === 2">
     <div class="contrat-section">
       <h3>Situations de risque</h3>
@@ -161,7 +162,6 @@
 </div>
   </div>
 
-<!-- Étape 2 : Garanties -->
 <div *ngIf="currentStep === 3">
   <div class="contrat-section">
     <h3>Garanties par situation de risque</h3>
@@ -182,14 +182,12 @@
         <label>Capitale Assuré:</label>
         <input type="number" [(ngModel)]="g.capitale">
 
-        <!-- Checkbox Franchise -->
        <div style="margin-bottom: 1rem;">
         <label>
           <input type="checkbox" [(ngModel)]="g.hasFranchise"> Franchise
         </label>
       </div>
 
-    <!-- Champs Franchise affichés seulement si checkbox coché -->
     <div class="franchise-fields" *ngIf="g.hasFranchise">
       <label>Franchise (%):</label>
       <input type="number" [(ngModel)]="g.franchise" placeholder="Pourcentage">
@@ -228,10 +226,8 @@
   <div *ngFor="let s of situationRisques; let i = index">
     <h4>Situation {{ i + 1 }} : {{ s.identification }}</h4>
 
-    <!-- Vérification si des groupes existent -->
     <div *ngIf="getSousGarantiesParParent(s).length > 0; else noGaranties">
       
-      <!-- Parcourir les groupes de sous-garanties par garantie parent -->
       <div *ngFor="let groupe of getSousGarantiesParParent(s); let groupeIndex = index" 
            class="groupe-garantie">
         
@@ -239,7 +235,6 @@
 
      
 
-        <!-- Section pour ajouter une nouvelle exclusion -->
         <div class="ajout-exclusion" 
              *ngIf="groupe.sousGaranties && groupe.sousGaranties.length > 0 && groupe.sousGaranties[0]"
              style="margin-bottom: 1rem; padding: 1rem; background: #f8f9fa; border-radius: 4px;">
@@ -268,7 +263,6 @@
           </div>
         </div>
 
-        <!-- Liste des exclusions -->
         <div *ngIf="groupe.sousGaranties && groupe.sousGaranties.length > 0 && groupe.sousGaranties[0] && 
                     groupe.sousGaranties[0].exclusionsOptions && groupe.sousGaranties[0].exclusionsOptions.length > 0" 
              class="exclusions-container">
@@ -299,7 +293,6 @@
           </div>
         </div>
 
-        <!-- Message si aucune exclusion disponible -->
         <div *ngIf="!(groupe.sousGaranties && groupe.sousGaranties[0] && groupe.sousGaranties[0].exclusionsOptions) || 
                     (groupe.sousGaranties && groupe.sousGaranties[0] && groupe.sousGaranties[0].exclusionsOptions && 
                      groupe.sousGaranties[0].exclusionsOptions.length === 0)">
@@ -320,11 +313,9 @@
   </div>
 </div>
 
-<!-- Étape 5 : RC Exploitation -->
 <div *ngIf="currentStep === 5" class="contrat-section">
   <h3>RC Exploitation</h3>
 
-  <!-- Objet de la garantie -->
   <div class="card" style="background-color: #e8f5e9; margin-bottom: 2rem;">
     <label>Objet de la garantie</label>
     <textarea 
@@ -336,7 +327,6 @@
     ></textarea>
   </div>
 
-  <!-- Liste des RC Exploitation existantes -->
   <div *ngIf="rcExploitations.length > 0" style="margin-top: 2rem;">
     <h4>RC Exploitation configurées :</h4>
     <div *ngFor="let rc of rcExploitations; let i = index" class="rc-item card" style="padding: 1rem; margin-bottom: 1rem; border-left: 4px solid #388e3c;">
@@ -372,11 +362,9 @@
     </div>
   </div>
 
-  <!-- Formulaire pour ajouter/modifier une RC -->
   <div class="contrat-section">
     <h4>{{ rcExploitations.length > 0 ? 'Ajouter une autre RC Exploitation' : 'Configurer une RC Exploitation' }}</h4>
 
-    <!-- Paramètres de la RC -->
     <div class="form-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
       <div class="form-group">
         <label>Limite annuelle Dommages Corporels</label>
@@ -404,7 +392,6 @@
       </div>
     </div>
 
-    <!-- Sélection des situations -->
     <h5>Sélectionner les situations pour cette RC :</h5>
     <div class="situations-list">
     <div *ngFor="let s of situationRisques" class="situation-item" style="padding: 0.5rem; border-bottom: 1px solid #eee;">
@@ -429,7 +416,6 @@
     </span>
   </label>
 </div>
-    <!-- Exclusions -->
     <div class="exclusions-section" style="margin-top: 2rem;">
       <h5>Exclusions pour cette RC :</h5>
 
@@ -483,7 +469,6 @@
       </div>
     </div>
 
-    <!-- Bouton Ajouter -->
     <div style="margin-top: 1rem; display: flex; gap: 1rem; align-items: center;">
       <button 
         pButton 
@@ -505,12 +490,596 @@
     </div>
   </div>
 
-  <!-- Navigation -->
   <div style="margin-top: 2rem; display: flex; gap: 1rem;">
     <button pButton label="← Précédent" (click)="prevStep()"></button>
     <button pButton label="Soumettre" (click)="submit()" 
             class="p-button-success"></button>
              <button pButton label="Test RC" (click)="testAvecDonneesRC()" class="p-button-help"></button>
   </div>
+   </div>
 
+     <div class="pdf-sidebar" *ngIf="showModele">
+    <div class="pdf-container">
+      <div class="pdf-header">
+        <h3>Modèle de Contrat</h3>
+        <button 
+          pButton 
+          icon="pi pi-times" 
+          class="p-button-text p-button-sm"
+          (click)="toggleModele()"
+          title="Fermer">
+        </button>
+      </div>
+      
+      <ng-container *ngIf="pdfUrl; else loading">
+        <iframe [src]="pdfUrl" width="100%" height="100%"></iframe>
+      </ng-container>
+      
+      <ng-template #loading>
+        <div class="loading-content">
+          <p *ngIf="contratData || situationRisques.length > 0" class="loading-text">
+            <i class="pi pi-spin pi-spinner" style="margin-right: 8px;"></i>
+            Génération du PDF en cours...
+          </p>
+          <p *ngIf="!contratData && situationRisques.length === 0" class="no-data-text">
+            <i class="pi pi-info-circle" style="margin-right: 8px;"></i>
+            Veuillez d'abord créer au moins une situation de risque pour générer le PDF.
+          </p>
+        </div>
+      </ng-template>
+    </div>
+  </div>
 </div>
+    </div> -->
+
+    <div class="contrat-main-container" [class.split-view]="showModele"> 
+  <div class="contrat-container">
+    <p-toast></p-toast>
+    <p-steps [model]="steps" [(activeIndex)]="currentStep"></p-steps>
+    
+    <div style="display: flex; justify-content: flex-end; margin: 1rem 0;">
+      <button 
+        pButton 
+        label="{{ showModele ? 'Fermer le modèle' : 'Voir le modèle' }}" 
+        icon="{{ showModele ? 'pi pi-eye-slash' : 'pi pi-eye' }}"
+        (click)="toggleModele()" 
+        class="p-button-info"
+      >
+      </button>
+    </div>
+  <div class="form-content">
+    <!-- Étape 0 : Informations générales -->
+    <div *ngIf="currentStep === 0">
+      <div class="contrat-upload-container contrat-section">
+        <div class="card">
+          <div class="card-title">Importer votre Contrat</div>
+          <input 
+            type="file" 
+            (change)="onPdfSelected($event)" 
+            accept=".pdf,.doc,.docx"
+            style="padding: 10px; width: 100%; border: 1px solid #ccc; border-radius: 4px;"
+          />
+          <small>Choisissez un fichier PDF pour remplir automatiquement les informations générales.</small>
+        </div>
+      </div>
+
+      <!-- Section Adhérent -->
+      <div class="contrat-section">
+        <h3>Informations générales</h3>
+        <h4>Adhérent</h4>
+        <label>Code Adhérent:</label>
+        <input type="text" [(ngModel)]="adherent.codeId">
+        <label>Nom / Raison sociale:</label>
+        <input type="text" [(ngModel)]="adherent.nomRaison">
+        <label>Adresse:</label>
+        <input type="text" [(ngModel)]="adherent.adresse">
+        <label>Activité:</label>
+        <input type="text" [(ngModel)]="adherent.activite">
+        <label>
+          <input type="checkbox" [(ngModel)]="adherent.nouveau">
+          Nouvel adhérent ?
+        </label>
+      </div>
+
+      <!-- Branche -->
+      <div class="contrat-section">
+        <label for="branche">Branche:</label>
+        <select id="branche" [(ngModel)]="branche">
+          <option *ngFor="let opt of brancheOptions" [value]="opt.value">{{ opt.label }}</option>
+        </select>
+      </div>
+
+      <!-- Numéro police / assureur / agence -->
+      <div class="contrat-section">
+        <label>Numéro de police:</label>
+        <input type="text" [(ngModel)]="numPolice">
+        <label>Activité de l'Assuré:</label>
+        <input type="text" [(ngModel)]="nom_assure">
+        <label>Code Agence:</label>
+        <input type="text" [(ngModel)]="codeAgence">
+      </div>
+
+      <!-- Fractionnement / Code renouvellement / Type contrat -->
+      <div class="contrat-section">
+        <label for="fractionnement">Fractionnement:</label>
+        <select id="fractionnement" [(ngModel)]="fractionnement">
+          <option *ngFor="let opt of fractionnementOptions" [value]="opt.value">{{ opt.label }}</option>
+        </select>
+
+        <label for="codeRenouvellement">Code Renouvellement:</label>
+        <select id="codeRenouvellement" [(ngModel)]="codeRenouvellement">
+          <option *ngFor="let opt of codeRenouvellementOptions" [value]="opt.value">{{ opt.label }}</option>
+        </select>
+
+        <label for="typeContrat">Type de contrat:</label>
+        <select id="typeContrat" 
+                [ngModel]="typeContrat"
+                (change)="onTypeContratChange($any($event.target).value)"
+                class="form-control">
+          <option *ngFor="let opt of typeContratOptions" [value]="opt.value">
+            {{ opt.label }}
+          </option>
+        </select>
+      </div>
+
+      <!-- Dates -->
+      <div class="contrat-section">
+        <label>Date de début:</label>
+        <input type="date" [(ngModel)]="dateDebut">
+        <label>Date de fin:</label>
+        <input type="date" [(ngModel)]="dateFin">
+      </div>
+
+      <!-- Bouton Suivant -->
+      <div style="margin-top: 10px; display: flex; gap: 1rem;">
+        <button pButton label="Suivant →" (click)="nextStep()"></button>
+      </div>
+    </div>
+
+    <!-- === Step Préambule === -->
+    <div *ngIf="currentStep === 1" class="contrat-section preambule-section">
+      <h3>Préambule du contrat</h3>
+      <textarea id="preambuleTextarea"
+                class="p-inputtextarea p-component"
+                rows="10"
+                [(ngModel)]="preambule"
+                [attr.maxlength]="preambuleMaxLength"
+                style="width:100%; resize:vertical;"></textarea>
+
+      <div class="p-t-2" style="display:flex; justify-content:space-between; align-items:center; margin-top:0.5rem;">
+        <div style="margin-top: 10px; display: flex; gap: 1rem;">
+          <button pButton label="← Précédent" (click)="prevStep()"></button>
+          <button pButton label="Suivant →" (click)="nextStep()"></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Étape 2 : Situations -->
+    <div *ngIf="currentStep === 2">
+      <div class="contrat-section">
+        <h3>Situations de risque</h3>
+
+        <label>Identification:</label>
+        <input type="text" [(ngModel)]="currentSituationRisque.identification">
+        <label>Adresse:</label>
+        <input type="text" [(ngModel)]="currentSituationRisque.adresse">
+        <label>Nature de construction:</label>
+        <input type="text" [(ngModel)]="currentSituationRisque.natureConstruction">
+        <label>Contiguïté:</label>
+        <input type="text" [(ngModel)]="currentSituationRisque.contiguite">
+        <label>Avoisinage:</label>
+        <input type="text" [(ngModel)]="currentSituationRisque.avoisinage">
+
+        <div style="margin-top: 10px; display: flex; gap: 1rem;">
+          <button pButton label="← Précédent" (click)="prevStep()"></button>
+          <button pButton [label]="editIndex !== null ? 'Valider la modification' : 'Ajouter cette situation'" (click)="addSituation()"></button>
+          <button pButton label="Suivant →" (click)="nextStep()"></button>
+        </div>
+      </div>
+
+      <div *ngIf="situationRisques.length > 0" style="margin-top: 2rem;">
+        <h4>Situations ajoutées :</h4>
+        <ul>
+          <li *ngFor="let s of situationRisques; let i = index">
+            <span 
+              style="cursor: pointer; text-decoration: underline; color: #02bd4a;" 
+              (click)="editSituation(i)">
+              {{ i + 1 }}. {{ s.identification }} - {{ s.adresse }}
+            </span>
+            <i class="pi pi-trash" 
+               style=" color: #388e3c; cursor: pointer; font-size: 1rem; margin-left: 10px;" 
+               (click)="removeSituation(i)" 
+               title="Supprimer"></i>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Étape 3 : Garanties -->
+    <div *ngIf="currentStep === 3">
+      <div class="contrat-section">
+        <h3>Garanties par situation de risque</h3>
+
+        <div *ngFor="let s of situationRisques; let i = index" class="contrat-section">
+          <h4>Situation {{ i + 1 }} : {{ s.identification }}</h4>
+          <p>Adresse: {{ s.adresse }}</p>
+
+          <div *ngFor="let g of s.garanties; let j = index" class="garantie-item">
+            <input type="hidden" [(ngModel)]="g.sectionId">
+
+            <label for="sousGarantie">Garanties:</label>
+            <select id="sousGarantie" [(ngModel)]="g.sousGarantieId" (change)="onGarantieChange(g)">
+              <option [value]="0">Sélectionner une garantie</option>
+              <option *ngFor="let opt of sousGarantiesOptions" [value]="opt.value">{{ opt.label }}</option>
+            </select>
+
+            <label>Capitale Assuré:</label>
+            <input type="number" [(ngModel)]="g.capitale">
+
+            <!-- Checkbox Franchise -->
+            <div style="margin-bottom: 1rem;">
+              <label>
+                <input type="checkbox" [(ngModel)]="g.hasFranchise"> Franchise
+              </label>
+            </div>
+
+            <!-- Champs Franchise affichés seulement si checkbox coché -->
+            <div class="franchise-fields" *ngIf="g.hasFranchise">
+              <label>Franchise (%):</label>
+              <input type="number" [(ngModel)]="g.franchise" placeholder="Pourcentage">
+              <label>Minimum:</label>
+              <input type="number" [(ngModel)]="g.minimum" placeholder="Montant minimum">
+              <label>Maximum:</label>
+              <input type="number" [(ngModel)]="g.maximum" placeholder="Montant maximum">
+            </div>
+
+            <label>Prime NET:</label>
+            <input type="number" [(ngModel)]="g.primeNET">
+
+            <i class="pi pi-trash" 
+               style="color: #388e3c; cursor: pointer; font-size: 1rem; margin-left: 5px;" 
+               (click)="removeGarantie(s, j)" 
+               title="Supprimer"></i>
+
+            <hr>
+          </div>
+
+          <button pButton type="button" label="Ajouter Garantie" (click)="addGarantie(s)"></button>
+        </div>
+      </div>
+
+      <div style="margin-top: 10px; display: flex; gap: 1rem;">
+        <button pButton label="← Précédent" (click)="prevStep()"></button>
+        <button pButton label="Suivant →" (click)="nextStep()"></button>
+      </div>
+    </div>
+
+    <!-- Étape 4 : Exclusions -->
+    <div *ngIf="currentStep === 4" class="contrat-section">
+      <h3>Exclusions par garantie</h3>
+      
+      <div *ngFor="let s of situationRisques; let i = index">
+        <h4>Situation {{ i + 1 }} : {{ s.identification }}</h4>
+
+        <!-- Vérification si des groupes existent -->
+        <div *ngIf="getSousGarantiesParParent(s).length > 0; else noGaranties">
+          
+          <!-- Parcourir les groupes de sous-garanties par garantie parent -->
+          <div *ngFor="let groupe of getSousGarantiesParParent(s); let groupeIndex = index" 
+               class="groupe-garantie">
+            
+            <h5>Garantie : {{ groupe.parent.libelle || 'Garantie sans nom' }}</h5>
+
+            <!-- Section pour ajouter une nouvelle exclusion -->
+            <div class="ajout-exclusion" 
+                 *ngIf="groupe.sousGaranties && groupe.sousGaranties.length > 0 && groupe.sousGaranties[0]"
+                 style="margin-bottom: 1rem; padding: 1rem; background: #f8f9fa; border-radius: 4px;">
+              
+              <label style="font-weight: bold; display: block; margin-bottom: 0.5rem;">
+                Ajouter une nouvelle exclusion pour cette garantie :
+              </label>
+              
+              <div style="display: flex; gap: 0.5rem;">
+                <input 
+                  type="text" 
+                  [(ngModel)]="groupe.sousGaranties[0].nouvelleExclusion"
+                  placeholder="Saisir le nom de la nouvelle exclusion..."
+                  style="flex: 1; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;"
+                  (keyup.enter)="ajouterExclusionPersonnalisee(groupe.sousGaranties[0])">
+                
+                <button 
+                  pButton 
+                  label="Ajouter" 
+                  icon="pi pi-plus"
+                  (click)="ajouterExclusionPersonnalisee(groupe.sousGaranties[0])"
+                  class="p-button-sm bouton-ajout-exclusion"
+                  style="height: 38px; min-width: 100px; display: flex; align-items: center; justify-content: center;"
+                  [disabled]="!groupe.sousGaranties[0].nouvelleExclusion?.trim()">
+                </button>
+              </div>
+            </div>
+
+            <!-- Liste des exclusions -->
+            <div *ngIf="groupe.sousGaranties && groupe.sousGaranties.length > 0 && groupe.sousGaranties[0] && 
+                        groupe.sousGaranties[0].exclusionsOptions && groupe.sousGaranties[0].exclusionsOptions.length > 0" 
+                 class="exclusions-container">
+              
+              <label class="exclusions-label">Sélectionner les exclusions applicables :</label>
+              
+              <div class="exclusions-scroll-container" tabindex="0" 
+                   (keydown)="handleKeyboardExclusions($event, groupe.sousGaranties[0])">
+                
+                <div class="exclusions-list">
+                  <div *ngFor="let exclusion of groupe.sousGaranties[0].filteredExclusionsOptions; let exclIndex = index" 
+                       class="exclusion-item">
+                    
+                    <input 
+                      type="checkbox" 
+                      [id]="'exclusion_' + i + '_' + groupeIndex + '_' + exclIndex"
+                      [checked]="isExclusionSelected(groupe.sousGaranties[0], exclusion.id)"
+                      (change)="toggleExclusion(groupe.sousGaranties[0], exclusion.id)"
+                      class="exclusion-checkbox">
+                    
+                    <label 
+                      [for]="'exclusion_' + i + '_' + groupeIndex + '_' + exclIndex" 
+                      class="exclusion-text">
+                      {{ exclusion.nom }}
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Message si aucune exclusion disponible -->
+            <div *ngIf="!(groupe.sousGaranties && groupe.sousGaranties[0] && groupe.sousGaranties[0].exclusionsOptions) || 
+                        (groupe.sousGaranties && groupe.sousGaranties[0] && groupe.sousGaranties[0].exclusionsOptions && 
+                         groupe.sousGaranties[0].exclusionsOptions.length === 0)">
+              <p>⚠️ Aucune exclusion disponible pour cette garantie.</p>
+            </div>
+
+          </div>
+        </div>
+
+        <ng-template #noGaranties>
+          <p>Aucune garantie disponible pour cette situation.</p>
+        </ng-template>
+      </div>
+
+      <div style="margin-top: 10px; display: flex; gap: 1rem;">
+        <button pButton label="← Précédent" (click)="prevStep()"></button>
+        <button pButton label="Suivant →" (click)="nextStep()"></button>
+      </div>
+    </div>
+
+    <!-- Étape 5 : RC Exploitation -->
+    <div *ngIf="currentStep === 5" class="contrat-section">
+      <h3>RC Exploitation</h3>
+
+      <!-- Objet de la garantie -->
+      <div class="card" style="background-color: #e8f5e9; margin-bottom: 2rem;">
+        <label>Objet de la garantie</label>
+        <textarea 
+          [value]="objetGarantieRc" 
+          rows="3" 
+          class="p-inputtextarea p-component"
+          style="width: 100%; resize: vertical;"
+          readonly
+        ></textarea>
+      </div>
+
+      <!-- Liste des RC Exploitation existantes -->
+      <div *ngIf="rcExploitations.length > 0" style="margin-top: 2rem;">
+        <h4>RC Exploitation configurées :</h4>
+        <div *ngFor="let rc of rcExploitations; let i = index" class="rc-item card" style="padding: 1rem; margin-bottom: 1rem; border-left: 4px solid #388e3c;">
+          <div style="display: flex; justify-content: space-between; align-items: start;">
+            <div>
+              <strong>RC {{ i + 1 }}</strong>
+              <div style="margin-top: 0.5rem;">
+                <strong>Paramètres :</strong><br>
+                • Dommages Corporels: {{ rc.limiteAnnuelleDomCorporels }}<br>
+                • Dommages Matériels: {{ rc.limiteAnnuelleDomMateriels }}<br>
+                • Limite/sinistre: {{ rc.limiteParSinistre }}<br>
+                • Franchise: {{ rc.franchise }}<br>
+                • Prime NET: {{ rc.primeNET }}
+              </div>
+              <div style="margin-top: 0.5rem;">
+                <strong>Situations couvertes :</strong><br>
+                {{ getRcSituationsNames(rc) }}
+              </div>
+              <div style="margin-top: 0.5rem;">
+                <strong>Exclusions ({{ (rc.exclusionsIds || []).length }})</strong>
+              </div>
+            </div>
+            <div>
+              <i class="pi pi-pencil" 
+                 style="color: #388e3c; cursor: pointer; margin-right: 10px;" 
+                 (click)="editRcExploitation(i)"
+                 title="Modifier"></i>
+              <i class="pi pi-trash" 
+                 style="color: #e74c3c; cursor: pointer;" 
+                 (click)="removeRcExploitation(i)"
+                 title="Supprimer"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Formulaire pour ajouter/modifier une RC -->
+      <div class="contrat-section">
+        <h4>{{ rcExploitations.length > 0 ? 'Ajouter une autre RC Exploitation' : 'Configurer une RC Exploitation' }}</h4>
+
+        <!-- Paramètres de la RC -->
+        <div class="form-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+          <div class="form-group">
+            <label>Limite annuelle Dommages Corporels</label>
+            <input type="number" [(ngModel)]="currentRcExploitation.limiteAnnuelleDomCorporels">
+          </div>
+
+          <div class="form-group">
+            <label>Limite annuelle Dommages Matériels</label>
+            <input type="number" [(ngModel)]="currentRcExploitation.limiteAnnuelleDomMateriels">
+          </div>
+
+          <div class="form-group">
+            <label>Limite par sinistre</label>
+            <input type="number" [(ngModel)]="currentRcExploitation.limiteParSinistre">
+          </div>
+
+          <div class="form-group">
+            <label>Franchise</label>
+            <input type="number" [(ngModel)]="currentRcExploitation.franchise">
+          </div>
+
+          <div class="form-group">
+            <label>Prime Net</label>
+            <input type="number" [(ngModel)]="currentRcExploitation.primeNET">
+          </div>
+        </div>
+
+        <!-- Sélection des situations -->
+        <h5>Sélectionner les situations pour cette RC :</h5>
+        <div class="situations-list">
+          <div *ngFor="let s of situationRisques" class="situation-item" style="padding: 0.5rem; border-bottom: 1px solid #eee;">
+            <label [class.disabled]="isSituationUsedInOtherRc(s, currentRcExploitation.id)" 
+                   style="display: flex; align-items: center; gap: 0.5rem;">
+              <input 
+                type="checkbox" 
+                [checked]="isRcSituationSelected(s)" 
+                (change)="toggleRcSituation(s, $event)"
+                [disabled]="isSituationUsedInOtherRc(s, currentRcExploitation.id)"
+                style="margin: 0;">
+              <div>
+                <strong>{{ s.identification }}</strong>
+                <div style="font-size: 0.8em; color: #666;">{{ s.adresse }}</div>
+                <div *ngIf="isSituationCoveredByRc(s)" style="font-size: 0.8em; color: #388e3c;">
+                  ✓ Déjà couverte par une RC
+                </div>
+              </div>
+              <span *ngIf="isSituationUsedInOtherRc(s, currentRcExploitation.id)" 
+                    style="color: #999; font-size: 0.8em; margin-left: auto;">
+                (déjà utilisée dans une autre RC)
+              </span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Exclusions -->
+        <div class="exclusions-section" style="margin-top: 2rem;">
+          <h5>Exclusions pour cette RC :</h5>
+
+          <div class="ajout-exclusion" style="margin-bottom: 1rem; padding: 1rem; background: #f8f9fa; border-radius: 4px;">
+            <label style="font-weight: bold; display: block; margin-bottom: 0.5rem;">
+              Ajouter une nouvelle exclusion RC :
+            </label>
+            <div style="display: flex; gap: 0.5rem;">
+              <input 
+                type="text" 
+                [(ngModel)]="nouvelleExclusionRC"
+                placeholder="Saisir le nom de la nouvelle exclusion RC..."
+                style="flex: 1; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;"
+                (keyup.enter)="ajouterExclusionRC()">
+              <button 
+                pButton 
+                label="Ajouter" 
+                icon="pi pi-plus"
+                (click)="ajouterExclusionRC()"
+                class="p-button-sm"
+                style="height: 38px; min-width: 100px;">
+              </button>
+            </div>
+          </div>
+
+          <div *ngIf="filteredExclusionsRC.length > 0" class="exclusions-container">
+            <label class="exclusions-label">Sélectionner les exclusions applicables :</label>
+            
+            <div class="exclusions-scroll-container" tabindex="0"> 
+              <div class="exclusions-list">
+                <div *ngFor="let ex of filteredExclusionsRC; let exclIndex = index" 
+                     class="exclusion-item" style="padding: 0.5rem; border-bottom: 1px solid #eee;">
+                  
+                  <input 
+                    type="checkbox" 
+                    [id]="'exclusionRC_' + ex.id"
+                    [checked]="currentRcExploitation.exclusionsIds.includes(ex.id)"
+                    (change)="toggleCurrentRcExclusion(ex.id, $event)"
+                    class="exclusion-checkbox"
+                    style="margin-right: 0.5rem;">
+                  
+                  <label 
+                    [for]="'exclusionRC_' + ex.id" 
+                    class="exclusion-text"
+                    style="cursor: pointer;">
+                    {{ ex.nom }}
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bouton Ajouter -->
+        <div style="margin-top: 1rem; display: flex; gap: 1rem; align-items: center;">
+          <button 
+            pButton 
+            type="button" 
+            [label]="currentRcExploitation.situations.length > 0 ? 'Ajouter cette RC' : 'Ajouter RC'" 
+            (click)="addRcExploitation()"
+            [disabled]="currentRcExploitation.situations.length === 0 || !canAddNewRc"
+            class="p-button-success"
+            style="margin-top: 1rem;">
+          </button>
+          
+          <span *ngIf="!canAddNewRc" style="color: #666; font-size: 0.9em;">
+            ❌ Toutes les situations sont déjà couvertes par une RC
+          </span>
+          
+          <span *ngIf="currentRcExploitation.situations.length === 0 && canAddNewRc" style="color: #666; font-size: 0.9em;">
+            ⚠️ Veuillez sélectionner au moins une situation
+          </span>
+        </div>
+      </div>
+
+      <!-- Navigation -->
+      <div style="margin-top: 2rem; display: flex; gap: 1rem;">
+        <button pButton label="← Précédent" (click)="prevStep()"></button>
+        <button pButton label="Soumettre" (click)="submit()" 
+                class="p-button-success"></button>
+        <button pButton label="Test RC" (click)="testAvecDonneesRC()" class="p-button-help"></button>
+      </div>
+    </div>
+    </div>
+  </div> <!-- Fin de contrat-container -->
+
+  <!-- Sidebar PDF -->
+  <div class="pdf-sidebar" *ngIf="showModele">
+    <div class="pdf-container">
+      <div class="pdf-header">
+        <h3>Modèle de Contrat</h3>
+        <button 
+          pButton 
+          icon="pi pi-times" 
+          class="p-button-text p-button-sm"
+          (click)="toggleModele()"
+          title="Fermer">
+        </button>
+      </div>
+      
+      <ng-container *ngIf="pdfUrl; else loading">
+        <iframe [src]="pdfUrl" width="100%" height="100%"></iframe>
+      </ng-container>
+      
+      <ng-template #loading>
+        <div class="loading-content">
+          <p *ngIf="contratData || situationRisques.length > 0" class="loading-text">
+            <i class="pi pi-spin pi-spinner" style="margin-right: 8px;"></i>
+            Génération du PDF en cours...
+          </p>
+          <p *ngIf="!contratData && situationRisques.length === 0" class="no-data-text">
+            <i class="pi pi-info-circle" style="margin-right: 8px;"></i>
+            Veuillez d'abord créer au moins une situation de risque pour générer le PDF.
+          </p>
+        </div>
+      </ng-template>
+    </div>
+  </div>
+</div> <!-- Fin de contrat-main-container -->
