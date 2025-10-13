@@ -35,6 +35,7 @@
           <th pSortableColumn="primeTTC">Prime TTC <p-sortIcon field="primeTTC"></p-sortIcon></th>
           <th pSortableColumn="dateDebut">Date Début <p-sortIcon field="dateDebut"></p-sortIcon></th>
           <th pSortableColumn="dateFin">Date Fin <p-sortIcon field="dateFin"></p-sortIcon></th>
+           <th *ngIf="isAdmin">Status</th> 
           <th>Actions</th>
         </tr>
       </ng-template>
@@ -58,6 +59,7 @@
           <td>{{ contrat.primeTTC | number:'1.2-2' }}</td>
           <td>{{ contrat.dateDebut | date:'dd/MM/yyyy' }}</td>
           <td>{{ contrat.dateFin | date:'dd/MM/yyyy' }}</td>
+          <td *ngIf="isAdmin"> <p-toggleButton   [(ngModel)]="contrat.fige"  onLabel="Figé" offLabel="Actif"    onLabel="Figé" offLabel="Actif" (onChange)="toggleStatus(contrat)"> </p-toggleButton></td>
           <td class="actions">
             <button pButton type="button" icon="pi pi-pencil" class="p-button-text p-button-sm"
                     (click)="editContrat(contrat)">

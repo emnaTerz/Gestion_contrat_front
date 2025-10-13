@@ -34,7 +34,7 @@
     </div>
 
     <label>Branche:</label>
-    <select [(ngModel)]="branche">
+    <select [(ngModel)]="branche" (ngModelChange)="onBrancheChange()">
       <option *ngFor="let opt of brancheOptions" [value]="opt.value">{{ opt.label }}</option>
     </select>
     <label>Code Produit:</label>

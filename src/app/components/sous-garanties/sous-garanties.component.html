@@ -1,0 +1,43 @@
+
+<div class="sous-garanties-container">
+  <h2>Les garanties de {{ garantieLabel }}</h2>
+
+  <!-- Card blanche avec shadow vert -->
+  <div class="card-container">
+    <!-- Barre de recherche -->
+    <div class="search-bar">
+      <input
+        type="text"
+        placeholder="Rechercher une garantie..."
+        [(ngModel)]="searchTerm"
+        (input)="filterSousGaranties()"
+      />
+      <button *ngIf="searchTerm" (click)="clearSearch()" class="clear-btn">
+        <i class="pi pi-times"></i>
+      </button>
+    </div>
+
+    <!-- Message si aucune sous-garantie -->
+    <div *ngIf="filteredSousGaranties.length === 0" class="empty">
+      Aucune garantie correspondante.
+    </div>
+
+    <!-- Liste scrollable -->
+    <div *ngIf="filteredSousGaranties.length > 0" class="sous-garantie-list">
+      <div *ngFor="let sg of filteredSousGaranties" class="sous-garantie-card">
+        <span>{{ sg.nom }}</span>
+        <!-- Bouton corbeille -->
+     <i class="pi pi-trash delete-icon" (click)="confirmDelete(sg)" title="Supprimer la sous-garantie"></i>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Dialog de confirmation -->
+<p-dialog header="Confirmation" [(visible)]="displayConfirm" [modal]="true" [closable]="false">
+  <p>Voulez-vous vraiment supprimer cette garantie ?</p>
+  <p-footer>
+    <button pButton type="button" label="Annuler" (click)="displayConfirm=false"></button>
+    <button pButton type="button" label="Supprimer" class="p-button-danger" (click)="deleteSousGarantie()"></button>
+  </p-footer>
+</p-dialog>

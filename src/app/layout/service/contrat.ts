@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { catchError, Observable, throwError } from 'rxjs';
 
 
@@ -7,6 +7,7 @@ export interface SousGarantie {
   id: number;
   nom: string;
   garantie: Garantie; 
+  branche: Branche;
   garantieParent: Garantie;
 
   // Pour stocker les exclusions
@@ -87,6 +88,7 @@ export interface Contrat {
   primeTTC: number;
   dateDebut: string;
   dateFin: string;
+  status: string;
 }
 
 // Dans votre service/contrat.ts
@@ -190,10 +192,6 @@ export interface GarantieResponseDTO {
 }
 
 
-export interface Garantie {
-  id: number;
-  nom: string;
-}
 
 export interface SectionResponseDTO {
   id: number;
@@ -245,13 +243,43 @@ export class ContratService {
 
   private extractApiUrl = 'http://localhost:5000/extract'; // ton API Flask
   private sousGarantieApiUrl = 'http://localhost:8081/contrat/catalogue/sous-garantie'; // ton API sous-garanties
+  private GarantieApiUrl = 'http://localhost:8081/contrat/catalogue/garantie'; // ton API sous-garanties
+
   private exclusionApiUrl = 'http://localhost:8081/contrat/catalogue/exclusion/garantie'; // API exclusions
 private baseUrl = 'http://localhost:8081/contrat';
   private tarifApiUrl = 'http://localhost:8081/contrat/tarifs';
   constructor(private http: HttpClient) { }
 
+toggleContratStatus(numPolice: string): Observable<any> {
+  return this.http.patch(`http://localhost:8081/contrat/${numPolice}/status`, {});
+}
 
+getContratStatus(numPolice: string) {
+  // responseType: 'text' dit à HttpClient de traiter la réponse comme simple texte
+  return this.http.get(`http://localhost:8081/contrat/${numPolice}/status`, { responseType: 'text' });
+}
 
+   deleteSousGarantie(id: number): Observable<void> {
+    return this.http.delete<void>(`http://localhost:8081/contrat/catalogue/sous-garantie/${id}`);
+  }
+
+getSousGarantiesbybranche(garantieId: number, branche: string): Observable<SousGarantie[]> {
+  const params = new HttpParams().set('branche', branche);
+  return this.http.get<SousGarantie[]>(
+    `http://localhost:8081/contrat/catalogue/sous-garantie-branche/${garantieId}`, 
+    { params }
+  );
+}
+
+ deleteGarantie(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.GarantieApiUrl}/${id}`);
+  }
+  createGarantie(garantie: Garantie): Observable<Garantie> {
+    return this.http.post<Garantie>(`${this.GarantieApiUrl}`, garantie);
+  }
+getAllGaranties(): Observable<Garantie[]> {
+    return this.http.get<Garantie[]>(`${this.GarantieApiUrl}`);
+  }
   getAllContrat(): Observable<Contrat[]> {
   const token = localStorage.getItem('token'); // récupère le token stocké
   const headers = { 
@@ -275,8 +303,12 @@ private baseUrl = 'http://localhost:8081/contrat';
     );
   }
   // Méthode pour récupérer toutes les sous-garanties
-  getSousGaranties(): Observable<SousGarantie[]> {
+  getallSousGaranties(): Observable<SousGarantie[]> {
     return this.http.get<SousGarantie[]>(this.sousGarantieApiUrl);
+  }
+  getSousGaranties(branche: string): Observable<SousGarantie[]> {
+    const url = `${this.sousGarantieApiUrl}/by-and-branche/${branche}`;
+    return this.http.get<SousGarantie[]>(url);
   }
 createExclusion(exclusion: any): Observable<Exclusion> {
   return this.http.post<Exclusion>('http://localhost:8081/contrat/catalogue/exclusion', exclusion);

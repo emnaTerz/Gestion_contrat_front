@@ -10,6 +10,8 @@ import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
+import { ToggleButtonModule } from 'primeng/togglebutton';
+
 import { ToastModule } from 'primeng/toast';
 
 @Component({
@@ -23,8 +25,8 @@ import { ToastModule } from 'primeng/toast';
     ButtonModule,
     TagModule,
     ToastModule,
-  DialogModule
-    ],
+  DialogModule,
+  ToggleButtonModule ],
 
   templateUrl: './contrat-list.component.html',
   styleUrls: ['./contrat-list.component.scss']
@@ -50,6 +52,7 @@ showAdherentDetails(adherent: any) {
     private router: Router,
     private messageService: MessageService
   ) {}
+   isAdmin: boolean = false;
 dateDebutFilter: string | null = null;
 dateFinFilter: string | null = null;
 getFractionnementLabel(value: number | string | null): string {
@@ -88,22 +91,54 @@ filterByDate() {
 }
   ngOnInit(): void {
     this.getAllContrats();
+     const role = localStorage.getItem('userRole');
+    this.isAdmin = role === 'ADMIN';
   }
 
-  getAllContrats() {
-    this.loading = true;
-    this.contratService.getAllContrat().subscribe({
-      next: (data) => {
-        this.contrats = data;
-        this.filteredContrats = data;
-        this.loading = false;
-      },
-      error: (err) => {
-        console.error(err);
-        this.loading = false;
-      }
-    });
-  }
+
+
+  toggleStatus(contrat: any) {
+  this.contratService.toggleContratStatus(contrat.numPolice).subscribe({
+    next: (res) => {
+      contrat.status = res.status; // met à jour l'objet local
+      this.messageService.add({
+        severity: 'success',
+        summary: 'Statut modifié',
+        detail: `Le contrat ${contrat.numPolice} est maintenant ${contrat.status}`
+      });
+    },
+    error: (err) => {
+      console.error(err);
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Erreur',
+        detail: 'Impossible de modifier le statut'
+      });
+    }
+  });
+}
+
+
+
+ getAllContrats() {
+  this.loading = true;
+  this.contratService.getAllContrat().subscribe({
+    next: (data) => {
+      // Convertir status en booléen pour le toggle
+      this.contrats = data.map(c => ({
+        ...c,
+        fige: c.status === 'figé'  // ✅ true si figé, false sinon
+      }));
+      this.filteredContrats = [...this.contrats];
+      this.loading = false;
+    },
+    error: (err) => {
+      console.error(err);
+      this.loading = false;
+    }
+  });
+}
+
 
 onGlobalFilter(event: any) {
   const value = event.target.value.toLowerCase();

@@ -52,7 +52,7 @@
       <!-- Branche -->
       <div class="contrat-section">
         <label for="branche">Branche:</label>
-        <select id="branche" [(ngModel)]="branche">
+        <select id="branche" [(ngModel)]="branche" (ngModelChange)="onBrancheChange()">
           <option *ngFor="let opt of brancheOptions" [value]="opt.value">{{ opt.label }}</option>
         </select>
         <label for="codeProduit">Code Produit:</label>

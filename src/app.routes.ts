@@ -12,6 +12,8 @@ import { ForceResetPasswordComponent } from '@/components/force-reset-password/f
 import { ModifierContratComponent } from '@/components/modifier-contrat-component/modifier-contrat-component.component';
 import { ContratListComponent } from '@/components/contrat-list/contrat-list.component';
 import { NotfoundComponent } from '@/components/notfound/notfound.component';
+import { GarantieManagementComponent } from '@/components/garantie-management/garantie-management.component';
+import { SousGarantiesComponent } from '@/components/sous-garanties/sous-garanties.component';
 
 
 export const appRoutes: Routes = [
@@ -25,9 +27,11 @@ export const appRoutes: Routes = [
         component: EmptyLayoutComponent,
         children: [
             { path: 'action-history', component: ActionHistoryComponent, canActivate: [AuthGuard], data: { expectedRole: 'ADMIN' } },
+            { path: 'garanties', component: GarantieManagementComponent, canActivate: [AuthGuard], data: { expectedRole: 'ADMIN' } }, 
+            { path: 'sous-garanties', component: SousGarantiesComponent, canActivate: [AuthGuard], data: { expectedRole: 'ADMIN' } }, 
             { path: 'users', component: UsersComponent, canActivate: [AuthGuard], data: { expectedRole: 'ADMIN' } },
             { path: 'Contrat', component: ContratComponent, canActivate: [AuthGuard], data: { expectedRole: 'USER' } },
-            { path: 'contrat-list', component: ContratListComponent, canActivate: [AuthGuard], data: { expectedRole: 'USER' } },
+            {  path: 'contrat-list',   component: ContratListComponent, canActivate: [AuthGuard],  data: { expectedRole: ['USER', 'ADMIN'] } },
             { path: 'Modif_Contrat/:numPolice', component: ModifierContratComponent, canActivate: [AuthGuard], data: { expectedRole: 'USER' } },
             { path: 'Landing', component: LandingComponent, canActivate: [AuthGuard], data: { expectedRole: 'USER' } },
             { path: 'force-reset-password', component: ForceResetPasswordComponent, canActivate: [AuthGuard], data: { expectedRole: 'USER' } },

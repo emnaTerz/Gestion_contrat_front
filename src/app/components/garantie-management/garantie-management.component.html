@@ -1,0 +1,105 @@
+<!-- 
+
+ <div class="garantie-container">
+  <h2>Garanties</h2>
+
+  <div class="add-garantie">
+    <input 
+      type="text" 
+      placeholder="Nouvelle garantie..." 
+      [(ngModel)]="newGarantieLibelle" />
+    <button (click)="addGarantie()" title="Ajouter">
+      <i class="pi pi-plus"></i> Ajouter
+    </button>
+  </div>
+
+  <div *ngIf="garanties.length === 0" class="empty">
+    Aucune garantie disponible.
+  </div>
+
+  <div *ngIf="garanties.length > 0" class="garantie-list">
+    <div *ngFor="let g of garanties" class="garantie-card" (click)="openBrancheDialog(g.id)">
+      <div class="garantie-item">
+           <span>{{ g.libelle || 'Nom non défini' }}</span>
+        <i 
+          class="pi pi-trash delete-icon"
+          title="Supprimer"
+          (click)="confirmDelete(g.id, g.libelle)">
+        </i>
+      </div>
+    </div>
+  </div>
+
+<p-confirmDialog></p-confirmDialog>
+<p-toast></p-toast>
+</div>
+
+<div *ngIf="displayBrancheDialog" class="popup-overlay">
+  <div class="popup-content">
+    <h3>Sélectionner la branche</h3>
+
+    <select [(ngModel)]="selectedBranche">
+      <option *ngFor="let b of Branche" [value]="b.value">{{ b.label }}</option>
+    </select>
+
+    <div class="popup-actions">
+      <button (click)="onBrancheSelected()">Valider</button>
+      <button (click)="displayBrancheDialog = false">Annuler</button>
+    </div>
+  </div>
+</div> -->
+<div class="garantie-container">
+  <h2>Garanties</h2>
+
+  <!-- Ajout d'une nouvelle garantie -->
+  <div class="add-garantie">
+    <input 
+      type="text" 
+      placeholder="Nouvelle garantie..." 
+      [(ngModel)]="newGarantieLibelle" />
+    <button (click)="addGarantie()" title="Ajouter">
+      <i class="pi pi-plus"></i> Ajouter
+    </button>
+  </div>
+
+  <!-- Message si aucune garantie -->
+  <div *ngIf="garanties.length === 0" class="empty">
+    Aucune garantie disponible.
+  </div>
+
+  <!-- Liste des garanties -->
+  <div *ngIf="garanties.length > 0" class="garantie-list">
+    <div *ngFor="let g of garanties" class="garantie-card" (click)="openBrancheDialog(g.id)">
+      <div class="garantie-item">
+        <span>{{ g.libelle || 'Nom non défini' }}</span>
+        <i 
+          class="pi pi-trash delete-icon"
+          title="Supprimer"
+          (click)="confirmDelete(g.id, g.libelle); $event.stopPropagation()">
+        </i>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dialogue de confirmation et toast -->
+  <p-confirmDialog></p-confirmDialog>
+  <p-toast></p-toast>
+</div>
+
+<!-- Popup de sélection de branche -->
+<div *ngIf="displayBrancheDialog" class="popup-overlay">
+  <div class="popup-content">
+    <h3>Sélectionner la branche</h3>
+
+    <!-- Select HTML natif -->
+    <select [(ngModel)]="selectedBranche">
+      <option *ngFor="let b of Branche" [value]="b.value">{{ b.label }}</option>
+    </select>
+
+    <!-- Footer avec boutons -->
+    <div class="popup-actions">
+      <button (click)="onBrancheSelected()">Valider</button>
+      <button (click)="displayBrancheDialog = false">Annuler</button>
+    </div>
+  </div>
+</div>

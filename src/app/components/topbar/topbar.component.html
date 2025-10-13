@@ -106,6 +106,20 @@
     </button>
   </ng-template>
 </p-dialog>
+<!-- Nouveau bouton Garanties -->
+<button *ngIf="isAdmin" 
+        pButton icon="pi pi-shield" 
+        class="p-button-text"
+        (click)="navigateToGaranties()" 
+        title="Gestion des Garanties">
+</button>
+<!-- Nouveau bouton Contrats -->
+<button *ngIf="isAdmin" 
+        pButton icon="pi pi-file" 
+        class="p-button-text"
+        (click)="navigateToContrats()" 
+        title="Liste des Contrats">
+</button>
 
 
   <button pButton icon="pi pi-sign-out" 

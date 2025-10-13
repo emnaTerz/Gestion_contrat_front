@@ -1,0 +1,215 @@
+
+ @use "sass:color"; 
+ $green-mae: #008037;
+
+.garantie-container {
+  padding: 20px;
+  font-family: Arial, sans-serif;
+}
+
+h2 {
+  color: $green-mae;
+}
+
+.empty {
+  font-style: italic;
+  color: gray;
+}
+
+.add-garantie {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+  gap: 10px;
+
+  input {
+    padding: 8px 12px;
+    border: 1px solid $green-mae;
+    border-radius: 4px;
+    width: 200px;
+  }
+
+  button {
+    background-color: $green-mae;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+
+    &:hover {
+    background-color: color.adjust($green-mae, $lightness: -10%);
+    }
+
+    i {
+      font-size: 14px;
+    }
+  }
+}
+
+.garantie-list {
+display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.garantie-card {
+ /*  flex: 1 1 200px; */
+   flex: 1 1 calc(25% - 15px);
+  border: 1px solid $green-mae;
+  border-radius: 8px;
+  background-color: #d9f0e5;
+  padding: 12px 16px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s;
+  display: flex;
+  align-items: center;
+ justify-content: space-between;
+  &:hover {
+    transform: translateY(-2px);
+  }
+}
+.garantie-card span {
+  flex: 1;  /* prend tout l’espace entre l’icône et la poubelle */
+  color: $green-mae;
+  font-weight: bold;
+  font-size: 16px;
+}
+
+
+.garantie-item {
+  display: flex;
+  justify-content: space-between;  // ajoute ça
+  align-items: center;
+  width: 100%;
+
+  span {
+    color: $green-mae;
+    font-weight: bold;
+    font-size: 16px;
+  }
+}
+
+
+.delete-icon {
+  color: #d32f2f;
+  font-size: 1.3rem;
+  cursor: pointer;
+  transition: color 0.2s ease, transform 0.2s ease;
+
+  &:hover {
+    color: #ff0000;
+    transform: scale(1.2);
+  }}
+/* Popup overlay */
+.popup-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+/* Popup overlay */
+.popup-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.6); // un peu plus sombre
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 10px;
+}
+
+/* Popup content */
+.popup-content {
+  background: #fff;
+  padding: 30px 40px;
+  border-radius: 12px;
+  min-width: 400px;
+  max-width: 600px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+  animation: popupFade 0.3s ease-in-out;
+
+  h3 {
+    margin: 0;
+    font-size: 22px;
+    color: $green-mae;
+    text-align: center;
+    font-weight: 600;
+  }
+
+  select {
+    padding: 12px 16px;
+    border-radius: 6px;
+    border: 1px solid $green-mae;
+    font-size: 18px;
+    width: 100%;
+    transition: all 0.2s ease;
+
+    &:focus {
+      outline: none;
+      border-color: darken($green-mae, 10%);
+      box-shadow: 0 0 5px rgba(0,128,55,0.5);
+    }
+  }
+}
+
+/* Footer des boutons */
+.popup-actions {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+
+  button {
+    padding: 10px 25px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 16px;
+    transition: all 0.2s ease;
+
+    &:first-child {
+      background-color: $green-mae;
+      color: #fff;
+
+      &:hover {
+        background-color: color.adjust($green-mae, $lightness: -15%);
+      }
+    }
+
+    &:last-child {
+      background-color: #e0e0e0;
+      color: #333;
+
+      &:hover {
+        background-color: #bdbdbd;
+      }
+    }
+  }
+}
+
+/* Animation */
+@keyframes popupFade {
+  0% { transform: scale(0.8); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .popup-content {
+    min-width: 90%;
+    padding: 20px;
+  }
+}

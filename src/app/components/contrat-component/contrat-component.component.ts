@@ -14,6 +14,7 @@ import { Branche, CodeRenouvellement, ContratDTO, ContratService, Fractionnement
 import { FileUploadModule } from 'primeng/fileupload';
 import { PdfGeneratorService } from '@/layout/service/PdfGeneratorService';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { Router } from '@angular/router';
 
 interface Exclusion {
   id: number;
@@ -201,7 +202,7 @@ filteredExclusionsRC: any[] = [];
 selectedSituationsName: string = '';
   rcConfigurations: RcConfiguration[] = [];
   currentRcConfig: RcConfiguration = this.createNewRcConfig();
-  constructor(private contratService: ContratService, private messageService: MessageService , private pdfService: PdfGeneratorService, private sanitizer: DomSanitizer) {}
+  constructor(private contratService: ContratService, private messageService: MessageService , private pdfService: PdfGeneratorService, private sanitizer: DomSanitizer, private router: Router) {}
 // In your component class
  pdfUrl: SafeResourceUrl | null = null;
   generatePdf(data: any) {
@@ -426,7 +427,6 @@ private prepareGarantiesForPdf(garanties: GarantieSection[]): any[] {
 }
 
   ngOnInit(): void {
-    this.loadSousGaranties();
      this.updatePreambule();
    const now = new Date(); // date locale
 this.startTime = now.getFullYear() + '-' +
@@ -490,6 +490,7 @@ uploadSelectedPdf() {
         // Dates
         this.dateDebut = this.formatDateForInput(lines[15]);
         this.dateFin = this.formatDateForInput(lines[16]);
+         this.loadSousGaranties();
       }
     },
     error: (err) => {
@@ -739,39 +740,69 @@ ajouterExclusionPersonnalisee(garantie: GarantieSection) {
 }
 
  
-
-
-  loadSousGaranties() {
-  this.contratService.getSousGaranties().subscribe(data => {
-    // 🔹 créer une map pour accéder rapidement à la sous-garantie par id
+onBrancheChange() {
+  if (this.branche && this.branche.trim && this.branche.trim() !== '') {
+    this.loadSousGaranties();
+  } else {
+    this.sousGarantiesOptions = [];
     this.sousGarantiesMap = {};
-    
-    this.sousGarantiesOptions = data.map(sg => {
-      // Stocker la sous-garantie complète dans la map
-      this.sousGarantiesMap[sg.id] = sg;
-      return {
-        label: sg.nom,
-        value: sg.id,
-        garantieParent: sg.garantie  // 🔹 ici, le "garantie parent"
-        
-      };
-   
-    });
-
-    // 🔹 Initialiser le filtrage pour toutes les garanties existantes
-    this.situationRisques.forEach(s => {
-      s.garanties.forEach(g => {
-        g.filteredSousGarantiesOptions = [...this.sousGarantiesOptions];
-        g.keyboardFilterGaranties = '';
-        g.lastKeyTimeGaranties = 0;
-        g.filterTimeoutGaranties = null;
-      });
-    });
-  });
+  }
 }
 
 
+loadSousGaranties() {
+  console.log('🔍 loadSousGaranties called with branche:', this.branche);
+  
+  if (!this.branche || this.branche.trim() === '') {
+    console.warn('❌ No branche selected');
+    this.sousGarantiesOptions = [];
+    this.sousGarantiesMap = {};
+    return;
+  }
 
+  console.log('📡 Calling service with branche:', this.branche);
+  
+  this.contratService.getSousGaranties(this.branche).subscribe({
+    next: (data) => {
+      console.log('✅ Sous-garanties loaded:', data);
+      
+      this.sousGarantiesMap = {};
+      this.sousGarantiesOptions = data.map(sg => {
+        console.log('📝 Processing sous-garantie:', sg);
+        this.sousGarantiesMap[sg.id] = sg;
+        return {
+          label: sg.nom,
+          value: sg.id,
+          garantieParent: sg.garantie
+        };
+      });
+
+      console.log('🗂️ Final sousGarantiesOptions:', this.sousGarantiesOptions);
+      console.log('🗺️ Final sousGarantiesMap:', this.sousGarantiesMap);
+
+      // Initialize filtering for existing garanties
+      this.situationRisques.forEach(s => {
+        s.garanties.forEach(g => {
+          g.filteredSousGarantiesOptions = [...this.sousGarantiesOptions];
+          g.keyboardFilterGaranties = '';
+          g.lastKeyTimeGaranties = 0;
+          g.filterTimeoutGaranties = null;
+        });
+      });
+    },
+    error: (err) => {
+      console.error('❌ Error loading sous-garanties:', err);
+      console.error('Error details:', err.message, err.status, err.url);
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Erreur',
+        detail: 'Impossible de charger les sous-garanties'
+      });
+      this.sousGarantiesOptions = [];
+      this.sousGarantiesMap = {};
+    }
+  });
+}
   editSituation(index: number) {
     this.currentSituationRisque = { ...this.situationRisques[index] };
     this.editIndex = index;
@@ -914,6 +945,7 @@ get selectedSituationsNames(): string {
   if (!this.selectedSituations || this.selectedSituations.length === 0) return '';
   return this.selectedSituations.map(s => s.identification).join(', ');
 }
+
 submit() {
   // VÉRIFICATION CRITIQUE: Avez-vous configuré des RC ?
   if (this.rcExploitations.length === 0) {
@@ -1026,6 +1058,9 @@ submit() {
         summary: 'Succès',
         detail: 'Contrat créé avec succès !'
       });
+        setTimeout(() => {
+        this.redirectToLanding();
+      }, 1500); 
     },
     error: (error) => {
       console.error('Erreur création contrat:', error);
@@ -1048,7 +1083,10 @@ submit() {
     }
   });
 }
-
+redirectToLanding() {
+  // Méthode 1: Redirection simple (si vous utilisez le router Angular)
+  // Importez Router et injectez-le dans le constructor
+  this.router.navigate(['/landing']);}
 // 🔥 AJOUT: Formater startTime pour le backend
 private formatStartTimeForBackend(startTime: string): string {
   if (!startTime) {

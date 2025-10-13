@@ -620,6 +620,7 @@ getSousGarantieDetails(sousGarantieId: number): SousGarantieWithDetails | undefi
     const sousGarantie = this.getSousGarantieDetails(sousGarantieId);
     return sousGarantie?.garantie?.libelle || 'Garantie inconnue';
   }
+
 loadContrat(numPolice: string) {
   this.contratService.getContrat(numPolice).subscribe({
     next: (contrat: ContratResponseDTO) => {
@@ -629,7 +630,10 @@ loadContrat(numPolice: string) {
       this.adherent = contrat.adherent;
       this.fractionnement = contrat.fractionnement;
       this.codeRenouvellement = contrat.codeRenouvellement;
+      
+      // 🔥 CORRECTION: Définir la branche AVANT de charger les sous-garanties
       this.branche = contrat.branche;
+      
       this.service = contrat.service;
       this.primeTTC = contrat.primeTTC;
       this.typeContrat = contrat.typeContrat;
@@ -637,39 +641,78 @@ loadContrat(numPolice: string) {
       this.dateFin = contrat.dateFin;
       this.preambule = contrat.preambule || '';
 
-      // Mapping simplifié
-      this.situationRisques = (contrat.sections || []).map((section: SectionResponseDTO, index: number) => ({
-        numPolice: this.numPolice,
-        identification: section.identification,
-        adresse: section.adresse,
-        natureConstruction: section.natureConstruction,
-        contiguite: section.contiguite,
-        avoisinage: section.avoisinage,
-        garanties: (section.garanties || []).map((g: GarantieResponseDTO) => ({
-          sectionId: g.sectionId,
-          sousGarantieId: g.sousGarantieId,
-          franchise: g.franchise,
-          maximum: g.maximum,
-          minimum: g.minimum,
-          hasFranchise: (g.franchise ?? 0) > 0,
-          capitale: g.capitale,
-          primeNET: g.primeNet,
-          exclusionsIds: g.exclusions?.map(e => e.exclusionId) || [],
-          exclusionsOptions: [],
-          garantieParentId: g.garantieParent?.id,
-          garantieParentLibelle: g.garantieParent?.libelle || 'Sans parent'
-        }))
-      }));
+      console.log(`📋 Branche récupérée du contrat: ${this.branche}`);
 
-      // Utiliser la nouvelle méthode optimisée
-      this.loadExclusionsForAllGarantiesOptimized();
-      this.initializeRCExploitation(contrat);
-      this.cd.detectChanges();
+      // 🔥 CORRECTION: Charger les sous-garanties avec la branche du contrat
+      this.loadSousGarantiesWithDetails().then(() => {
+        console.log(`✅ Sous-garanties chargées pour la branche: ${this.branche}`);
+        
+        // Maintenant mapper les sections avec les sous-garanties disponibles
+        this.situationRisques = (contrat.sections || []).map((section: SectionResponseDTO, index: number) => ({
+          numPolice: this.numPolice,
+          identification: section.identification,
+          adresse: section.adresse,
+          natureConstruction: section.natureConstruction,
+          contiguite: section.contiguite,
+          avoisinage: section.avoisinage,
+          garanties: (section.garanties || []).map((g: GarantieResponseDTO) => {
+            const garantieComposant: GarantieComposant = {
+              sectionId: g.sectionId,
+              sousGarantieId: g.sousGarantieId,
+              franchise: g.franchise,
+              maximum: g.maximum,
+              minimum: g.minimum,
+              hasFranchise: (g.franchise ?? 0) > 0,
+              capitale: g.capitale,
+              primeNET: g.primeNet,
+              exclusionsIds: g.exclusions?.map(e => e.exclusionId) || [],
+              exclusionsOptions: [],
+              garantieParentId: g.garantieParent?.id,
+              garantieParentLibelle: g.garantieParent?.libelle || 'Sans parent',
+              // Initialiser les propriétés de filtrage avec les sous-garanties chargées
+              filteredSousGarantiesOptions: [...this.sousGarantiesOptions],
+              keyboardFilterGaranties: '',
+              lastKeyTimeGaranties: 0,
+              filterTimeoutGaranties: null
+            };
+
+            // 🔥 CORRECTION: Si la garantie parent n'est pas définie, la récupérer depuis les sous-garanties chargées
+            if (!garantieComposant.garantieParentId && g.sousGarantieId) {
+              const sousGarantieDetails = this.getSousGarantieDetails(g.sousGarantieId);
+              if (sousGarantieDetails) {
+                garantieComposant.garantieParentId = sousGarantieDetails.garantie.id;
+                garantieComposant.garantieParentLibelle = sousGarantieDetails.garantie.libelle;
+              }
+            }
+
+            return garantieComposant;
+          })
+        }));
+
+        // Utiliser la nouvelle méthode optimisée
+        this.loadExclusionsForAllGarantiesOptimized();
+        this.initializeRCExploitation(contrat);
+        this.cd.detectChanges();
+      }).catch(error => {
+        console.error('❌ Erreur lors du chargement des sous-garanties:', error);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Erreur',
+          detail: 'Impossible de charger les sous-garanties pour cette branche'
+        });
+      });
+
     },
-    error: err => console.error('Erreur chargement contrat', err)
+    error: err => {
+      console.error('Erreur chargement contrat', err);
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Erreur',
+        detail: 'Impossible de charger le contrat'
+      });
+    }
   });
 }
-
 // Vérifier si une exclusion est sélectionnée pour l'affichage dans le groupe
 isExclusionSelectedForGroup(garanties: GarantieComposant[], exclusionId: number): boolean {
   return garanties.some(garantie => 
@@ -852,7 +895,7 @@ initializeFilterProperties(garantie: GarantieComposant ) {
 
   async loadSousGaranties(): Promise<void> {
     return new Promise((resolve) => {
-      this.contratService.getSousGaranties().subscribe({
+      this.contratService.getSousGaranties(this.branche).subscribe({
         next: (data) => {
           this.sousGarantiesOptions = data.map(sg => ({ label: sg.nom, value: sg.id }));
           resolve();
@@ -1274,9 +1317,36 @@ applyGarantieOptionsFilter(garantie: GarantieComposant ) {
     this.keyboardFilterExclusions = '';
     this.filteredExclusionsRC = [...this.exclusionsRC];
   }
+  // Ajoutez cette méthode dans votre classe ModifierContratComponent
+onBrancheChange() {
+  console.log("branche change", this.branche);
+  if (this.branche) {
+    this.loadSousGarantiesWithDetails().then(() => {
+      // Recharger les sous-garanties pour toutes les garanties existantes
+      this.reinitializeSousGarantiesForAllGaranties();
+    });
+  } else {
+    // Réinitialiser les sous-garanties si aucune branche n'est sélectionnée
+    this.sousGarantiesOptions = [];
+    this.sousGarantiesWithDetails = [];
+    this.sousGarantieNameCache.clear();
+  }
+}
+
+// Méthode pour réinitialiser les sous-garanties pour toutes les garanties existantes
+private reinitializeSousGarantiesForAllGaranties() {
+  this.situationRisques.forEach(situation => {
+    situation.garanties.forEach(garantie => {
+      garantie.filteredSousGarantiesOptions = [...this.sousGarantiesOptions];
+      garantie.keyboardFilterGaranties = '';
+      garantie.lastKeyTimeGaranties = 0;
+      garantie.filterTimeoutGaranties = null;
+    });
+  });
+}
    loadSousGarantiesWithDetails(): Promise<void> {
     return new Promise((resolve) => {
-      this.contratService.getSousGaranties().subscribe({
+      this.contratService.getSousGaranties(this.branche).subscribe({
         next: (sousGaranties: any[]) => {
           // Stocker les sous-garanties avec leurs détails complets
           this.sousGarantiesWithDetails = sousGaranties;

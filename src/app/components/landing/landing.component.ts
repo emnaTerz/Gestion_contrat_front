@@ -53,27 +53,73 @@ exclusionsOptions: any[] = []; // tableau pour stocker toutes les exclusions du 
     this.displayModifyDialog = true;
   }
 
-  onSubmitNumPolice() {
-    if (!this.numPoliceInput || this.numPoliceInput.trim() === '') {
-      this.errorMessage = 'Veuillez entrer le numéro de police';
-      return;
-    }
+  // onSubmitNumPolice() {
+  //   if (!this.numPoliceInput || this.numPoliceInput.trim() === '') {
+  //     this.errorMessage = 'Veuillez entrer le numéro de police';
+  //     return;
+  //   }
 
-    this.contratService.checkContratExists(this.numPoliceInput.trim()).subscribe(
-      exists => {
-        if (exists) {
-          this.displayModifyDialog = false;
-          this.router.navigate([`/Modif_Contrat/${this.numPoliceInput.trim()}`]);
-        } else {
-          this.errorMessage = "Aucun contrat trouvé avec ce numéro";
-        }
-      },
-      err => {
-        this.errorMessage = "Erreur lors de la vérification du contrat";
-        console.error(err);
-      }
-    );
+  //   this.contratService.checkContratExists(this.numPoliceInput.trim()).subscribe(
+  //     exists => {
+  //       if (exists) {
+  //         this.displayModifyDialog = false;
+  //         this.router.navigate([`/Modif_Contrat/${this.numPoliceInput.trim()}`]);
+  //       } else {
+  //         this.errorMessage = "Aucun contrat trouvé avec ce numéro";
+  //       }
+  //     },
+  //     err => {
+  //       this.errorMessage = "Erreur lors de la vérification du contrat";
+  //       console.error(err);
+  //     }
+  //   );
+  // }
+  onSubmitNumPolice() {
+  const numPolice = this.numPoliceInput.trim();
+
+  if (!numPolice) {
+    this.errorMessage = "Veuillez saisir un numéro de police";
+    return;
   }
+
+  this.contratService.getContratStatus(numPolice).subscribe(
+    (status: string) => {
+      console.log('Statut brut reçu:', status);
+      
+      // Nettoyer et normaliser le statut
+      const cleanedStatus = status.trim().toLowerCase();
+      console.log('Statut nettoyé:', cleanedStatus);
+      
+      // Gestion des différents cas de status
+      if (cleanedStatus === 'contrat non trouvé' || cleanedStatus === 'non trouvé') {
+        this.errorMessage = "Aucun contrat trouvé avec ce numéro";
+        this.displayModifyDialog = true;
+      } else if (cleanedStatus === 'figé' || cleanedStatus === 'fige') {
+        this.errorMessage = "Le contrat est figé, vous ne pouvez pas le modifier";
+        this.displayModifyDialog = true;
+      } else {
+        // Contrat existe et modifiable
+        this.errorMessage = "";
+        this.displayModifyDialog = false;
+        this.router.navigate([`/Modif_Contrat/${numPolice}`]);
+      }
+    },
+    err => {
+      console.error('Erreur API:', err);
+      
+      // Gestion spécifique des erreurs HTTP
+      if (err.status === 404) {
+        this.errorMessage = "Aucun contrat trouvé avec ce numéro";
+      } else if (err.status === 500) {
+        this.errorMessage = "Erreur serveur, veuillez réessayer plus tard";
+      } else {
+        this.errorMessage = "Erreur lors de la récupération du statut du contrat";
+      }
+      
+      this.displayModifyDialog = true;
+    }
+  );
+}
 
   goToCreateContrat() {
     this.router.navigate(['/Contrat']);
@@ -391,7 +437,7 @@ private getSousGarantieNomFromData(garantie: any): string {
 
 loadSousGarantiesWithDetails(): Promise<void> {
   return new Promise((resolve) => {
-    this.contratService.getSousGaranties().subscribe({
+    this.contratService.getallSousGaranties().subscribe({
       next: (sousGaranties: any[]) => {
         this.sousGarantiesWithDetails = sousGaranties;
         this.sousGarantiesOptions = sousGaranties.map(sg => ({

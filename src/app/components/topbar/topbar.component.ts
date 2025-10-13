@@ -75,6 +75,9 @@ onBrancheChange() {
       });
     }
   }
+navigateToGaranties() {
+  this.router.navigate(['/garanties']); 
+}
 
   save() {
     if (this.tarif) {
@@ -83,4 +86,9 @@ onBrancheChange() {
         alert('Tarif mis à jour avec succès ✅');
       });
     }
-  }}
+  }
+
+  navigateToContrats() {
+    this.router.navigate(['/contrat-list']);
+  }
+}
