@@ -11,6 +11,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { ContratService, ContratDTO, Fractionnement, CodeRenouvellement, Branche, TypeContrat, SectionDTO, ContratResponseDTO, GarantieResponseDTO, SectionResponseDTO,RcConfigurationDTO } from '@/layout/service/contrat';
 import { CheckboxModule } from 'primeng/checkbox';
 import { InputNumberModule } from 'primeng/inputnumber';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { PdfGeneratorService } from '@/layout/service/PdfGeneratorService';
 
 interface Exclusion {
   id: number;
@@ -112,6 +114,9 @@ currentRcExploitation: RCExploitation = this.createNewRcExploitation();
   fractionnement = '';
   codeRenouvellement = '';
   branche = '';
+  service: number = 0;
+  primeTTC: number = 0;
+
   typeContrat = '';
   dateDebut = '';
   dateFin = '';
@@ -187,6 +192,9 @@ filteredExclusionsRC: any[] = [];
     { label: 'Rc Exploitation' },
 
   ];
+    contratData: any = null;
+   pdfUrl: SafeResourceUrl | null = null;
+   showModele = false;
   private lockCheckInterval: any;
   private lockCheckPeriod = 30000; // Vérifier toutes les 30 secondes
   private isLockedByCurrentUser = true;
@@ -197,7 +205,226 @@ filteredExclusionsRC: any[] = [];
     private cd: ChangeDetectorRef,
     private router: Router,
     private zone: NgZone,
+    private pdfService: PdfGeneratorService,
+     private sanitizer: DomSanitizer
   ) {}
+
+private prepareCurrentDataForPdf(): any {
+  // 🔹 Construction des sections de risque
+  const sections = this.situationRisques.map((situation, index) => ({
+    identification: situation.identification.trim(),
+    adresse: situation.adresse?.trim() || "Non spécifié",
+    natureConstruction: situation.natureConstruction?.trim() || "Non spécifié",
+    contiguite: situation.contiguite?.trim() || "Non spécifié",
+    avoisinage: situation.avoisinage?.trim() || "Non spécifié",
+    numPolice: this.numPolice,
+  
+    garanties: this.prepareGarantiesForPdf(situation.garanties)
+  }));
+
+
+  // 🔹 Construction des configurations RC
+  const rcConfigurations = this.rcExploitations.map(rcExploitation => {
+    const sectionIds = rcExploitation.situations
+      .map(situation => {
+        const index = this.situationRisques.findIndex(
+          s => s.identification === situation.identification
+        );
+        return index !== -1 ? index : null;
+      })
+      .filter(id => id !== null) as number[];
+
+    return {
+      id: rcExploitation.id,
+      limiteAnnuelleDomCorporels: rcExploitation.limiteAnnuelleDomCorporels ?? 0,
+      limiteAnnuelleDomMateriels: rcExploitation.limiteAnnuelleDomMateriels ?? 0,
+      limiteParSinistre: rcExploitation.limiteParSinistre ?? 0,
+      franchise: rcExploitation.franchise ?? 0,
+      primeNET: rcExploitation.primeNET ?? 0,
+      exclusionsRcIds: rcExploitation.exclusionsIds || [],
+      sectionIds
+    };
+  });
+
+  // 🔹 Préparation des garanties groupées par parent
+  const garantiesParParent = this.prepareGarantiesParParent();
+
+  // ✅ Retour global des données prêtes pour le PDF
+  return {
+    numPolice: this.numPolice,
+    nom_assure: this.nom_assure,
+    codeAgence: this.codeAgence,
+    adherent: this.adherent,
+    fractionnement: this.fractionnement,
+    codeRenouvellement: this.codeRenouvellement,
+    branche: this.branche,
+    primeTTC:this.primeTTC,
+    typeContrat: this.typeContrat,
+    dateDebut: this.dateDebut,
+    dateFin: this.dateFin,
+    preambule: this.preambule,
+    service: this.service,
+
+    // ✅ L'objet de la garantie est global
+    objetDeLaGarantie: this.objetGarantieRc,
+
+    // 🔹 Toutes les exclusions disponibles (globales)
+    exclusionsRC: this.exclusionsRC || [],
+
+    // 🔹 Détails des sections et RCs
+    sections,
+    rcConfigurations,
+
+    // 🔹 Garanties groupées par parent
+    garantiesParParent
+  };
+  
+}
+
+
+// ✅ Préparer les exclusions pour une garantie spécifique (existant + nouvelle)
+private prepareExclusionsForGarantie(garantie: GarantieComposant): any[] {
+  const exclusions: any[] = [];
+
+  // 🔹 Exclusions existantes via IDs
+  if (garantie.exclusionsIds && garantie.exclusionsOptions) {
+    exclusions.push(
+      ...garantie.exclusionsIds
+        .map(id => garantie.exclusionsOptions?.find(e => e.id === id))
+        .filter(e => e != null)
+        .map(e => ({ id: e!.id, nom: e!.nom || 'Exclusion sans libellé' }))
+    );
+  }
+
+  // 🔹 Exclusion nouvellement ajoutée par l'utilisateur
+  if (garantie.nouvelleExclusion) {
+    exclusions.push({ id: 0, nom: garantie.nouvelleExclusion });
+  }
+
+  return exclusions;
+}
+
+// ✅ Ajouter les exclusions au parent en évitant les doublons
+private addExclusionsToParent(garantie: GarantieComposant, parentData: any): void {
+  this.prepareExclusionsForGarantie(garantie).forEach(exclusion => {
+    if (!parentData.exclusionsUniques.has(exclusion.id)) {
+      parentData.exclusionsUniques.set(exclusion.id, exclusion);
+    }
+  });
+}
+private prepareGarantiesParParent(): any[] {
+  const garantiesParParentMap = new Map<number, {
+    parent: { id: number; libelle: string };
+    sousGaranties: {
+      sousGarantieId: number;
+      sousGarantieNom: string;
+      exclusions: any[];
+      situations: string[];
+    }[];
+    exclusionsUniques: Map<number, any>;
+  }>();
+
+  this.situationRisques.forEach(situation => {
+    situation.garanties.forEach(garantie => {
+      if (!garantie.sousGarantieId) return;
+
+      // Récupération des détails de la sous-garantie
+      const sousGarantieDetails = this.getSousGarantieDetails(garantie.sousGarantieId);
+
+      // Détermination de l'ID et du libellé du parent
+      const parentId = sousGarantieDetails?.garantie?.id ?? garantie.garantieParentId;
+      const parentLibelle = sousGarantieDetails?.garantie?.libelle ?? garantie.garantieParentLibelle ?? "Garantie parent";
+
+      if (!parentId) {
+        console.warn(`⚠️ Impossible de trouver le parent pour la sous-garantie ID ${garantie.sousGarantieId}`);
+        return;
+      }
+
+      // Initialiser le parent si nécessaire
+      if (!garantiesParParentMap.has(parentId)) {
+        garantiesParParentMap.set(parentId, {
+          parent: { id: parentId, libelle: parentLibelle },
+          sousGaranties: [],
+          exclusionsUniques: new Map<number, any>()
+        });
+      }
+
+      const parentData = garantiesParParentMap.get(parentId)!;
+
+      // Préparer les exclusions pour cette sous-garantie
+      const exclusionsGarantie = this.prepareExclusionsForGarantie(garantie);
+
+      // Vérifier si la sous-garantie existe déjà
+      const existingSousGarantie = parentData.sousGaranties.find(
+        sg => sg.sousGarantieId === garantie.sousGarantieId
+      );
+
+      if (existingSousGarantie) {
+        if (!existingSousGarantie.situations.includes(situation.identification)) {
+          existingSousGarantie.situations.push(situation.identification);
+        }
+      } else {
+        parentData.sousGaranties.push({
+          sousGarantieId: garantie.sousGarantieId,
+          sousGarantieNom: sousGarantieDetails?.nom ?? "Sous-garantie non trouvée",
+          exclusions: exclusionsGarantie,
+          situations: [situation.identification]
+        });
+      }
+
+      // Ajouter les exclusions au parent
+      this.addExclusionsToParent(garantie, parentData);
+    });
+  });
+
+  // Convertir la Map en tableau
+  return Array.from(garantiesParParentMap.values()).map(parentData => ({
+    parent: parentData.parent,
+    sousGaranties: parentData.sousGaranties,
+    exclusions: Array.from(parentData.exclusionsUniques.values())
+  }));
+}
+
+// ✅ Préparer les garanties pour les sections
+private prepareGarantiesForPdf(garanties: GarantieComposant[]): any[] {
+  return garanties.map(garantie => {
+    const sousGarantieNom = this.getSousGarantieName(garantie.sousGarantieId);
+    const exclusions = this.prepareExclusionsForGarantie(garantie);
+    return {
+      sousGarantieNom,
+      sousGarantieId: garantie.sousGarantieId,
+      franchise: garantie.franchise ?? 0,
+      maximum: garantie.maximum ?? 0,
+      minimum: garantie.minimum ?? 0,
+      capitale: garantie.capitale ?? 0,
+      primeNET: garantie.primeNET ?? 0,
+      hasFranchise: garantie.hasFranchise ?? false,
+      exclusions 
+    };
+  });
+}
+toggleModele() {
+  if (!this.showModele) {
+    // Préparer les données actuelles pour le PDF
+    const currentData = this.prepareCurrentDataForPdf();
+    this.generatePdf(currentData);
+  }
+  this.showModele = !this.showModele;
+}
+  generatePdf(data: any) {
+    this.pdfService.generateContratPDF(data).then(blob => {
+      const blobUrl = URL.createObjectURL(blob);
+      this.pdfUrl = this.sanitizer.bypassSecurityTrustResourceUrl(blobUrl);
+      this.showModele = true;
+    }).catch(error => {
+      console.error('Error generating PDF:', error);
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Erreur',
+        detail: 'Erreur lors de la génération du PDF'
+      });
+    });
+  }
 
    ngOnInit(): void {
  
@@ -279,7 +506,6 @@ private checkLockStatus(): void {
   }
   toggleNouveau(adherent: any) {
     adherent.nouveau = !adherent.nouveau;
-    console.log('Nouveau adhérent:', adherent.nouveau);
   }
 
   handleLockError(err: any) {
@@ -404,6 +630,8 @@ loadContrat(numPolice: string) {
       this.fractionnement = contrat.fractionnement;
       this.codeRenouvellement = contrat.codeRenouvellement;
       this.branche = contrat.branche;
+      this.service = contrat.service;
+      this.primeTTC = contrat.primeTTC;
       this.typeContrat = contrat.typeContrat;
       this.dateDebut = contrat.dateDebut;
       this.dateFin = contrat.dateFin;
@@ -432,14 +660,6 @@ loadContrat(numPolice: string) {
           garantieParentLibelle: g.garantieParent?.libelle || 'Sans parent'
         }))
       }));
-
-      console.log('=== GROUPEMENT PAR GARANTIE PARENT ===');
-      this.situationRisques.forEach((situation, index) => {
-        console.log(`Situation ${index}: ${situation.identification}`);
-        situation.garanties.forEach(garantie => {
-          console.log(`  - ${garantie.sousGarantieId}: ${garantie.garantieParentLibelle} (ID: ${garantie.garantieParentId})`);
-        });
-      });
 
       // Utiliser la nouvelle méthode optimisée
       this.loadExclusionsForAllGarantiesOptimized();
@@ -517,19 +737,22 @@ loadExclusionsForAllGaranties() {
   });
 }
 
-// Nouvelle méthode pour charger les exclusions par garantie parent
+
+  // Nouvelle méthode pour charger les exclusions par garantie parent
 loadExclusionsForGarantieParent(garantie: GarantieComposant): Promise<void> {
   return new Promise((resolve) => {
+
+
     if (garantie.garantieParentId && garantie.garantieParentId > 0) {
       this.contratService.getExclusionsByGarantie(garantie.garantieParentId).subscribe({
         next: (data) => {
-          // ✅ Partager les mêmes exclusions pour toutes les garanties du même parent
+       
           garantie.exclusionsOptions = data;
           garantie.filteredExclusionsOptions = [...data];
-          console.log(`Exclusions chargées pour parent ${garantie.garantieParentId}:`, data.length);
           resolve();
         },
-        error: () => { 
+        error: (error) => { 
+          console.error('❌ Erreur chargement exclusions:', error);
           garantie.exclusionsOptions = [];
           garantie.filteredExclusionsOptions = [];
           resolve(); 
@@ -648,10 +871,6 @@ initializeFilterProperties(garantie: GarantieComposant ) {
   }
 
  initializeRCExploitation(contrat: ContratResponseDTO) {
-  console.log('=== 🎯 INITIALISATION RC EXPLOITATION (AVEC IDs) ===');
-  console.log('Contrat reçu:', contrat);
-  console.log('RC Configurations:', contrat.rcConfigurations);
-  console.log('Sections:', contrat.sections);
 
   // Réinitialiser
   this.rcExploitations = [];
@@ -663,16 +882,13 @@ initializeFilterProperties(garantie: GarantieComposant ) {
     this.rcExploitations = contrat.rcConfigurations.map(rcConfig => {
       const situations: SituationRisque[] = [];
       
-      console.log(`Traitement RC Config ${rcConfig.id} avec sectionIds:`, rcConfig.sectionIds);
       
       if (rcConfig.sectionIds && contrat.sections) {
         rcConfig.sectionIds.forEach(sectionId => {
-          console.log(`Recherche section avec ID ${sectionId}`);
           
           // 🔥 CORRECTION: Rechercher par ID de section, pas par index
           const section = contrat.sections.find(s => s.id === sectionId);
           if (section) {
-            console.log(`✅ Section trouvée:`, section);
             
             const situation: SituationRisque = {
               numPolice: this.numPolice,
@@ -702,13 +918,10 @@ initializeFilterProperties(garantie: GarantieComposant ) {
         objetDeLaGarantie: rcConfig.objetDeLaGarantie || this.objetGarantieRc
       };
 
-      console.log(`✅ RC Exploitation ${rcConfig.id} créée avec ${situations.length} situations:`, rcExploitation);
       return rcExploitation;
     });
 
-    console.log('✅ RC Exploitations finales:', this.rcExploitations);
   } else {
-    console.log('ℹ️ Aucune configuration RC trouvée dans le contrat');
   }
 
   // Charger toutes les exclusions RC
@@ -780,7 +993,6 @@ addSituation() {
 
  
  submit() {
-  console.log('=== 🚀 DÉBUT MODIFICATION CONTRAT ===');
 
   // Déverrouiller le contrat avant soumission
   this.contratService.unlockContrat(this.numPolice, false, this.startTime).subscribe({
@@ -840,27 +1052,20 @@ addSituation() {
         dateFin: this.dateFin,
         startTime: this.startTime,
         preambule: this.preambule,
+        service: this.service,
         sections: sections,
         rcConfigurations: rcConfigurations
       };
 
-      console.log('=== 📦 DONNÉES ENVOYÉES POUR MODIFICATION ===');
-      console.log('ContratData:', contratData);
-      console.log('RC Configurations:', rcConfigurations);
+
 
       // Appel du service pour modifier le contrat
       this.contratService.modifierContrat(contratData).subscribe({
         next: (response) => {
-          console.log('=== ✅ SUCCÈS MODIFICATION ===');
-          this.messageService.add({
-            severity: 'success',
-            summary: 'Contrat mis à jour',
-            detail: 'Les modifications ont été enregistrées avec succès.'
-          });
+      
           this.router.navigate(['/Landing']);
         },
         error: (err) => {
-          console.error('=== ❌ ERREUR MODIFICATION ===', err);
           let errorMessage = 'Impossible de mettre à jour le contrat';
           if (err.error?.message) {
             errorMessage += ': ' + err.error.message;
@@ -1053,12 +1258,6 @@ applyGarantieOptionsFilter(garantie: GarantieComposant ) {
   }
 
   private applyExclusionsFilter() {
-  console.log('applyExclusionsFilter appelé', {
-    keyboardFilter: this.keyboardFilterExclusions,
-    exclusionsRCLength: this.exclusionsRC.length,
-    filteredLength: this.filteredExclusionsRC.length
-  });
-  
   if (!this.keyboardFilterExclusions) {
     this.filteredExclusionsRC = [...this.exclusionsRC];
     return;
@@ -1068,8 +1267,7 @@ applyGarantieOptionsFilter(garantie: GarantieComposant ) {
     exclusion.nom.toLowerCase().includes(this.keyboardFilterExclusions) ||
     (exclusion.id && exclusion.id.toString().includes(this.keyboardFilterExclusions))
   );
-  
-  console.log('Après filtrage:', this.filteredExclusionsRC);
+
 }
 
   resetExclusionsFilter() {
@@ -1089,7 +1287,6 @@ applyGarantieOptionsFilter(garantie: GarantieComposant ) {
             value: sg.id
           }));
           
-          console.log('Sous-garanties chargées avec détails:', this.sousGarantiesWithDetails);
           resolve();
         },
         error: (error) => {
@@ -1142,16 +1339,29 @@ getGarantiesGroupedByParent(situation: SituationRisque): any[] {
   return result;
 }
 
-// Optimiser getSousGarantieName avec cache
-getSousGarantieName(sousGarantieId: number): string {
-  if (this.sousGarantieNameCache.has(sousGarantieId)) {
-    return this.sousGarantieNameCache.get(sousGarantieId)!;
+getSousGarantieName(sousGarantieId: number | string): string {
+  
+  // Convertir l'ID en nombre pour le cache (toujours stocker en number)
+  const idNumber = Number(sousGarantieId);
+  
+  if (this.sousGarantieNameCache.has(idNumber)) {
+    const name = this.sousGarantieNameCache.get(idNumber)!;
+    return name;
   }
 
-  const sg = this.sousGarantiesOptions.find(s => s.value === sousGarantieId);
+  // 🔥 CORRECTION: Rechercher avec les deux types
+  let sg = this.sousGarantiesOptions.find(s => 
+    s.value === sousGarantieId || 
+    Number(s.value) === idNumber ||
+    s.value.toString() === sousGarantieId.toString()
+  );
+  
+
+  
   const name = sg ? sg.label : `Sous-garantie ${sousGarantieId}`;
   
-  this.sousGarantieNameCache.set(sousGarantieId, name);
+  // Stocker dans le cache avec l'ID converti en number
+  this.sousGarantieNameCache.set(idNumber, name);
   return name;
 }
 
@@ -1224,8 +1434,6 @@ removeRcExploitation(index: number) {
 toggleRcSituation(situation: SituationRisque, event: any) {
   const isChecked = event.target.checked;
   
-  console.log(`Toggle situation: ${situation.identification}, checked: ${isChecked}`);
-  
   // Initialiser le tableau si nécessaire
   if (!this.currentRcExploitation.situations) {
     this.currentRcExploitation.situations = [];
@@ -1235,18 +1443,14 @@ toggleRcSituation(situation: SituationRisque, event: any) {
     // Ajouter la situation si elle n'est pas déjà présente
     if (!this.currentRcExploitation.situations.some(s => s.identification === situation.identification)) {
       this.currentRcExploitation.situations.push({...situation});
-      console.log(`✅ Situation "${situation.identification}" ajoutée`);
     }
   } else {
     // Retirer la situation
     this.currentRcExploitation.situations = this.currentRcExploitation.situations.filter(
       s => s.identification !== situation.identification
     );
-    console.log(`❌ Situation "${situation.identification}" retirée`);
   }
-  
-  console.log('Situations sélectionnées:', this.currentRcExploitation.situations.map(s => s.identification));
-}
+  }
 
 
 // Méthodes utilitaires
@@ -1353,8 +1557,6 @@ private initializeSituationSelectionForCurrentRc() {
       this.situationSelectionStates[situation.identification] = true;
     });
   }
-  
-  console.log('✅ États de sélection initialisés pour RC courant:', this.situationSelectionStates);
-  console.log('Situations sélectionnées:', this.currentRcExploitation.situations?.map(s => s.identification));
+
 }
 }

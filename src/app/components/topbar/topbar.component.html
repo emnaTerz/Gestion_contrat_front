@@ -28,45 +28,85 @@
           (click)="openDialog()" 
           title="tarif">
   </button>
-<p-dialog header="Gestion des Tarifs" [(visible)]="displayDialog" [modal]="true" [style]="{width: '500px'}">
-  
-<div class="field">
-  <label for="branche">Choisir Branche :</label>
-  <select [(ngModel)]="selectedBranche" (change)="onBrancheChange()">
-    <option *ngFor="let b of branches" [value]="b">
-      {{ b }}
-    </option>
-  </select>
-</div>
+<p-dialog 
+  header="Gestion des Tarifs" 
+  [(visible)]="displayDialog" 
+  [modal]="true" 
+  [style]="{width: '500px'}">
 
+  <div class="field">
+    <label for="branche">Choisir Branche :</label>
+    <select 
+      id="branche"
+      name="branche"
+      [(ngModel)]="selectedBranche" 
+      (change)="onBrancheChange()" 
+      autocomplete="off">
+      <option *ngFor="let b of branches" [value]="b">{{ b }}</option>
+    </select>
+  </div>
 
   <div *ngIf="tarif">
     <div class="field">
-      <label>FQ :</label>
-      <input type="number" [(ngModel)]="tarif.fq" />
+      <label for="fq">FQ :</label>
+      <input 
+        id="fq"
+        name="fq"
+        type="number" 
+        [(ngModel)]="tarif.fq" 
+        autocomplete="off" />
     </div>
 
     <div class="field">
-      <label>FE/FG :</label>
-      <input type="number" [(ngModel)]="tarif.feFg" />
+      <label for="fefg">FE/FG :</label>
+      <input 
+        id="fefg"
+        name="fefg"
+        type="number" 
+        [(ngModel)]="tarif.feFg" 
+        autocomplete="off" />
     </div>
 
     <div class="field">
-      <label>Prix Adhésion :</label>
-      <input type="number" [(ngModel)]="tarif.prixAdhesion" />
+      <label for="prixAdhesion">Prix Adhésion :</label>
+      <input 
+        id="prixAdhesion"
+        name="prixAdhesion"
+        type="number" 
+        [(ngModel)]="tarif.prixAdhesion" 
+        autocomplete="off" />
     </div>
 
     <div class="field">
-      <label>Taux :</label>
-      <input type="number" [(ngModel)]="tarif.taux" />
+      <label for="taux">Taux :</label>
+      <input 
+        id="taux"
+        name="taux"
+        type="number" 
+        [(ngModel)]="tarif.taux" 
+        autocomplete="off" />
     </div>
   </div>
 
   <ng-template pTemplate="footer">
-    <button pButton label="Annuler" icon="pi pi-times" class="p-button-text" (click)="displayDialog=false"></button>
-    <button pButton label="Enregistrer" icon="pi pi-check" [disabled]="!tarif" (click)="save()"></button>
+    <button 
+      pButton 
+      label="Annuler" 
+      icon="pi pi-times" 
+      class="p-button-text" 
+      (click)="displayDialog=false">
+    </button>
+
+    <button 
+      pButton 
+      label="Enregistrer" 
+      icon="pi pi-check" 
+      [disabled]="!tarif" 
+      (click)="save()">
+    </button>
   </ng-template>
 </p-dialog>
+
 
   <button pButton icon="pi pi-sign-out" 
           class="p-button-text p-button-danger"

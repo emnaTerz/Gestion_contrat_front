@@ -129,6 +129,7 @@ export class ContratComponent implements OnInit {
   dateDebut: string = '';
   dateFin: string = '';
   startTime: string = '';
+  service: number = 0;
 preambule: string = '';
 rcExploitations: RcExploitation[] = [];
 currentRcExploitation: RcExploitation = this.createNewRcExploitation();
@@ -174,8 +175,7 @@ pdfLines: string[] = [];  // lignes extraites du PDF
     garanties: [],
      rcExploitationActive: false, 
     
-    
-  };
+};
   sousGarantiesOptions: { label: string; value: number }[] = [];
   sousGarantiesMap: { [id: number]: SousGarantie } = {};
   editIndex: number | null = null;
@@ -232,33 +232,25 @@ toggleModele() {
   this.showModele = !this.showModele;
 }
 
-// Méthode pour préparer les données actuelles pour le PDF (avant soumission)
+// ✅ Méthode pour préparer les données actuelles pour le PDF (avant soumission)
 private prepareCurrentDataForPdf(): any {
-  // Construction des sections
+  // 🔹 Construction des sections de risque AVEC gestion des garanties parents
   const sections = this.situationRisques.map((situation, index) => ({
     identification: situation.identification.trim(),
     adresse: situation.adresse?.trim() || "Non spécifié",
-    natureConstruction: situation.natureConstruction?.trim() || "Non spécifié", 
+    natureConstruction: situation.natureConstruction?.trim() || "Non spécifié",
     contiguite: situation.contiguite?.trim() || "Non spécifié",
     avoisinage: situation.avoisinage?.trim() || "Non spécifié",
     numPolice: this.numPolice,
-    garanties: situation.garanties.map(garantie => ({
-      sousGarantieId: garantie.sousGarantieId,
-      franchise: garantie.franchise ?? 0,
-      maximum: garantie.maximum ?? 0,
-      minimum: garantie.minimum ?? 0,
-      capitale: garantie.capitale ?? 0,
-      primeNET: garantie.primeNET ?? 0,
-      hasFranchise: garantie.hasFranchise ?? false
-    }))
+    garanties: this.prepareGarantiesForPdf(situation.garanties)
   }));
 
-  // Construction des RC Configurations
-  const rcConfigurations = this.rcExploitations.map((rcExploitation, rcIndex) => {
+  // 🔹 Construction des configurations RC
+  const rcConfigurations = this.rcExploitations.map(rcExploitation => {
     const sectionIds = rcExploitation.situations
       .map(situation => {
-        const index = this.situationRisques.findIndex(s => 
-          s.identification === situation.identification
+        const index = this.situationRisques.findIndex(
+          s => s.identification === situation.identification
         );
         return index !== -1 ? index : null;
       })
@@ -271,12 +263,15 @@ private prepareCurrentDataForPdf(): any {
       limiteParSinistre: rcExploitation.limiteParSinistre ?? 0,
       franchise: rcExploitation.franchise ?? 0,
       primeNET: rcExploitation.primeNET ?? 0,
-      objetDeLaGarantie: this.objetGarantieRc,
       exclusionsRcIds: rcExploitation.exclusionsIds || [],
-      sectionIds: sectionIds
+      sectionIds
     };
   });
 
+  // 🔹 Préparation des garanties groupées par parent (pour éviter les duplications)
+  const garantiesParParent = this.prepareGarantiesParParent();
+
+  // ✅ Retour global des données prêtes pour le PDF
   return {
     numPolice: this.numPolice,
     nom_assure: this.nom_assure,
@@ -289,10 +284,147 @@ private prepareCurrentDataForPdf(): any {
     dateDebut: this.dateDebut,
     dateFin: this.dateFin,
     preambule: this.preambule,
-    sections: sections,
-    rcConfigurations: rcConfigurations
+    service: this.service,
+
+    // ✅ L'objet de la garantie est global
+    objetDeLaGarantie: this.objetGarantieRc,
+
+    // 🔹 Toutes les exclusions disponibles (globales)
+    exclusionsRC: this.exclusionsRC || [],
+
+    // 🔹 Détails des sections et RCs
+    sections,
+    rcConfigurations,
+
+    // 🔹 NOUVEAU: Garanties groupées par parent (pour affichage unique des exclusions)
+    garantiesParParent
   };
 }
+
+// ✅ Préparer les garanties groupées par parent pour éviter les duplications
+private prepareGarantiesParParent(): any[] {
+  const garantiesParParentMap = new Map<number, {
+    parent: Garantie;
+    sousGaranties: {
+      sousGarantieId: number;
+      sousGarantieNom: string;
+      exclusions: any[];
+      situations: string[]; // Liste des situations où cette sous-garantie apparaît
+    }[];
+    exclusionsUniques: Map<number, Exclusion>; // Pour éviter les doublons d'exclusions
+  }>();
+
+  // Parcourir toutes les situations et leurs garanties
+  this.situationRisques.forEach(situation => {
+    situation.garanties.forEach(garantie => {
+      if (!garantie.sousGarantieId) return;
+
+      const sousGarantie = this.sousGarantiesMap[garantie.sousGarantieId];
+      if (!sousGarantie || !sousGarantie.garantie) return;
+
+      const parentId = sousGarantie.garantie.id;
+      
+      // Initialiser l'entrée pour ce parent si elle n'existe pas
+      if (!garantiesParParentMap.has(parentId)) {
+        garantiesParParentMap.set(parentId, {
+          parent: sousGarantie.garantie,
+          sousGaranties: [],
+          exclusionsUniques: new Map<number, Exclusion>()
+        });
+      }
+
+      const parentData = garantiesParParentMap.get(parentId)!;
+
+      // Vérifier si cette sous-garantie existe déjà
+      const existingSousGarantie = parentData.sousGaranties.find(
+        sg => sg.sousGarantieId === garantie.sousGarantieId
+      );
+
+      if (existingSousGarantie) {
+        // Ajouter la situation à la liste des situations existantes
+        if (!existingSousGarantie.situations.includes(situation.identification)) {
+          existingSousGarantie.situations.push(situation.identification);
+        }
+      } else {
+        // Créer une nouvelle entrée pour cette sous-garantie
+        const sousGarantieData = {
+          sousGarantieId: garantie.sousGarantieId,
+          sousGarantieNom: sousGarantie.nom || "Sous-garantie non trouvée",
+          exclusions: this.prepareExclusionsForGarantie(garantie),
+          situations: [situation.identification]
+        };
+
+        parentData.sousGaranties.push(sousGarantieData);
+      }
+
+      // Ajouter les exclusions au pool d'exclusions uniques du parent
+      this.addExclusionsToParent(garantie, parentData);
+    });
+  });
+
+  // Convertir la Map en tableau et formater les exclusions
+  return Array.from(garantiesParParentMap.values()).map(parentData => ({
+    parent: {
+      id: parentData.parent.id,
+      libelle: parentData.parent.libelle || "Garantie parent"
+    },
+    sousGaranties: parentData.sousGaranties,
+    exclusions: Array.from(parentData.exclusionsUniques.values())
+  }));
+}
+
+// ✅ Préparer les exclusions pour une garantie spécifique
+private prepareExclusionsForGarantie(garantie: GarantieSection): any[] {
+  if (!garantie.exclusionsIds || !garantie.exclusionsOptions) return [];
+
+  return garantie.exclusionsIds
+    .map(exclusionId => {
+      const exclusion = garantie.exclusionsOptions?.find(e => e.id === exclusionId);
+      return exclusion ? {
+        id: exclusion.id,
+        nom: exclusion.nom || "Exclusion sans libellé"
+      } : null;
+    })
+    .filter(exclusion => exclusion !== null) as any[];
+}
+
+// ✅ Ajouter les exclusions au parent (éviter les doublons)
+private addExclusionsToParent(garantie: GarantieSection, parentData: any): void {
+  if (!garantie.exclusionsIds || !garantie.exclusionsOptions) return;
+
+  garantie.exclusionsIds.forEach(exclusionId => {
+    const exclusion = garantie.exclusionsOptions?.find(e => e.id === exclusionId);
+    if (exclusion && !parentData.exclusionsUniques.has(exclusion.id)) {
+      parentData.exclusionsUniques.set(exclusion.id, {
+        id: exclusion.id,
+        nom: exclusion.nom || "Exclusion sans libellé"
+      });
+    }
+  });
+}
+
+// ✅ Préparer les garanties pour les sections (format original conservé)
+private prepareGarantiesForPdf(garanties: GarantieSection[]): any[] {
+  return garanties.map(garantie => {
+    const sousGarantieNom = this.sousGarantiesMap[garantie.sousGarantieId]?.nom ||
+      "Sous-garantie non trouvée";
+    
+    const exclusions = this.prepareExclusionsForGarantie(garantie);
+
+    return {
+      sousGarantieNom,
+      sousGarantieId: garantie.sousGarantieId,
+      franchise: garantie.franchise ?? 0,
+      maximum: garantie.maximum ?? 0,
+      minimum: garantie.minimum ?? 0,
+      capitale: garantie.capitale ?? 0,
+      primeNET: garantie.primeNET ?? 0,
+      hasFranchise: garantie.hasFranchise ?? false,
+      exclusions 
+    };
+  });
+}
+
   ngOnInit(): void {
     this.loadSousGaranties();
      this.updatePreambule();
@@ -303,7 +435,6 @@ this.startTime = now.getFullYear() + '-' +
   String(now.getHours()).padStart(2,'0') + ':' +
   String(now.getMinutes()).padStart(2,'0') + ':' +
   String(now.getSeconds()).padStart(2,'0');
-console.log('Heure locale format ISO sans décalage:', this.startTime);
     this.loadExclusionsRC();
     this.updateObjetDeLaGarantie();
      this.filteredExclusionsRC = [...this.exclusionsRC];
@@ -317,7 +448,6 @@ onPdfSelected(event: any) {
   }
 }
 
-// Appel de la méthode de service
 uploadSelectedPdf() {
   if (!this.selectedPdfFile) return;
 
@@ -327,40 +457,39 @@ uploadSelectedPdf() {
       this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'PDF traité avec succès' });
 
       if (this.pdfLines.length > 0) {
-    
-
+        const lines = this.pdfLines;
 
         // ----------------- REMPLISSAGE CHAMPS INFO GENERALE -----------------
-        // Ignorer les colonnes inutiles
-        const lines = this.pdfLines.filter((_, index) => ![7,8,10].includes(index));
-
+        
         // Adhérent
         this.adherent.codeId = lines[0] || '';
         this.adherent.nomRaison = lines[1] || '';
-        this.adherent.adresse = lines.slice(2, 6).join(', ') || ''; // concatène lignes 3,4,5,6
+        this.adherent.adresse = lines.slice(1, 6).join(', ') || ''; // concatène lignes 1 à 5
         this.adherent.activite = lines[6] || '';
-        this.adherent.nouveau = false; // ou à définir selon logique PDF
-
+        this.adherent.nouveau = false;
         // Branche
-        this.branche = lines[7] || '';
+        this.branche = lines[9] || '';
+
+        // Service / Code Produit
+        this.service = Number(lines[10]) || 0;
 
         // Numéro de police
-        this.numPolice = lines[8] || '';
+        this.numPolice = lines[11] || '';
 
         // Code Agence
-        this.codeAgence = lines[9] || '';
+        this.codeAgence = lines[12] || '';
 
         // Fractionnement
         const fractionnementMap: any = { '5': 'ZERO', '2': 'UN', '4': 'DEUX' };
-        this.fractionnement = fractionnementMap[lines[10]] || '';
+        this.fractionnement = fractionnementMap[lines[13]] || '';
 
         // Code renouvellement
-        const codeRenouvellementMap : any = {'T': 'T', 'R': 'R', 'L':'T', 'By': 'T'};
-        this.codeRenouvellement =codeRenouvellementMap[lines[11] ] || '';
+        const codeRenouvellementMap: any = { 'T': 'T', 'R': 'R', 'L': 'T', 'By': 'T' };
+        this.codeRenouvellement = codeRenouvellementMap[lines[14]] || '';
 
         // Dates
-        this.dateDebut = this.formatDateForInput(lines[12]);
-        this.dateFin = this.formatDateForInput(lines[13]);
+        this.dateDebut = this.formatDateForInput(lines[15]);
+        this.dateFin = this.formatDateForInput(lines[16]);
       }
     },
     error: (err) => {
@@ -369,7 +498,6 @@ uploadSelectedPdf() {
     }
   });
 }
-
 // Fonction utilitaire pour convertir dd-MM-yyyy ou ddMMyyyy -> yyyy-MM-dd
 formatDateForInput(dateStr: string): string {
   if (!dateStr) return '';
@@ -621,7 +749,6 @@ ajouterExclusionPersonnalisee(garantie: GarantieSection) {
     this.sousGarantiesOptions = data.map(sg => {
       // Stocker la sous-garantie complète dans la map
       this.sousGarantiesMap[sg.id] = sg;
-        console.log('SousGarantie:', sg.nom, '-> garantieParent:', sg.garantie);
       return {
         label: sg.nom,
         value: sg.id,
@@ -673,10 +800,6 @@ ajouterExclusionPersonnalisee(garantie: GarantieSection) {
     this.situationRisques.splice(index, 1);
   }
 
- /*  addGarantie(situation: SituationRisque) {
-    const nouvelleGarantie: GarantieSection = { sectionId: 0, sousGarantieId: 0, franchise: 0, exclusionsIds: [], exclusionsOptions: [] };
-    situation.garanties.push(nouvelleGarantie);
-  } */
 addGarantie(situation: SituationRisque) {
   const nouvelleGarantie: GarantieSection = { 
     sectionId: 0, 
@@ -703,9 +826,6 @@ loadExclusionsForGarantie(garantieParent: Garantie, g: any) {
     g.filteredExclusionsOptions = [];
     return;
   }
-
-  console.log('ID de la garantie parent:', garantieParent.id);
-
   this.contratService.getExclusionsByGarantie(garantieParent.id).subscribe({
     next: (data) => {
       g.exclusionsOptions = data;
@@ -794,160 +914,6 @@ get selectedSituationsNames(): string {
   if (!this.selectedSituations || this.selectedSituations.length === 0) return '';
   return this.selectedSituations.map(s => s.identification).join(', ');
 }
-/*
-submit() {
-  // VÉRIFICATION CRITIQUE: Avez-vous configuré des RC ?
-  if (this.rcExploitations.length === 0) {
-    this.messageService.add({
-      severity: 'error',
-      summary: 'Configuration manquante',
-      detail: 'Veuillez configurer au moins une RC Exploitation avant de soumettre le contrat.'
-    });
-    return;
-  }
-
-  // Construction des sections AVEC garanties
-  const sections = this.situationRisques.map((situation, index) => {
-    
-    if (!situation.identification || situation.identification.trim() === '') {
-      throw new Error(`L'identification de la section ${index} est obligatoire`);
-    }
-
-    const section = {
-      identification: situation.identification.trim(),
-      adresse: situation.adresse?.trim() || "Non spécifié",
-      natureConstruction: situation.natureConstruction?.trim() || "Non spécifié", 
-      contiguite: situation.contiguite?.trim() || "Non spécifié",
-      avoisinage: situation.avoisinage?.trim() || "Non spécifié",
-      numPolice: this.numPolice,
-      // 🔥 CORRECTION: Inclure les garanties dans la section
-      garanties: situation.garanties.map(garantie => {
-        // Valider la sous-garantie
-        if (!garantie.sousGarantieId || garantie.sousGarantieId === 0) {
-          console.error(`❌ Garantie sans sous-garantie dans section ${situation.identification}`);
-          throw new Error(`Une garantie doit avoir une sous-garantie sélectionnée dans la section "${situation.identification}"`);
-        }
-
-        return {
-          franchise: garantie.franchise ?? 0,
-          sousGarantieId: Number(garantie.sousGarantieId),
-          maximum: garantie.maximum !== null && garantie.maximum !== undefined ? Number(garantie.maximum) : undefined,
-          minimum: garantie.minimum !== null && garantie.minimum !== undefined ? Number(garantie.minimum) : undefined,
-          capitale: garantie.capitale !== null && garantie.capitale !== undefined ? Number(garantie.capitale) : undefined,
-          primeNET: garantie.primeNET !== null && garantie.primeNET !== undefined ? Number(garantie.primeNET) : undefined,
-          exclusions: (garantie.exclusionsIds || []).map(exclusionId => ({
-            exclusionId: Number(exclusionId)
-          }))
-        };
-      })
-    };
-
-    console.log(`✅ Section ${index} construite:`, section);
-    return section;
-  });
-
-  // Construction des rcConfigurations à partir de rcExploitations
-  const rcConfigurations = this.rcExploitations.map((rcExploitation, rcIndex) => {
-    
-    // Valider la configuration RC
-    if (!rcExploitation.situations || rcExploitation.situations.length === 0) {
-      throw new Error(`La configuration RC ${rcIndex + 1} doit avoir au moins une situation associée`);
-    }
-
-    // 🔥 CORRECTION: Calculer les sectionIds correctement
-    const sectionIds = rcExploitation.situations
-      .map(situation => {
-        const index = this.situationRisques.findIndex(s => 
-          s.identification === situation.identification
-        );
-        console.log(`   - "${situation.identification}" → index: ${index}`);
-        
-        if (index === -1) {
-          throw new Error(`Situation "${situation.identification}" non trouvée`);
-        }
-        
-        return index;
-      })
-      .filter(id => id !== -1);
-
-
-    const config = {
-      // 🔥 CORRECTION: Utiliser les données de rcExploitation
-      id: rcExploitation.id,
-      limiteAnnuelleDomCorporels: rcExploitation.limiteAnnuelleDomCorporels ?? 0,
-      limiteAnnuelleDomMateriels: rcExploitation.limiteAnnuelleDomMateriels ?? 0,
-      limiteParSinistre: rcExploitation.limiteParSinistre ?? 0,
-      franchise: rcExploitation.franchise ?? 0,
-      primeNET: rcExploitation.primeNET ?? 0,
-      objetDeLaGarantie: this.objetGarantieRc, // Utiliser l'objet unique
-      exclusionsRcIds: rcExploitation.exclusionsIds || [],
-      sectionIds: sectionIds
-    };
-
-    console.log(`✅ Configuration RC ${rcIndex} finale:`, config);
-    return config;
-  });
-
-  // 🔥 CORRECTION: Formater startTime correctement
-  const formattedStartTime = this.formatStartTimeForBackend(this.startTime);
-
-  // Construction du contrat final - SANS primeTTC
-  const contratData: ContratDTO = {
-    numPolice: this.numPolice,
-    nom_assure: this.nom_assure,
-    codeAgence: this.codeAgence,
-    adherent: this.adherent,
-    fractionnement: this.fractionnement as Fractionnement,
-    codeRenouvellement: this.codeRenouvellement as CodeRenouvellement,
-    branche: this.branche as Branche,
-    typeContrat: this.typeContrat as TypeContrat,
-    dateDebut: this.dateDebut,
-    dateFin: this.dateFin,
-    startTime: formattedStartTime, // 🔥 Format corrigé
-    preambule: this.preambule,
-    // 🔥 SUPPRESSION: primeTTC est calculé côté backend
-    sections: sections,
-    rcConfigurations: rcConfigurations
-  };
-  this.contratService.createContrat(contratData).subscribe({
-    next: (response) => {
-      console.log('=== ✅ SUCCÈS ===');
-      console.log('Contrat créé avec succès:', response);
-      this.messageService.add({
-        severity: 'success',
-        summary: 'Succès',
-        detail: 'Contrat créé avec succès !'
-      });
-    },
-    error: (error) => {
-      console.error('=== ❌ ERREUR ===');
-      console.error('Erreur complète:', error);
-      
-      let errorMessage = 'Erreur lors de la création du contrat';
-      if (error.error) {
-        console.error('Détails erreur backend:', error.error);
-        if (error.error.message) {
-          errorMessage += ': ' + error.error.message;
-        }
-        
-        // 🔥 AFFICHER LES DÉTAILS DE L'ERREUR BACKEND
-        if (error.error.errors) {
-          console.error('Erreurs de validation:', error.error.errors);
-          errorMessage += '. Détails: ' + JSON.stringify(error.error.errors);
-        }
-      }
-      
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Erreur',
-        detail: errorMessage
-      });
-    }
-  });
-}*/
-
-
-
 submit() {
   // VÉRIFICATION CRITIQUE: Avez-vous configuré des RC ?
   if (this.rcExploitations.length === 0) {
@@ -1047,6 +1013,7 @@ submit() {
     dateFin: this.dateFin,
     startTime: formattedStartTime,
     preambule: this.preambule,
+    service:this.service,
     sections: sections,
     rcConfigurations: rcConfigurations
   };
@@ -1054,7 +1021,6 @@ submit() {
   // Envoyer au backend
   this.contratService.createContrat(this.contratData).subscribe({
     next: (response) => {
-      console.log('Contrat créé avec succès:', response);
       this.messageService.add({
         severity: 'success',
         summary: 'Succès',
@@ -1098,44 +1064,6 @@ private formatStartTimeForBackend(startTime: string): string {
   // Sinon, créer une date ISO
   return new Date().toISOString();
 }
-
-// Méthode de test avec données fixes
-testAvecDonneesRC() {
-  console.log('=== 🧪 CRÉATION DE DONNÉES RC DE TEST ===');
-  
-  // S'assurer qu'il y a des situations
-  if (this.situationRisques.length === 0) {
-    console.error('❌ Aucune situation de risque créée');
-    this.messageService.add({
-      severity: 'error',
-      summary: 'Erreur',
-      detail: 'Veuillez d\'abord créer des situations de risque'
-    });
-    return;
-  }
-
-  // Créer une configuration RC de test
-  this.rcConfigurations = [{
-    id: Date.now(),
-    limiteAnnuelleDomCorporels: 100000,
-    limiteAnnuelleDomMateriels: 50000,
-    limiteParSinistre: 50000,
-    franchise: 1000,
-    primeNET: 200,
-    situations: [this.situationRisques[0]], // Prendre la première situation
-    exclusionsIds: [1, 2]
-  }];
-
-  console.log('✅ Données RC de test créées:', this.rcConfigurations);
-  this.messageService.add({
-    severity: 'success',
-    summary: 'Test',
-    detail: 'Données RC de test créées. Vous pouvez maintenant soumettre.'
-  });
-}
-
-// Ajoutez un bouton de test dans votre template
-// <button pButton label="Test RC" (click)="testAvecDonneesRC()" class="p-button-help"></button>
 
 resetForm() {
   this.currentStep = 0;
@@ -1278,17 +1206,11 @@ onTypeContratChange(newType: string) {
   this.updatePreambule(); 
 }
 updatePreambule() {
-  console.log('=== 📝 MISE À JOUR PRÉAMBULE ===');
-  console.log('Type de contrat:', this.typeContrat);
-  console.log('Préambule actuel:', this.preambule);
-
   const defaultGeneral =
-`Aux conditions Générales du Contrat d'Assurance « Multirisque Professionnelle » MF N° 403/7 du 24 Novembre 1998, dont l'assuré reconnaît avoir reçu un exemplaire, ainsi qu'aux conditions particulières qui suivent et conformément au formulaire de déclaration de risque ci annexé, la MAE Assurances garantit l'assuré contre les risques énumérées et aux conditions suivantes.
-Les présentes conditions particulières prévalent sur les conditions générales susmentionnées chaque fois qu'elles-y- dérogent.`;
+`Aux conditions Générales du Contrat d'Assurance « Multirisque Professionnelle » MF N° 403/7 du 24 Novembre 1998, dont l'assuré reconnaît avoir reçu un exemplaire, ainsi qu'aux conditions particulières qui suivent et conformément au formulaire de déclaration de risque ci annexé, la MAE Assurances garantit l'assuré contre les risques énumérées et aux conditions suivantes.Les présentes conditions particulières prévalent sur les conditions générales susmentionnées chaque fois qu'elles-y- dérogent.`;
 
   const defaultAppelOffre =
-`Aux conditions Générales du Contrat d'Assurance « Multirisque Professionnelle » MF N° 403/7 du 24 Novembre 1998 et aux conditions particulières qui suivent, dont l'adhérent reconnaît avoir reçu un exemplaire, et conformément aux clauses et conditions de l'Appel d'Offres Agence de Mise en Valeur de Promotion Culturelle « A.M.V. P.C »  N°03/2024 pour l'année 2023-2024-2025, et qui prévalent sur toutes autres dispositions, la M.A.E garantit l'adhérent dans les conditions et limites suivantes.
-Les présentes conditions particulières prévalent sur les conditions générales susmentionnées chaque fois qu'elles-y- dérogent.`;
+`Aux conditions Générales du Contrat d'Assurance « Multirisque Professionnelle » MF N° 403/7 du 24 Novembre 1998 et aux conditions particulières qui suivent, dont l'adhérent reconnaît avoir reçu un exemplaire, et conformément aux clauses et conditions de l'Appel d'Offres Agence de Mise en Valeur de Promotion Culturelle « A.M.V. P.C »  N°03/2024 pour l'année 2023-2024-2025, et qui prévalent sur toutes autres dispositions, la M.A.E garantit l'adhérent dans les conditions et limites suivantes.Les présentes conditions particulières prévalent sur les conditions générales susmentionnées chaque fois qu'elles-y- dérogent.`;
 
   // Vérifier si le préambule est vide ou contient seulement le texte par défaut
   const isPreambuleEmpty = !this.preambule || 
@@ -1299,17 +1221,10 @@ Les présentes conditions particulières prévalent sur les conditions général
   if (isPreambuleEmpty) {
     if (this.typeContrat === 'APPEL_D_OFFRE') {
       this.preambule = defaultAppelOffre;
-      console.log('✅ Préambule Appel d\'Offre appliqué');
     } else {
       this.preambule = defaultGeneral;
-      console.log('✅ Préambule Général appliqué');
     }
-  } else {
-    console.log('ℹ️ Préambule personnalisé conservé');
-  }
-
-  console.log('Préambule final:', this.preambule);
-}
+  }}
 // ReonTypeContratChangeourne un tableau des groupes { parent: Garantie, sousGaranties: GarantieSection[] }
 
 private sousGarantiesParParentCache = new Map<string, any[]>();

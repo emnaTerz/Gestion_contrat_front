@@ -82,6 +82,7 @@ export interface Contrat {
   codeRenouvellement: string;
   branche: string;
   typeContrat: string;
+  service: number;
   codeAgence: string;
   primeTTC: number;
   dateDebut: string;
@@ -108,8 +109,9 @@ export interface ContratDTO {
   codeRenouvellement: CodeRenouvellement;
   branche: Branche;
   nom_assure: string ;
-  codeAgence: string
+  codeAgence: string;
   typeContrat: TypeContrat;
+  service: number;
   primeTTC?: number;
   dateDebut: string;
   dateFin: string;
@@ -215,6 +217,7 @@ export interface ContratResponseDTO {
   typeContrat: string;
   preambule: string;
   primeTTC: number;
+  service: number;
   dateDebut: string;
   dateFin: string;
   editingUser: string;
@@ -279,13 +282,14 @@ createExclusion(exclusion: any): Observable<Exclusion> {
   return this.http.post<Exclusion>('http://localhost:8081/contrat/catalogue/exclusion', exclusion);
 }
 
-createExclusionRC(request: any): Observable<Exclusion> {
+createExclusionRC(request: any): Observable<ExclusionRCResponseDTO> {
   return this.http.post<Exclusion>('http://localhost:8081/contrat/catalogue/exclusion-rc', request);
 }
   // Nouvelle méthode pour récupérer les exclusions d'une garantie spécifique
   getExclusionsByGarantie(garantieId: number): Observable<Exclusion[]> {
     return this.http.get<Exclusion[]>(`${this.exclusionApiUrl}/${garantieId}`);
   }
+  
 createContrat(contrat: ContratDTO) {
 const token = localStorage.getItem('token');
     const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
@@ -362,6 +366,11 @@ getExclusionsRC(): Observable<Exclusion[]> {
 }
 
   getTarifByBranche(branche: Branche): Observable<Tarif> {
+
+  console.log('💡 Branche envoyée à l’API:', branche);
+
+
+
     return this.http.get<Tarif>(`${this.tarifApiUrl}/${branche}`).pipe(
       catchError(err => {
         console.error('Erreur récupération tarif', err);
@@ -383,6 +392,21 @@ getExclusionsRC(): Observable<Exclusion[]> {
     );
   }
 
+getExclusionrc(id: number): Observable<string> {
+  const url = `http://localhost:8081/contrat/catalogue/exclusion-rc`;
+  return this.http.get(`${url}/${id}`, { responseType: 'text' });
+}
+
+ getExclusionById(id: number): Observable<Exclusion> {
+  const url = `http://localhost:8081/contrat/catalogue/exclusion`;
+
+  return this.http.get<Exclusion>(`${url}/${id}`);
+}
+ getExclusion(): Observable<Exclusion> {
+  const url = `http://localhost:8081/contrat/catalogue/exclusion`;
+
+  return this.http.get<Exclusion>(`${url}`);
+}
 modifierContrat(contrat: ContratDTO): Observable<ContratDTO> {
   const token = localStorage.getItem('token');
   const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });

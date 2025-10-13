@@ -1,0 +1,89 @@
+/* Wrapper centré avec un joli fond */
+.notfound-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 2rem;
+  background: linear-gradient(135deg, #e0f7e9, #ffffff); /* Fond doux vert/blanc */
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Card centrée avec ombre verte et arrondie */
+.notfound-card {
+  text-align: center;
+  padding: 3rem 2rem;
+  border-radius: 20px;
+  background-color: #ffffff;
+  max-width: 450px;
+  width: 100%;
+  box-shadow: 0 12px 30px rgba(0, 128, 0, 0.3);
+  transition: transform 0.3s, box-shadow 0.3s;
+
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 16px 40px rgba(0, 128, 0, 0.4);
+  }
+
+  /* Logo centré */
+  .logo-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 2rem;
+
+    .logo {
+      width: 140px;
+      height: auto;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s;
+      
+      &:hover {
+        transform: scale(1.05);
+      }
+    }
+  }
+
+  /* Code d'erreur */
+  .error-code {
+    font-size: 5rem;
+    font-weight: 700;
+    color: #2e7d32; /* Vert foncé */
+    margin-bottom: 0.5rem;
+  }
+
+  /* Message principal */
+  h1 {
+    font-size: 2rem;
+    font-weight: 600;
+    color: #1b5e20; /* Vert un peu plus foncé */
+    margin-bottom: 0.5rem;
+  }
+
+  p {
+    font-size: 1rem;
+    color: #4caf50; /* Vert moyen */
+    margin-bottom: 2rem;
+    line-height: 1.5;
+  }
+
+  /* Bouton logout / revenir */
+ .logout-btn {
+  width: 150px;              /* Largeur fixe */
+  height: 40px;              /* Hauteur */
+  border-radius: 12px;       /* Coins arrondis */
+  background-color: #43a047; /* Vert vif */
+  color: #ffffff;            /* Texte blanc */
+  border: 2px solid #2e7d32; /* Contour vert foncé */
+  font-weight: bold;
+  font-size: 1rem;
+  transition: background-color 0.3s, transform 0.2s;
+
+  /* Hover */
+  &:hover {
+    background-color: #388e3c; /* Vert foncé */
+    transform: scale(1.05);    /* Petit zoom */
+  }
+}
+
+}

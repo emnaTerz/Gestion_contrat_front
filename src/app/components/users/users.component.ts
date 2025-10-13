@@ -67,38 +67,41 @@ export class UsersComponent implements OnInit {
   this.loadUsers();
 }
 
-  loadUsers() {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      this.router.navigate(['/login']);
-      return;
-    }
 
-    this.loading = true;
-    this.userService.getAllUsers().subscribe({
-      next: (data) => {
+
+  loadUsers() {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    this.router.navigate(['/login']);
+    return;
+  }
+
+  this.loading = true;
+  this.userService.getAllUsers().subscribe({
+    next: (data) => {
+      setTimeout(() => { 
         this.users = data;
         this.filteredUsers = [...this.users];
         this.loading = false;
-      },
-      error: (err) => {
-        console.error('Erreur lors du chargement des utilisateurs', err);
-        this.loading = false;
-
-        if (err.status === 401 || err.status === 403) {
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Erreur',
-            detail: 'Session expirée ou accès non autorisé. Veuillez vous reconnecter.'
-          });
-          localStorage.removeItem('token');
-          this.router.navigate(['/login']);
-        } else {
-          this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de charger les utilisateurs' });
-        }
+      });
+    },
+    error: (err) => {
+      console.error('Erreur lors du chargement des utilisateurs', err);
+      this.loading = false;
+      if (err.status === 401 || err.status === 403) {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Erreur',
+          detail: 'Session expirée ou accès non autorisé. Veuillez vous reconnecter.'
+        });
+        localStorage.removeItem('token');
+        this.router.navigate(['/login']);
+      } else {
+        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de charger les utilisateurs' });
       }
-    });
-  }
+    }
+  });
+}
 
   onGlobalFilter(event: Event) {
     const value = (event.target as HTMLInputElement).value?.toLowerCase() || '';

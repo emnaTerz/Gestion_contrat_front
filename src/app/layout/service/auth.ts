@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
+import { JwtHelperService } from '@auth0/angular-jwt';
 
 export interface SigninRequest {
   email: string;
@@ -17,7 +18,7 @@ export interface SigninResponse {
 })
 export class AuthService {
 private apiUrl = 'http://localhost:8080/api';
-
+ private jwtHelper = new JwtHelperService();
   constructor(private http: HttpClient) {}
 
  signin(request: SigninRequest): Observable<SigninResponse> {
@@ -38,10 +39,20 @@ private apiUrl = 'http://localhost:8080/api';
     return localStorage.getItem('userRole');
   }
 
-  isLoggedIn(): boolean {
-    return !!this.getToken();
+isLoggedIn(): boolean {
+    const token = this.getToken();
+    if (!token) return false;
+
+    // ✅ Utilisation correcte sans require()
+    return !this.jwtHelper.isTokenExpired(token);
   }
 
+  getTokenExpirationDate(): Date | null {
+    const token = this.getToken();
+    if (!token) return null;
+    console.log("exxxx",this.jwtHelper.getTokenExpirationDate(token));
+    return this.jwtHelper.getTokenExpirationDate(token);
+  }
   logout(): void {
     localStorage.removeItem('token');
     localStorage.removeItem('userRole');

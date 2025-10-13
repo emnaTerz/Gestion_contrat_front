@@ -105,20 +105,24 @@ filterByDate() {
     });
   }
 
-  onGlobalFilter(event: any) {
-    
-    const value = event.target.value.toLowerCase();
-    this.filteredContrats = this.contrats.filter(c =>
+onGlobalFilter(event: any) {
+  const value = event.target.value.toLowerCase();
+
+  this.filteredContrats = this.contrats.filter(c => {
+    const fractionnementLabel = this.getFractionnementLabel(c.fractionnement).toLowerCase();
+
+    return (
       c.numPolice?.toLowerCase().includes(value) ||
       c.adherent?.codeId?.toLowerCase().includes(value) ||
-      c.fractionnement?.toLowerCase().includes(value) ||
+      fractionnementLabel.includes(value) || // ✅ on filtre sur le libellé lisible
       c.codeRenouvellement?.toLowerCase().includes(value) ||
       c.branche?.toLowerCase().includes(value) ||
       c.typeContrat?.toLowerCase().includes(value) ||
       c.codeAgence?.toLowerCase().includes(value) ||
       c.primeTTC?.toString().includes(value)
     );
-  }
+  });
+}
 
   clearFilter() {
     this.filteredContrats = this.contrats;

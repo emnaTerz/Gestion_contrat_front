@@ -1,8 +1,20 @@
+
+    <div class="contrat-main-container" [class.split-view]="showModele"> 
+
 <div class="contrat-container">
   <p-toast></p-toast>
 
   <p-steps [model]="steps" [(activeIndex)]="currentStep"></p-steps>
-
+<div style="display: flex; justify-content: flex-end; margin: 1rem 0;">
+      <button 
+        pButton 
+        label="{{ showModele ? 'Fermer le modèle' : 'Voir le modèle' }}" 
+        icon="{{ showModele ? 'pi pi-eye-slash' : 'pi pi-eye' }}"
+        (click)="toggleModele()" 
+        class="p-button-info"
+      >
+      </button>
+    </div>
   <!-- Étape 0 -->
   <div *ngIf="currentStep === 0" class="contrat-section">
     <h3>Informations générales</h3>
@@ -14,7 +26,7 @@
     <input type="text" [(ngModel)]="adherent.nomRaison">
     <label>Adresse:</label>
     <input type="text" [(ngModel)]="adherent.adresse">
-    <label>Activité:</label>
+    <label>Profession:</label>
     <input type="text" [(ngModel)]="adherent.activite">
     <div class="custom-checkbox-label" style="margin-bottom: 1rem;">
       <p-checkbox [(ngModel)]="adherent.nouveau" binary="true" class="custom-checkbox"></p-checkbox>
@@ -25,10 +37,12 @@
     <select [(ngModel)]="branche">
       <option *ngFor="let opt of brancheOptions" [value]="opt.value">{{ opt.label }}</option>
     </select>
+    <label>Code Produit:</label>
+  <input type="number" [(ngModel)]="service" placeholder="Entrez le code produit" />
 
     <label>Numéro de police:</label>
     <input type="text" [(ngModel)]="numPolice">
-    <label>Nom de l'assuré:</label>
+    <label>Activité professionnelle de l'Assuré:</label>
     <input type="text" [(ngModel)]="nom_assure">
     <label>Code Agence:</label>
     <input type="text" [(ngModel)]="codeAgence">
@@ -109,43 +123,6 @@
     </div>
   </div>
 
-  <!-- Étape 2 : Garanties -->
- <!--  <div *ngIf="currentStep === 3" class="contrat-section">
-    <h3>Garanties</h3>
-    <div *ngFor="let s of situationRisques; let i=index" class="situation-card">
-      <h4>Situation {{i+1}} : {{s.identification}}</h4>
-      <div *ngFor="let g of s.garanties; let j=index" class="garantie-card">
-        <div class="garantie-header">
-          <label>Garantie: {{getGarantieName(g.sousGarantieId)}}</label>
-          <i class="pi pi-trash delete-icon" (click)="removeGarantie(s,j)" title="Supprimer"></i>
-        </div>
-
-        <select [(ngModel)]="g.sousGarantieId" (change)="loadExclusionsForGarantie(g)">
-          <option [value]="0">Sélectionner</option>
-          <option *ngFor="let sg of sousGarantiesOptions" [value]="sg.value">{{sg.label}}</option>
-        </select>
-
-        <label>Capitale Assuré</label>
-        <input type="number" [(ngModel)]="g.capitale">
-        <label>Franchise</label>
-        <input type="number" [(ngModel)]="g.franchise">
-        <label>Minimum</label>
-        <input type="number" [(ngModel)]="g.minimum">
-        <label>Maximum</label>
-        <input type="number" [(ngModel)]="g.maximum">
-        <label>Prime NET</label>
-        <input type="number" [(ngModel)]="g.primeNET">
-      </div>
-
-      <button pButton label="Ajouter garantie" (click)="addGarantie(s)" class="add-btn"></button>
-    </div>
-
-    <div style="margin-top:10px; display:flex; justify-content: space-between;">
-      <button pButton label="← Précédent" (click)="currentStep=1"></button>
-      <button pButton label="Suivant →" (click)="currentStep=4"></button>
-      <button pButton label="Annuler" class="p-button-danger" (click)="cancel()"></button>
-    </div>
-  </div> -->
   <!-- Étape 3 : Garanties -->
 <div *ngIf="currentStep === 3" class="contrat-section">
   <h3>Garanties</h3>
@@ -521,6 +498,36 @@
         </div>
       </div>
   </div>
-
- 
 </div>
+<div class="pdf-sidebar" *ngIf="showModele">
+    <div class="pdf-container">
+      <div class="pdf-header">
+        <h3>Modèle de Contrat</h3>
+        <button 
+          pButton 
+          icon="pi pi-times" 
+          class="p-button-text p-button-sm"
+          (click)="toggleModele()"
+          title="Fermer">
+        </button>
+      </div>
+      
+      <ng-container *ngIf="pdfUrl; else loading">
+        <iframe [src]="pdfUrl" width="100%" height="100%"></iframe>
+      </ng-container>
+      
+      <ng-template #loading>
+        <div class="loading-content">
+          <p *ngIf="contratData || situationRisques.length > 0" class="loading-text">
+            <i class="pi pi-spin pi-spinner" style="margin-right: 8px;"></i>
+            Génération du PDF en cours...
+          </p>
+          <p *ngIf="!contratData && situationRisques.length === 0" class="no-data-text">
+            <i class="pi pi-info-circle" style="margin-right: 8px;"></i>
+            Veuillez d'abord créer au moins une situation de risque pour générer le PDF.
+          </p>
+        </div>
+      </ng-template>
+    </div>
+  </div>
+</div> <!-- Fin de contrat-main-container -->

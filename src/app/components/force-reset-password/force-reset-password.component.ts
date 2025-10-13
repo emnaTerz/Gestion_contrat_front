@@ -9,21 +9,46 @@ import { ToastModule } from 'primeng/toast';
 @Component({
   selector: 'app-force-reset-password',
   standalone: true,
-  imports: [CommonModule, FormsModule,ToastModule ],
+  imports: [CommonModule, FormsModule, ToastModule],
   templateUrl: './force-reset-password.component.html',
-  styleUrl: './force-reset-password.component.scss'
+  styleUrls: ['./force-reset-password.component.scss']
 })
-
 export class ForceResetPasswordComponent {
   newPassword: string = '';
   confirmPassword: string = '';
-  errorMessage: string = '';
+  passwordStrength: number = 0; // 0 à 5 (5 critères)
+  passwordColor: string = 'red';
 
   constructor(
     private userService: UserService,
     private router: Router,
     private messageService: MessageService
   ) {}
+
+  // Vérifie la force du mot de passe et met à jour la couleur
+  checkPasswordStrength() {
+    const password = this.newPassword;
+    let strength = 0;
+
+    if (password.length >= 8) strength++;
+    if (/[A-Z]/.test(password)) strength++;
+    if (/[a-z]/.test(password)) strength++;
+    if (/\d/.test(password)) strength++;
+    if (/[\W_]/.test(password)) strength++;
+
+    this.passwordStrength = strength; // 0 à 5
+
+    if (strength < 3) this.passwordColor = 'red';
+    else if (strength < 5) this.passwordColor = 'orange';
+    else this.passwordColor = 'green';
+  }
+
+  // Retourne le texte correspondant à la force du mot de passe
+  getPasswordStrengthText(): string {
+    if (this.passwordStrength < 3) return 'Faible';
+    else if (this.passwordStrength < 5) return 'Moyenne';
+    else return 'Forte';
+  }
 
   submit(): void {
     if (!this.newPassword || !this.confirmPassword) {
@@ -33,6 +58,13 @@ export class ForceResetPasswordComponent {
 
     if (this.newPassword !== this.confirmPassword) {
       this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Les mots de passe ne correspondent pas' });
+      return;
+    }
+
+    // Validation du mot de passe
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
+    if (!passwordRegex.test(this.newPassword)) {
+      this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Le mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule, un chiffre et un symbole.' });
       return;
     }
 
