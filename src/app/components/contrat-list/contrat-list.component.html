@@ -59,7 +59,7 @@
           <td>{{ contrat.primeTTC | number:'1.2-2' }}</td>
           <td>{{ contrat.dateDebut | date:'dd/MM/yyyy' }}</td>
           <td>{{ contrat.dateFin | date:'dd/MM/yyyy' }}</td>
-          <td *ngIf="isAdmin"> <p-toggleButton   [(ngModel)]="contrat.fige"  onLabel="Figé" offLabel="Actif"    onLabel="Figé" offLabel="Actif" (onChange)="toggleStatus(contrat)"> </p-toggleButton></td>
+          <td *ngIf="isAdmin">   <p-toggleButton [(ngModel)]="contrat.fige" onLabel="Figé" offLabel="Actif" class="custom-toggle" (onChange)="toggleStatus(contrat)"></p-toggleButton></td>
           <td class="actions">
             <button pButton type="button" icon="pi pi-pencil" class="p-button-text p-button-sm"
                     (click)="editContrat(contrat)">

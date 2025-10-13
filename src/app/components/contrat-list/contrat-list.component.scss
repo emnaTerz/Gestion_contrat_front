@@ -132,4 +132,14 @@ p-dialog .p-dialog-content {
   padding: 0.8rem 1rem;
   background-color: transparent;
 }
+.custom-toggle ::ng-deep .p-togglebutton.p-highlight {
+  background-color: #f28b82 !important; /* rouge clair */
+  border-color: #f28b82 !important;
+  color: black !important;
+}
 
+.custom-toggle ::ng-deep .p-togglebutton:not(.p-highlight) {
+  background-color: #81c784 !important; /* vert clair */
+  border-color: #81c784 !important;
+  color: black !important;
+}
