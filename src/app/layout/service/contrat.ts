@@ -242,31 +242,31 @@ export interface Tarif {
 export class ContratService {
 
   private extractApiUrl = 'http://localhost:5000/extract'; // ton API Flask
-  private sousGarantieApiUrl = 'http://localhost:8081/contrat/catalogue/sous-garantie'; // ton API sous-garanties
-  private GarantieApiUrl = 'http://localhost:8081/contrat/catalogue/garantie'; // ton API sous-garanties
+  private sousGarantieApiUrl = 'http://localhost:8082/contrat/catalogue/sous-garantie'; // ton API sous-garanties
+  private GarantieApiUrl = 'http://localhost:8082/contrat/catalogue/garantie'; // ton API sous-garanties
 
-  private exclusionApiUrl = 'http://localhost:8081/contrat/catalogue/exclusion/garantie'; // API exclusions
-private baseUrl = 'http://localhost:8081/contrat';
-  private tarifApiUrl = 'http://localhost:8081/contrat/tarifs';
+  private exclusionApiUrl = 'http://localhost:8082/contrat/catalogue/exclusion/garantie'; // API exclusions
+private baseUrl = 'http://localhost:8082/contrat';
+  private tarifApiUrl = 'http://localhost:8082/contrat/tarifs';
   constructor(private http: HttpClient) { }
 
 toggleContratStatus(numPolice: string): Observable<any> {
-  return this.http.patch(`http://localhost:8081/contrat/${numPolice}/status`, {});
+  return this.http.patch(`http://localhost:8082/contrat/${numPolice}/status`, {});
 }
 
 getContratStatus(numPolice: string) {
   // responseType: 'text' dit à HttpClient de traiter la réponse comme simple texte
-  return this.http.get(`http://localhost:8081/contrat/${numPolice}/status`, { responseType: 'text' });
+  return this.http.get(`http://localhost:8082/contrat/${numPolice}/status`, { responseType: 'text' });
 }
 
    deleteSousGarantie(id: number): Observable<void> {
-    return this.http.delete<void>(`http://localhost:8081/contrat/catalogue/sous-garantie/${id}`);
+    return this.http.delete<void>(`http://localhost:8082/contrat/catalogue/sous-garantie/${id}`);
   }
 
 getSousGarantiesbybranche(garantieId: number, branche: string): Observable<SousGarantie[]> {
   const params = new HttpParams().set('branche', branche);
   return this.http.get<SousGarantie[]>(
-    `http://localhost:8081/contrat/catalogue/sous-garantie-branche/${garantieId}`, 
+    `http://localhost:8082/contrat/catalogue/sous-garantie-branche/${garantieId}`, 
     { params }
   );
 }
@@ -295,7 +295,7 @@ getAllGaranties(): Observable<Garantie[]> {
     return this.http.post<{ lines: string[] }>(this.extractApiUrl, formData);
   }
  getGaranties(): Observable<Garantie[]> {
-    return this.http.get<Garantie[]>('http://localhost:8081/contrat/catalogue/garantie').pipe(
+    return this.http.get<Garantie[]>('http://localhost:8082/contrat/catalogue/garantie').pipe(
       catchError(err => {
         console.error('Erreur récupération garanties', err);
         return throwError(() => err);
@@ -311,11 +311,11 @@ getAllGaranties(): Observable<Garantie[]> {
     return this.http.get<SousGarantie[]>(url);
   }
 createExclusion(exclusion: any): Observable<Exclusion> {
-  return this.http.post<Exclusion>('http://localhost:8081/contrat/catalogue/exclusion', exclusion);
+  return this.http.post<Exclusion>('http://localhost:8082/contrat/catalogue/exclusion', exclusion);
 }
 
 createExclusionRC(request: any): Observable<ExclusionRCResponseDTO> {
-  return this.http.post<Exclusion>('http://localhost:8081/contrat/catalogue/exclusion-rc', request);
+  return this.http.post<Exclusion>('http://localhost:8082/contrat/catalogue/exclusion-rc', request);
 }
   // Nouvelle méthode pour récupérer les exclusions d'une garantie spécifique
   getExclusionsByGarantie(garantieId: number): Observable<Exclusion[]> {
@@ -325,7 +325,7 @@ createExclusionRC(request: any): Observable<ExclusionRCResponseDTO> {
 createContrat(contrat: ContratDTO) {
 const token = localStorage.getItem('token');
     const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
-  return this.http.post('http://localhost:8081/contrat/creer', contrat, { headers });
+  return this.http.post('http://localhost:8082/contrat/creer', contrat, { headers });
 }
 checkContratExists(numPolice: string): Observable<boolean> {
     return this.http.get<boolean>(`${this.baseUrl}/exists/${numPolice}`);
@@ -360,7 +360,7 @@ getContrat(numPolice: string): Observable<ContratResponseDTO> {
       'Content-Type': 'application/json'
     });
     
-    return this.http.get(`http://localhost:8081/contrat/${numPolice}/pdf`, {
+    return this.http.get(`http://localhost:8082/contrat/${numPolice}/pdf`, {
       headers: headers,
       responseType: 'blob'
     }).pipe(
@@ -377,7 +377,7 @@ lockContrat(numPolice: string): Observable<ContratDTO> {
 }
 // Dans votre ContratService
 checkLockStatus(numPolice: string): Observable<boolean> {
-  return this.http.get<boolean>(`http://localhost:8081/contrat/${numPolice}/lock-status`);
+  return this.http.get<boolean>(`http://localhost:8082/contrat/${numPolice}/lock-status`);
 }
 
 unlockContrat(numPolice: string, cancelled: boolean, startTime: string): Observable<string> {
@@ -394,7 +394,7 @@ unlockContrat(numPolice: string, cancelled: boolean, startTime: string): Observa
 }
 // Ajouter cette méthode pour récupérer toutes les exclusions RC
 getExclusionsRC(): Observable<Exclusion[]> {
-  return this.http.get<Exclusion[]>(`http://localhost:8081/contrat/catalogue/exclusion-rc`);
+  return this.http.get<Exclusion[]>(`http://localhost:8082/contrat/catalogue/exclusion-rc`);
 }
 
   getTarifByBranche(branche: Branche): Observable<Tarif> {
@@ -425,17 +425,17 @@ getExclusionsRC(): Observable<Exclusion[]> {
   }
 
 getExclusionrc(id: number): Observable<string> {
-  const url = `http://localhost:8081/contrat/catalogue/exclusion-rc`;
+  const url = `http://localhost:8082/contrat/catalogue/exclusion-rc`;
   return this.http.get(`${url}/${id}`, { responseType: 'text' });
 }
 
  getExclusionById(id: number): Observable<Exclusion> {
-  const url = `http://localhost:8081/contrat/catalogue/exclusion`;
+  const url = `http://localhost:8082/contrat/catalogue/exclusion`;
 
   return this.http.get<Exclusion>(`${url}/${id}`);
 }
  getExclusion(): Observable<Exclusion> {
-  const url = `http://localhost:8081/contrat/catalogue/exclusion`;
+  const url = `http://localhost:8082/contrat/catalogue/exclusion`;
 
   return this.http.get<Exclusion>(`${url}`);
 }

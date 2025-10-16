@@ -24,12 +24,14 @@ export class PdfGeneratorService {
     const sectionsExclusionsParSituation = this.prepareExclusionsParSituation(data);
     const sectionsClausesCommunes = this.prepareClausesCommunes(data);
  const sectionCotisationAnnuelle = await this.prepareCotisationAnnuelle(data);
+   const sectionsAttestations = this.prepareAttestations(data);
+
     const docDefinition: any = {
-       pageMargins: [40, 150, 40, 71],
-       header: function(currentPage: number, pageCount: number) {
+ pageMargins: [40, 100, 40, 90],
+        header: function(currentPage: number, pageCount: number) {
         return {
           text: '',
-          margin: [0, 40, 0, 0] // Espace réservé pour le header
+          margin: [0, 20, 0, 0] // Espace réservé pour le header
         };
       },
       footer: function(currentPage: number, pageCount: number) {
@@ -318,7 +320,7 @@ margin: [0, 5, 0, 5]
           {
             columns: [
               { text: 'Le Souscripteur', alignment: 'left', margin: [0, 20, 0, 0],fontSize:10 },
-              { text: 'P / MAE Assurances', alignment: 'right', margin: [0, 20, 0, 0] }
+              { text: 'P / MAE Assurances', alignment: 'right', margin: [0, 20, 0, 0],fontSize:10 }
             ]
           }
         ]
@@ -359,7 +361,7 @@ margin: [0, 5, 0, 5]
             alignment: 'justify',
             margin: [0, 3, 0, 5]
           },
-          { text: 'EXCLUSIONS', style: 'paragraphCenterBold' },
+          { text: 'EXCLUSIONS', style: 'paragraphCenterBoldUnderline' },
           {
             ol: [
               'TOUS LES DOMMAGES AUTRES QUE CEUX DÉFINIS CI-DESSUS, AINSI QUE CEUX OCCASIONNÉS DIRECTEMENT OU INDIRECTEMENT, MEME EN CAS D’ORAGE, PAR TES EAUX DE RUISSELLEMENT DANS LES COURS ET JARDINS, VOIES PUBLIQUES OU PRIVÉES, INONDATIONS, RAZ-DE-MARÉE, MAREES, ENGORGEMENT ET REFOULEMENT DES ÉGOUTS, DÉBORDEMENT DES SOURCES, COURS D’EAU ET PLUS GÉNÉRALEMENT PAR LA MER ET AUTRES PLANS D’EAU NATURELS OU ARTIFICIELS.',
@@ -374,15 +376,14 @@ margin: [0, 5, 0, 5]
                 lineHeight: 1.5,
                 style: 'paragraph',}))
           },
-            { text: '', pageBreak: 'before' },
           // --- Autres sections II, III, IV ---
-          { text: 'II. FUMÉES', style: 'subSectionTitleCenter' },
+          { text: 'II. FUMÉES', style: 'subSectionTitleCenter',pageBreak: 'before'  },
           {
             text: `L'assureur garantit les dommages matériels causés aux biens assurés par des fumées dues à une défectuosité soudaine et imprévisible d'un appareil de chauffage ou de cuisine, relié à une cheminée et situé dans l’enceinte des risques spécifiés dans la police.`,
             style: 'paragraph',
             alignment: 'justify'
           },
-          { text: 'EXCLUSIONS', style: 'paragraphCenterBold' },
+          { text: 'EXCLUSIONS', style: 'paragraphCenterBoldUnderline' },
           {
              ol: [
              `SONT EXCLUS LES DOMMAGES PROVENANT DE FOYERS EXTÉRIEURS ET APPAREILS INDUSTRIELS AUTRES QUE LES APPAREILS DE CHAUFFAGE.`,
@@ -405,7 +406,7 @@ margin: [0, 5, 0, 5]
             style: 'paragraph',
             alignment: 'justify'
           },
-          { text: 'EXCLUSIONS', style: 'paragraphCenterBold' },
+          { text: 'EXCLUSIONS', style: 'paragraphCenterBoldUnderline' },
           {
             ol: [
               `OCCASIONNÉS PAR TOUT VÉHICULE DONT L'ASSURÉ OU LOCATAIRE EST PROPRIÉTAIRE OU USAGER.`,
@@ -491,7 +492,7 @@ Il faut entendre par inondation toute situation temporaire et générale pendant
               style: 'paragraph',
               alignment: 'justify'
             },
-            { text: 'IV. FRANCHISE', style: 'subSectionTitleCenter' },
+            { text: 'IV. FRANCHISE', style: 'subSectionTitleCenter',pageBreak: 'before'  },
             {
               text: `L'assuré conservera à sa charge, par sinistre une franchise égale à 10% des dommages avec un minimum de Mille Dinars (1 000DT) par sinistre et un maximum de Cinq Mille Dinars (5 000DT) par sinistre.
 Cette franchise sera déduite du montant de l'indemnité qui aurait été versée à l'assuré sans l'existence de la dite franchise.`,
@@ -640,7 +641,7 @@ La résiliation prendra effet sept jours après réception par l’assuré ou l�
               style: 'paragraph',
               alignment: 'justify'
             },
-            { text: 'FRANCHISE', style: 'subSectionTitleCenter' },
+            { text: 'FRANCHISE', style: 'subSectionTitleCenter',pageBreak: 'before'  },
             {
               text: `L'assuré conservera à sa charge, par sinistre et par établissement, une franchise égale à 10% du montant des dommages matériels directs subis avec un minimum de 5 000 dinars et un maximum de 75 000 dinars.
 Cette franchise sera déduite du montant de l'indemnité qui aurait été versée à l'assuré en l'absence de cette franchise.`,
@@ -765,6 +766,10 @@ La présente extension s’applique exclusivement aux sinistres dépassant 10.00
 
         {
           stack: [
+             { 
+            text: `Annexe au Contrat N° : ${data.adherent.codeId || '-'}/${data.service || '-'}/${data.numPolice || '-'}`,
+            style: 'headerCenter'
+          },
             { text: 'EXCLUSIONS COMMUNES', style: 'sectionTitle', margin: [0, 10, 0, 10], pageBreak: 'before'  },
             
             // Texte introductif avant les puces
@@ -826,11 +831,23 @@ La présente extension s’applique exclusivement aux sinistres dépassant 10.00
               bulletRadius: 2
             }
           ]
-        },
+        }, ...sectionsAttestations,
       ],
       
       styles: {
-    
+    attestationTitle: {
+    fontSize: 14,
+    bold: true,
+    alignment: 'center',
+    margin: [0, 10, 0, 20],
+    decoration: 'underline'
+  },
+  attestationText: {
+    fontSize: 10,
+    alignment: 'justify',
+    lineHeight: 1.4,
+    margin: [0, 5, 0, 5]
+  },
         headerCenter: { 
           fontSize: 12, 
           bold: true, 
@@ -1400,7 +1417,7 @@ const numPolice = data?.numPolice || '-';
     ];
 }
   // MODIFICATION : Ajuster l'ordre des colonnes pour les garanties
-  private prepareTableauxGaranties(sections: any[]): any[] {
+ /*  private prepareTableauxGaranties(sections: any[]): any[] {
     if (!sections || sections.length === 0) {
       return [
         {
@@ -1470,8 +1487,95 @@ const numPolice = data?.numPolice || '-';
         ]
       };
     });
+  } */
+
+private prepareTableauxGaranties(sections: any[]): any[] {
+  if (!sections || sections.length === 0) {
+    return [
+      {
+        stack: [
+          { text: 'GARANTIES', style: 'garantieSectionTitle' },
+          { text: 'Aucune garantie disponible', style: 'paragraph', alignment: 'center' }
+        ]
+      }
+    ];
   }
 
+  const allSectionsContent: any[] = [];
+
+  sections.forEach((section, index) => {
+    const situationLabel = `Situation ${String.fromCharCode(65 + index)}`;
+    const garanties = section.garanties || [];
+
+    if (garanties.length === 0) {
+      allSectionsContent.push({
+        stack: [
+          { 
+            text: `GARANTIES - ${situationLabel}`, 
+            style: 'garantieSectionTitle'
+            // SUPPRIMER pageBreak: 'before' 
+          },
+          { 
+            text: `Situation : ${section.identification || '-'}`, 
+            style: 'garantieSubSectionTitle'
+          },
+          { text: 'Aucune garantie', style: 'paragraph', alignment: 'center' }
+        ]
+      });
+      return;
+    }
+
+    const lignesGaranties = garanties.map((garantie: any) => [
+      { text: garantie.sousGarantieNom || garantie.sousGarantieId || '-', style: 'garantieTableCell' },
+      { text: this.formatMontant(garantie.capitale), style: 'garantieTableCellRight' },
+      { text: this.formatMontant(garantie.minimum), style: 'garantieTableCellRight' },
+      { text: this.formatMontant(garantie.maximum), style: 'garantieTableCellRight' },
+      { text: garantie.hasFranchise ? this.formatFranchise(garantie.franchise) : '0', style: 'garantieTableCellCenter' },
+      { text: this.formatMontant(garantie.primeNET), style: 'garantieTableCellRight' }
+    ]);
+
+    allSectionsContent.push({
+      stack: [
+        { 
+          text: `GARANTIES - ${situationLabel}`, 
+          style: 'garantieSectionTitle'
+          // SUPPRIMER pageBreak: 'before' - LAISSER pdfmake décider
+        },
+        { 
+          text: `Situation : ${section.identification || '-'}`, 
+          style: 'garantieSubSectionTitle'
+        },
+        {
+          table: {
+            headerRows: 1,
+            widths: ['*', 'auto', 'auto', 'auto', 'auto', 'auto'],
+            body: [
+              [
+                { text: 'Garantie', style: 'garantieTableHeader' },
+                { text: 'Capital assuré (DT)', style: 'garantieTableHeader' },
+                { text: 'Minimum (DT)', style: 'garantieTableHeader' },
+                { text: 'Maximum (DT)', style: 'garantieTableHeader' },
+                { text: 'Franchise', style: 'garantieTableHeader' },
+                { text: 'Prime nette (DT)', style: 'garantieTableHeader' }
+              ],
+              ...lignesGaranties
+            ]
+          },
+          layout: {
+            defaultBorder: true,
+            paddingLeft: function() { return 5; },
+            paddingRight: function() { return 5; },
+            paddingTop: function() { return 3; },
+            paddingBottom: function() { return 3; }
+          },
+          margin: [0, 0, 0, 25]
+        }
+      ]
+    });
+  });
+
+  return allSectionsContent;
+}
   private prepareSituationsRisque(sections: any[]): any[] {
     if (!sections || sections.length === 0) {
       return [
@@ -1567,7 +1671,7 @@ console.log(sections)
         return codeFractionnement;
     }
   }
-
+/* 
   private prepareSectionsRC(rcConfigurations: any[], data: any): any[] {
     if (!rcConfigurations || rcConfigurations.length === 0) {
       return [
@@ -1696,6 +1800,186 @@ if (!Array.isArray(allExclusions)) {
 
     return [sectionObjetGarantie, ...sectionsConfigurations];
   }
+ */
+private prepareSectionsRC(rcConfigurations: any[], data: any): any[] {
+  if (!rcConfigurations || rcConfigurations.length === 0) {
+    return [
+      {
+        stack: [
+          { text: 'RESPONSABILITÉ CIVILE', style: 'sectionTitle', pageBreak: 'before' },
+          { text: 'Aucune configuration de responsabilité civile disponible', style: 'paragraph', alignment: 'center' }
+        ]
+      }
+    ];
+  }
+
+  // Section avec l'objet de garantie (affiché une seule fois)
+  const sectionObjetGarantie = {
+    stack: [
+      { text: 'RESPONSABILITÉ CIVILE', style: 'sectionTitle', pageBreak: 'before' },
+      { text: 'Objet de la garantie :', style: 'subSectionTitle' },
+      { text: data.objetDeLaGarantie || 'Non spécifié', style: 'paragraph', margin: [0, 0, 0, 20] }
+    ]
+  };
+
+  const allExclusions = data.exclusionsRC || [];
+
+  if (!Array.isArray(allExclusions)) {
+    console.error('❌ allExclusions n\'est pas un tableau:', allExclusions);
+    return [];
+  }
+
+  // Sections pour chaque configuration RC
+  const sectionsConfigurations = rcConfigurations.map((rcConfig, index) => {
+    const situationsCouvertes = rcConfig.sectionIds && rcConfig.sectionIds.length > 0
+      ? rcConfig.sectionIds.map((id: number) => `Situation ${String.fromCharCode(65 + id)}`).join(', ')
+      : 'Aucune situation spécifiée';
+
+    // Récupérer les exclusions correspondant aux IDs
+    const exclusionsTextes = rcConfig.exclusionsRcIds && rcConfig.exclusionsRcIds.length > 0
+      ? allExclusions
+          .filter((ex: any) => rcConfig.exclusionsRcIds.includes(ex.id))
+          .map((ex: any) => ex.libelle || ex.nom || 'Exclusion sans libellé')
+      : [];
+
+    // PRÉPARER LE CONTENU DES EXCLUSIONS AVEC GESTION DE PAGINATION
+    const exclusionsContent = this.prepareRCExclusionsContent(exclusionsTextes);
+
+    return {
+      stack: [
+        { 
+          text: `RESPONSABILITÉ CIVILE ${index + 1}`, 
+          style: 'sectionTitle', 
+          pageBreak: index === 0 ? undefined : 'before' 
+        },
+
+        // Situations couvertes
+        { text: 'Situations de risque couvertes :', style: 'subSectionTitle' },
+        { text: situationsCouvertes, style: 'paragraph', margin: [0, 0, 0, 15] },
+
+        // Tableau RC
+        {
+          table: {
+            headerRows: 1,
+            widths: ['*', 'auto', 'auto', 'auto'],
+            body: [
+              [
+                { text: 'Couvertures', style: 'rcTableHeader' },
+                { text: 'Limite annuelle (DT)', style: 'rcTableHeader' },
+                { text: 'Limite par sinistre (DT)', style: 'rcTableHeader' },
+                { text: 'Franchise (%)', style: 'rcTableHeader' }
+              ],
+              [
+                { text: 'Dommages corporels', style: 'rcTableCell', border: [true, true, true, false] },
+                { text: this.formatMontant(rcConfig.limiteAnnuelleDomCorporels), style: 'rcTableCellRight', border: [true, true, true, false] },
+                { text: '\n' + this.formatMontant(rcConfig.limiteParSinistre) + '\n', style: 'rcTableCellRight', rowSpan: 2, border: [true, true, true, true] },
+                { text: '\n' + this.formatFranchise(rcConfig.franchise) + '\n', style: 'rcTableCellRight', rowSpan: 2, border: [true, true, true, true] }
+              ],
+              [
+                { text: 'Dommages matériels', style: 'rcTableCell', border: [true, false, true, true] },
+                { text: this.formatMontant(rcConfig.limiteAnnuelleDomMateriels), style: 'rcTableCellRight', border: [true, false, true, true] },
+                { text: '', border: [false, false, false, false] },
+                { text: '', border: [false, false, false, false] }
+              ]
+            ]
+          },
+          layout: {
+            hLineWidth: (i: number) => (i === 1 ? 0.5 : 1),
+            vLineWidth: () => 1,
+            hLineColor: () => '#000000',
+            vLineColor: () => '#000000',
+            paddingLeft: () => 5,
+            paddingRight: () => 5,
+            paddingTop: () => 3,
+            paddingBottom: () => 3
+          },
+          margin: [0, 0, 0, 20]
+        },
+
+        // Section Exclusions avec gestion de pagination
+        ...(exclusionsTextes.length > 0
+          ? [
+              { text: 'Exclusions :', style: 'subSectionTitle' },
+              ...exclusionsContent
+            ]
+          : [
+              {
+                text: 'Aucune exclusion spécifique.',
+                style: 'paragraph',
+                italics: true,
+                alignment: 'justify',
+                margin: [0, 5, 0, 15]
+              }
+            ])
+      ]
+    };
+  });
+
+  return [sectionObjetGarantie, ...sectionsConfigurations];
+}
+
+// NOUVELLE MÉTHODE pour gérer les exclusions RC
+private prepareRCExclusionsContent(exclusionsTextes: string[]): any[] {
+  if (!exclusionsTextes || exclusionsTextes.length === 0) {
+    return [];
+  }
+
+  // Si la liste est courte, on retourne simplement la liste
+  if (exclusionsTextes.length <= 8) { // Ajustez ce nombre selon vos besoins
+    return [{
+      ul: exclusionsTextes.map((text: string) => ({
+        text: text,
+        alignment: 'justify',
+        lineHeight: 1.5,
+        bold: true,
+        style: 'paragraph',
+        margin: [0, 0, 0, 5]
+      })),
+      margin: [10, 0, 0, 15],
+      bulletRadius: 2,
+      unbreakable: true // ⬅️ Garder le groupe ensemble
+    }];
+  }
+
+  // Pour les longues listes, on divise en chunks
+  const content: any[] = [];
+  const maxExclusionsPerPage = 8; // Ajustez selon vos besoins
+  const exclusionChunks = [];
+
+  for (let i = 0; i < exclusionsTextes.length; i += maxExclusionsPerPage) {
+    exclusionChunks.push(exclusionsTextes.slice(i, i + maxExclusionsPerPage));
+  }
+
+  exclusionChunks.forEach((chunk, chunkIndex) => {
+    const isFirstChunk = chunkIndex === 0;
+    
+    const chunkContent = {
+      stack: [
+        ...(chunkIndex > 0 ? [{ 
+          text: 'Exclusions  :', 
+          style: 'subSectionTitle',
+          pageBreak: 'before'
+        }] : []),
+        {
+          ul: chunk.map((text: string) => ({
+            text: text,
+            alignment: 'justify',
+            lineHeight: 1.5,
+            bold: true,
+            style: 'paragraph',
+            margin: [0, 0, 0, 5]
+          })),
+          margin: [10, 0, 0, 15],
+          bulletRadius: 2
+        }
+      ]
+    };
+
+    content.push(chunkContent);
+  });
+
+  return content;
+}
 
   private prepareExclusionsParSituation(data: any): any[] {
     if (!data.sections || data.sections.length === 0) {
@@ -1713,7 +1997,7 @@ if (!Array.isArray(allExclusions)) {
           { 
             text: `EXCLUSIONS - ${situationLabel}`, 
             style: 'sectionTitle',
-            pageBreak: index === 0 ? 'before' : undefined 
+          //  pageBreak: index === 0 ? 'before' : undefined 
           },
           { 
             text: `Situation : ${section.identification || '-'}`, 
@@ -1801,9 +2085,9 @@ if (!Array.isArray(allExclusions)) {
       }
     });
   }
-
+/* 
   // Préparer le contenu des exclusions pour l'affichage (FORMAT COMME RC)
-  private prepareExclusionsContent(garantiesParParent: any[]): any[] {
+ private prepareExclusionsContent(garantiesParParent: any[]): any[] {
     if (!garantiesParParent || garantiesParParent.length === 0) {
       return [
         {
@@ -1850,5 +2134,145 @@ if (!Array.isArray(allExclusions)) {
     });
 
     return content;
+  } 
+ */
+private prepareExclusionsContent(garantiesParParent: any[]): any[] {
+  if (!garantiesParParent || garantiesParParent.length === 0) {
+    return [
+      {
+        text: 'Aucune exclusion spécifique pour cette situation.',
+        style: 'paragraph',
+        italics: true,
+        margin: [0, 10, 0, 10]
+      }
+    ];
   }
+
+  const content: any[] = [];
+
+  garantiesParParent.forEach((parentGroup, index) => {
+    const hasExclusions = parentGroup.exclusionsUniques && parentGroup.exclusionsUniques.size > 0;
+
+    if (hasExclusions) {
+      const exclusionsList = Array.from(parentGroup.exclusionsUniques.values()).map((exclusion: any) => 
+        exclusion.nom || 'Exclusion sans libellé'
+      );
+
+      // CRÉER UN STACK COMPLET pour chaque groupe d'exclusions (titre + liste)
+      const exclusionGroupStack = {
+        stack: [
+          { 
+            text: `EXCLUSIONS - ${parentGroup.parent.libelle || 'GARANTIE'}`.toUpperCase(), 
+            style: 'exclusionParentTitle',
+            margin: [0, index === 0 ? 0 : 15, 0, 5]
+          },
+          {
+            ul: exclusionsList.map((text: string) => ({
+              text: text,
+              alignment: 'justify',
+              lineHeight: 1.5,
+              bold: true,
+              style: 'garantieExclusionText',
+              margin: [0, 0, 0, 5]
+            })),
+            margin: [10, 0, 0, 15],
+            bulletRadius: 2
+          }
+        ],
+        // FORCER le groupe à rester ensemble - saut de page avant si nécessaire
+        unbreakable: true // ⬅️ C'EST LA CLÉ !
+      };
+
+      content.push(exclusionGroupStack);
+    }
+  });
+
+  return content;
+}
+    
+  private prepareAttestations(data: any): any[] {
+  if (!data.sections || data.sections.length === 0) {
+    return [];
+  }
+
+  return data.sections.map((section: any, index: number) => {
+    const situationLabel = `Situation ${String.fromCharCode(65 + index)}`;
+    
+    return {
+      stack: [
+        { 
+          text: 'ATTESTATION', 
+          style: 'sectionTitle',
+          pageBreak: 'before',
+          alignment: 'center',
+          decoration: 'underline'
+        },
+        
+        // Texte principal de l'attestation
+        {
+          text: [
+            { text: 'Valable Du ', style: 'paragraph',alignment: 'center', },
+            { text: `${this.formatDate(data.dateDebut)}`, style: 'paragraphBold' },
+            { text: ' au ', style: 'paragraph' },
+            { text: `${this.formatDate(data.dateFin)}`, style: 'paragraphBold' }
+          ],
+          alignment: 'center',
+          margin: [0, 10, 0, 20]
+        },
+
+        {
+          text: [
+            'Nous soussignés ',
+            { text: 'Mutuelle Assurance de l\'Enseignement M.A.E', style: 'paragraphBold' },
+            ', dont le siège social est à ',
+            { text: 'Complexe EL MECHTEL AVENUE OULED HAFFOUZ, TUNIS 1075', style: 'paragraphBold' },
+            ', attestons par la présente que ',
+            { text: `${data.adherent.nomRaison || 'Nom de l\'Adhérent'}`, style: 'paragraphBold' },
+            ' a souscrit auprès de notre Mutuelle un contrat d\'assurance Multirisque Artisans et Professions libérales en couverture ',
+            { text: `${data.nom_assure || 'Descriptif'}`, style: 'paragraphBold' },
+            ' sis à ',
+            { text: `${section.adresse || 'Lieu/Site'}`, style: 'paragraphBold' },
+            '.'
+          ],
+          style: 'paragraph',
+          alignment: 'justify',
+          margin: [0, 0, 0, 10]
+        },
+
+        {
+          text: [
+            'Le dit contrat portant le N° : ',
+            { text: `${data.adherent.codeId || 'N° Adhérent'}`, style: 'paragraphBold' },
+             '/', { text: `${data.service || 'Service'}`, style: 'paragraphBold' },'/',
+            { text: `${data.numPolice || 'N° Police'}`, style: 'paragraphBold' },
+            ' prend effet à partir du ',
+            { text: `${this.formatDate(data.dateDebut)}`, style: 'paragraphBold' },
+            ' pour une période ',
+            { text: `${this.getNatureContrat(data.codeRenouvellement)}`, style: 'paragraphBold' },
+            '.'
+          ],
+          style: 'paragraph',
+          alignment: 'justify',
+          margin: [0, 0, 0, 10]
+        },
+
+        {
+          text: 'Cette attestation est délivrée pour servir et valoir ce que de droit.',
+          style: 'paragraph',
+          alignment: 'justify',
+          margin: [0, 0, 0, 30]
+        },
+
+        {
+          text: 'POUR LA MUTUELLE',
+          style: 'paragraphBold',
+          alignment: 'right',
+          margin: [0, 40, 0, 0]
+        },
+
+  
+      ]
+    };
+  });
+}
 }
