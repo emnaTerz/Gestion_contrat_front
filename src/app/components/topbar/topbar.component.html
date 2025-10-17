@@ -1,5 +1,5 @@
 
- <div *ngIf="showTopbar" class="topbar">
+<div *ngIf="showTopbar" class="topbar">
   <button *ngIf="isAdmin" 
           pButton icon="pi pi-chart-bar" 
           class="p-button-text"
@@ -28,6 +28,31 @@
           (click)="openDialog()" 
           title="tarif">
   </button>
+
+  <!-- Nouveau bouton Garanties -->
+  <button *ngIf="isAdmin" 
+          pButton icon="pi pi-shield" 
+          class="p-button-text"
+          (click)="navigateToGaranties()" 
+          title="Gestion des Garanties">
+  </button>
+  
+  <!-- Nouveau bouton Contrats -->
+  <button *ngIf="isAdmin" 
+          pButton icon="pi pi-file" 
+          class="p-button-text"
+          (click)="navigateToContrats()" 
+          title="Liste des Contrats">
+  </button>
+
+  <button pButton icon="pi pi-sign-out" 
+          class="p-button-text p-button-danger"
+          (click)="logout()" 
+          title="Logout">
+  </button>
+</div>
+
+<!-- Dialog déplacé EN DEHORS de la topbar -->
 <p-dialog 
   header="Gestion des Tarifs" 
   [(visible)]="displayDialog" 
@@ -106,25 +131,3 @@
     </button>
   </ng-template>
 </p-dialog>
-<!-- Nouveau bouton Garanties -->
-<button *ngIf="isAdmin" 
-        pButton icon="pi pi-shield" 
-        class="p-button-text"
-        (click)="navigateToGaranties()" 
-        title="Gestion des Garanties">
-</button>
-<!-- Nouveau bouton Contrats -->
-<button *ngIf="isAdmin" 
-        pButton icon="pi pi-file" 
-        class="p-button-text"
-        (click)="navigateToContrats()" 
-        title="Liste des Contrats">
-</button>
-
-
-  <button pButton icon="pi pi-sign-out" 
-          class="p-button-text p-button-danger"
-          (click)="logout()" 
-          title="Logout">
-  </button>
-</div>

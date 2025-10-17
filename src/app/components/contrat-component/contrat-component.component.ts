@@ -658,6 +658,7 @@ toggleExclusionRC(exclusionId: number, event: any) {
 isExclusionRCSelected(exclusionId: number): boolean {
   return this.selectedExclusionsRC.includes(exclusionId);
 }
+
 ajouterExclusionPersonnalisee(garantie: GarantieSection) {
   // Vérifier que le champ n'est pas vide
   if (!garantie.nouvelleExclusion || !garantie.nouvelleExclusion.trim()) {
@@ -679,6 +680,16 @@ ajouterExclusionPersonnalisee(garantie: GarantieSection) {
     return;
   }
 
+  // Vérifier qu'une branche est sélectionnée
+  if (!this.branche) {
+    this.messageService.add({
+      severity: 'error',
+      summary: 'Erreur',
+      detail: 'Veuillez sélectionner une branche'
+    });
+    return;
+  }
+
   // Récupérer la sous-garantie
   const sousGarantie = this.sousGarantiesMap[garantie.sousGarantieId];
 
@@ -691,12 +702,13 @@ ajouterExclusionPersonnalisee(garantie: GarantieSection) {
     return;
   }
 
-  // Préparer l'objet exclusion à créer
+  // 🔥 AJOUT: Préparer l'objet exclusion à créer AVEC la branche
   const nouvelleExclusion = {
     nom: garantie.nouvelleExclusion.trim(),
     garantie: {
-      id: sousGarantie.garantie.id // 🔹 ID de la garantie parent
-    }
+      id: sousGarantie.garantie.id // ID de la garantie parent
+    },
+    branche: this.branche // 🔥 Ajout de la branche
   };
 
   this.contratService.createExclusion(nouvelleExclusion).subscribe({
@@ -725,7 +737,7 @@ ajouterExclusionPersonnalisee(garantie: GarantieSection) {
       this.messageService.add({
         severity: 'success',
         summary: 'Succès',
-        detail: 'Exclusion ajoutée avec succès'
+        detail: `Exclusion ajoutée avec succès pour la branche ${this.branche}`
       });
     },
     error: (error) => {
@@ -849,7 +861,32 @@ addGarantie(situation: SituationRisque) {
     situation.garanties.splice(index, 1);
   }
 
+loadExclusionsByBrancheAndGarantie(garantieParent: Garantie, g: any) {
+  if (!garantieParent || !this.branche) {
+    g.exclusionsOptions = [];
+    g.filteredExclusionsOptions = [];
+    return;
+  }
 
+  // Convertir la branche string en enum Branche
+  const brancheEnum = this.branche as Branche;
+
+  this.contratService.getExclusionsByBrancheAndGarantie(brancheEnum, garantieParent.id).subscribe({
+    next: (data) => {
+      g.exclusionsOptions = data;
+      g.filteredExclusionsOptions = [...data]; // initialiser le filtered
+      console.log(`✅ Exclusions chargées pour branche ${this.branche} et garantie ${garantieParent.id}:`, data);
+    },
+    error: (error) => {
+      console.error('❌ Erreur chargement exclusions par branche et garantie:', error);
+      g.exclusionsOptions = [];
+      g.filteredExclusionsOptions = [];
+      
+      // Fallback: essayer l'ancienne méthode si la nouvelle échoue
+      this.loadExclusionsForGarantie(garantieParent, g);
+    }
+  });
+}
 // ⚡ Fonction pour charger les exclusions à partir de la garantie parent
 loadExclusionsForGarantie(garantieParent: Garantie, g: any) {
   if (!garantieParent) {
@@ -882,7 +919,7 @@ onGarantieChange(g: any) {
 
     if (sousGarantie && sousGarantie.garantie) {
       // Charger les exclusions de la garantie parent
-      this.loadExclusionsForGarantie(sousGarantie.garantie, g);
+      this.loadExclusionsByBrancheAndGarantie(sousGarantie.garantie, g);
     }
   }
 }

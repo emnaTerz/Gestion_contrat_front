@@ -1,13 +1,12 @@
 
-
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, ChangeDetectorRef, AfterViewInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Table, TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { DatePickerModule } from 'primeng/datepicker';
 import { FormsModule } from '@angular/forms';
 import { FilterService } from 'primeng/api';
-import { Observable } from 'rxjs';
+import { Observable, Subject, takeUntil } from 'rxjs';
 import { UserService } from '@/layout/service/UserService';
 import { ContratService } from '@/layout/service/contrat';
 
@@ -37,18 +36,23 @@ export interface ContratVerrouille {
   templateUrl: './action-history.component.html',
   styleUrls: ['./action-history.component.scss']
 })
-export class ActionHistoryComponent implements OnInit {
+export class ActionHistoryComponent implements OnInit, AfterViewInit, OnDestroy {
 
   @ViewChild('historyTable') historyTable!: Table;
   startTime = '';
   mode: 'user' | 'contrat' | 'locked' = 'user';
   history$!: Observable<any[]>;
   selectedDate: Date | null = null;
+  historyData: any[] = [];
+  
+  private destroy$ = new Subject<void>();
+  private tableInitialized = false;
 
   constructor(
     private userService: UserService,
     private contratService: ContratService,
-    private filterService: FilterService
+    private filterService: FilterService,
+    private cdRef: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -65,45 +69,57 @@ export class ActionHistoryComponent implements OnInit {
     });
   }
 
-
-  unlock(historyItem: ContratVerrouille) {
-  console.log('HistoryItem:', historyItem);
-  console.log('numPolice:', historyItem.numPolice);
-  
-  // Vérifiez que numPolice n'est pas null/undefined
-  if (!historyItem.numPolice) {
-    console.error('numPolice est null ou undefined');
-    return;
+  ngAfterViewInit(): void {
+    this.tableInitialized = true;
+    // Use setTimeout to avoid change detection issues
+    setTimeout(() => {
+      this.cdRef.detectChanges();
+    });
   }
 
-  const  now = new Date(); // date locale
-   const startTime = now.getFullYear() + '-' +
-  String(now.getMonth()+1).padStart(2,'0') + '-' +
-  String(now.getDate()).padStart(2,'0') + 'T' +
-  String(now.getHours()).padStart(2,'0') + ':' +
-  String(now.getMinutes()).padStart(2,'0') + ':' +
-  String(now.getSeconds()).padStart(2,'0');
-  console.log('Appel unlock avec:', {
-    numPolice: historyItem.numPolice,
-    cancelled: true,
-    startTime: startTime
-  });
-  
-  this.contratService.unlockContrat(historyItem.numPolice, true, startTime).subscribe({
-    next: (res) => {
-      console.log('Contrat déverrouillé:', res);
-      this.loadHistory();
-    },
-    error: (err) => {
-      console.error('Erreur lors du déverrouillage:', err);
-      // Affichez plus de détails sur l'erreur
-      console.error('Status:', err.status);
-      console.error('Message:', err.message);
-      console.error('Error body:', err.error);
-    }
-  });
-}
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
 
+  unlock(historyItem: ContratVerrouille) {
+    console.log('HistoryItem:', historyItem);
+    console.log('numPolice:', historyItem.numPolice);
+    
+    if (!historyItem.numPolice) {
+      console.error('numPolice est null ou undefined');
+      return;
+    }
+
+    const now = new Date();
+    const startTime = now.getFullYear() + '-' +
+      String(now.getMonth()+1).padStart(2,'0') + '-' +
+      String(now.getDate()).padStart(2,'0') + 'T' +
+      String(now.getHours()).padStart(2,'0') + ':' +
+      String(now.getMinutes()).padStart(2,'0') + ':' +
+      String(now.getSeconds()).padStart(2,'0');
+    
+    console.log('Appel unlock avec:', {
+      numPolice: historyItem.numPolice,
+      cancelled: true,
+      startTime: startTime
+    });
+    
+    this.contratService.unlockContrat(historyItem.numPolice, true, startTime)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (res) => {
+          console.log('Contrat déverrouillé:', res);
+          this.loadHistory();
+        },
+        error: (err) => {
+          console.error('Erreur lors du déverrouillage:', err);
+          console.error('Status:', err.status);
+          console.error('Message:', err.message);
+          console.error('Error body:', err.error);
+        }
+      });
+  }
 
   // Charger l'historique selon le mode
   loadHistory() {
@@ -112,40 +128,63 @@ export class ActionHistoryComponent implements OnInit {
     } else if (this.mode === 'contrat') {
       this.history$ = this.contratService.getHistoriqueContrat();
     } else if (this.mode === 'locked') {
-      this.history$ = this.contratService.getLockedContrats(); // JWT inclus dans le service
-      console.log(this.history$)
+      this.history$ = this.contratService.getLockedContrats();
     }
+
+    // Subscribe to store actual data for calculations
+    this.history$.pipe(takeUntil(this.destroy$)).subscribe(data => {
+      this.historyData = data || [];
+      // Use setTimeout to avoid change detection conflicts
+      setTimeout(() => {
+        this.cdRef.detectChanges();
+      });
+    });
   }
 
   // Basculer entre les modes
   switchMode(mode: 'user' | 'contrat' | 'locked') {
     this.mode = mode;
     this.loadHistory();
-    if (this.historyTable) this.historyTable.clear();
+    this.safeTableClear();
   }
 
   // Filtrer par date
   filterByDate() {
     if (this.selectedDate) {
-      this.historyTable.filter(
-        this.selectedDate,
-        this.mode === 'user' ? 'timestamp' : 'date',
-        'dateEquals'
-      );
+      setTimeout(() => {
+        if (this.historyTable) {
+          this.historyTable.filter(
+            this.selectedDate,
+            this.mode === 'user' ? 'timestamp' : 'date',
+            'dateEquals'
+          );
+        }
+      });
     } else {
-      this.historyTable.clear();
+      this.safeTableClear();
     }
   }
 
   // Supprimer les filtres
   clearHistoryFilter() {
     this.selectedDate = null;
-    if (this.historyTable) this.historyTable.clear();
+    this.safeTableClear();
+  }
+
+  // Safe table clear method
+  private safeTableClear() {
+    if (this.tableInitialized && this.historyTable) {
+      setTimeout(() => {
+        if (this.historyTable) {
+          this.historyTable.clear();
+        }
+      });
+    }
   }
 
   // Calculer total actions utilisateur
-  calculateActionTotal(username: string, history: any[]): number {
-    return history.filter(h => h.username === username).length;
+  calculateActionTotal(username: string): number {
+    return this.historyData.filter(h => h.username === username).length;
   }
 
   // Parser la date

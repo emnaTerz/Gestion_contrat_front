@@ -524,8 +524,8 @@ private checkLockStatus(): void {
       });
     }
   }
-
-ajouterExclusionPersonnalisee(garantie: GarantieComposant ) {
+  
+  ajouterExclusionPersonnalisee(garantie: GarantieComposant) {
   if (!garantie.nouvelleExclusion || !garantie.nouvelleExclusion.trim()) {
     this.messageService.add({ severity: 'warn', summary: 'Attention', detail: 'Veuillez saisir le nom de l\'exclusion' });
     return;
@@ -536,11 +536,23 @@ ajouterExclusionPersonnalisee(garantie: GarantieComposant ) {
     return;
   }
 
+  // 🔥 AJOUT: Vérifier qu'une branche est sélectionnée
+  if (!this.branche) {
+    this.messageService.add({ 
+      severity: 'error', 
+      summary: 'Erreur', 
+      detail: 'Veuillez sélectionner une branche avant d\'ajouter une exclusion' 
+    });
+    return;
+  }
+
+  // 🔥 AJOUT: Inclure la branche dans la requête
   const nouvelleExclusion = {
     nom: garantie.nouvelleExclusion.trim(),
     garantie: {
       id: garantie.sousGarantieId
-    }
+    },
+    branche: this.branche // 🔥 AJOUT DE LA BRANCHE
   };
 
   this.contratService.createExclusion(nouvelleExclusion).subscribe({
@@ -560,7 +572,11 @@ ajouterExclusionPersonnalisee(garantie: GarantieComposant ) {
       // Réinitialiser le champ
       garantie.nouvelleExclusion = '';
       
-      this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Exclusion ajoutée avec succès' });
+      this.messageService.add({ 
+        severity: 'success', 
+        summary: 'Succès', 
+        detail: `Exclusion ajoutée avec succès pour la branche ${this.branche}` 
+      });
     },
     error: (error) => {
       console.error('Erreur lors de la création de l\'exclusion:', error);
@@ -607,9 +623,36 @@ ajouterExclusionRC() {
   });
 }
 
-getSousGarantieDetails(sousGarantieId: number): SousGarantieWithDetails | undefined {
+/* getSousGarantieDetails(sousGarantieId: number): SousGarantieWithDetails | undefined {
     return this.sousGarantiesWithDetails.find(sg => sg.id === sousGarantieId);
+  } */
+ getSousGarantieDetails(sousGarantieId: number): SousGarantieWithDetails | undefined {
+  // 🔥 CORRECTION: Convertir en number et gérer les types
+  const id = Number(sousGarantieId);
+  
+  if (isNaN(id)) {
+    console.error(`❌ ID de sous-garantie invalide: ${sousGarantieId}`);
+    return undefined;
   }
+
+  const result = this.sousGarantiesWithDetails.find(sg => {
+    // Comparer en convertissant les deux en number
+    const sgId = Number(sg.id);
+    return !isNaN(sgId) && sgId === id;
+  });
+  
+  if (!result) {
+    console.warn(`🔍 Sous-garantie ${id} non trouvée. Liste disponible:`, 
+      this.sousGarantiesWithDetails.map(sg => ({ 
+        id: sg.id, 
+        type: typeof sg.id,
+        nom: sg.nom 
+      })));
+  } else {
+  }
+  
+  return result;
+}
 
   getGarantieParentId(sousGarantieId: number): number | undefined {
     const sousGarantie = this.getSousGarantieDetails(sousGarantieId);
@@ -641,11 +684,9 @@ loadContrat(numPolice: string) {
       this.dateFin = contrat.dateFin;
       this.preambule = contrat.preambule || '';
 
-      console.log(`📋 Branche récupérée du contrat: ${this.branche}`);
 
       // 🔥 CORRECTION: Charger les sous-garanties avec la branche du contrat
       this.loadSousGarantiesWithDetails().then(() => {
-        console.log(`✅ Sous-garanties chargées pour la branche: ${this.branche}`);
         
         // Maintenant mapper les sections avec les sous-garanties disponibles
         this.situationRisques = (contrat.sections || []).map((section: SectionResponseDTO, index: number) => ({
@@ -780,22 +821,54 @@ loadExclusionsForAllGaranties() {
   });
 }
 
-
-  // Nouvelle méthode pour charger les exclusions par garantie parent
+// Nouvelle méthode pour charger les exclusions par branche et garantie parent
 loadExclusionsForGarantieParent(garantie: GarantieComposant): Promise<void> {
   return new Promise((resolve) => {
+    // Vérifications complètes
+    if (!garantie.garantieParentId || garantie.garantieParentId <= 0) {
+      console.warn('❌ Garantie parent non définie pour:', garantie);
+      garantie.exclusionsOptions = [];
+      garantie.filteredExclusionsOptions = [];
+      resolve();
+      return;
+    }
 
-
+    if (!this.branche) {
+      console.warn('❌ Branche non définie');
+      // Fallback vers l'ancienne méthode sans branche
+      this.loadExclusionsForGarantieParentFallback(garantie).then(() => resolve());
+      return;
+    }
+    // 🔥 UTILISER LA NOUVELLE API AVEC BRANCHE
+    this.contratService.getExclusionsByBrancheAndGarantie(
+      this.branche as Branche, 
+      garantie.garantieParentId
+    ).subscribe({
+      next: (data) => {
+        garantie.exclusionsOptions = data;
+        garantie.filteredExclusionsOptions = [...data];
+        resolve(); // 🔥 Résoudre la promise quand les données sont chargées
+      },
+      error: (error) => { 
+        console.error('❌ Erreur chargement exclusions par branche:', error);
+        // Fallback vers l'ancienne méthode
+        this.loadExclusionsForGarantieParentFallback(garantie).then(() => resolve());
+      }
+    });
+  });
+}
+// Ancienne méthode conservée comme fallback
+private loadExclusionsForGarantieParentFallback(garantie: GarantieComposant): Promise<void> {
+  return new Promise((resolve) => {
     if (garantie.garantieParentId && garantie.garantieParentId > 0) {
       this.contratService.getExclusionsByGarantie(garantie.garantieParentId).subscribe({
         next: (data) => {
-       
           garantie.exclusionsOptions = data;
           garantie.filteredExclusionsOptions = [...data];
           resolve();
         },
         error: (error) => { 
-          console.error('❌ Erreur chargement exclusions:', error);
+          console.error('❌ Erreur chargement exclusions (fallback):', error);
           garantie.exclusionsOptions = [];
           garantie.filteredExclusionsOptions = [];
           resolve(); 
@@ -1024,16 +1097,124 @@ addSituation() {
   this.situationRisques.push(newSituation);
 }
   removeSituation(index: number) { this.situationRisques.splice(index, 1); }
-  addGarantie(situation: SituationRisque) { situation.garanties.push({ sectionId: 0, sousGarantieId: 0, exclusionsIds: [], exclusionsOptions: [],hasFranchise: false }); }
+  //addGarantie(situation: SituationRisque) { situation.garanties.push({ sectionId: 0, sousGarantieId: 0, exclusionsIds: [], exclusionsOptions: [],hasFranchise: false }); }
+  addGarantie(situation: SituationRisque) { 
+  situation.garanties.push({ 
+    sectionId: 0, 
+    sousGarantieId: 0, 
+    franchise: 0,
+    maximum: 0,
+    minimum: 0,
+    capitale: 0,
+    primeNET: 0,
+    hasFranchise: false,
+    exclusionsIds: [], 
+    exclusionsOptions: [],
+    filteredExclusionsOptions: [],
+    nouvelleExclusion: '',
+    // 🔥 AJOUT: Propriétés pour le filtrage des exclusions
+    keyboardFilterExclusions: '',
+    lastKeyTimeExclusions: 0,
+    filterTimeoutExclusions: null,
+    // 🔥 AJOUT: Propriétés pour le filtrage des sous-garanties
+    filteredSousGarantiesOptions: [...this.sousGarantiesOptions],
+    keyboardFilterGaranties: '',
+    lastKeyTimeGaranties: 0,
+    filterTimeoutGaranties: null,
+    // 🔥 AJOUT: Propriétés de la garantie parent (seront remplies quand une sous-garantie est sélectionnée)
+    garantieParentId: undefined,
+    garantieParentLibelle: undefined
+  });
+}
+ onGarantieChange(garantie: GarantieComposant) {
+  
+  // Vider les exclusions existantes à chaque changement
+  garantie.exclusionsOptions = [];
+  garantie.filteredExclusionsOptions = [];
+  garantie.exclusionsIds = [];
+  garantie.garantieParentId = undefined;
+  garantie.garantieParentLibelle = undefined;
+
+  // 🔥 CORRECTION: Convertir en number
+  const sousGarantieId = Number(garantie.sousGarantieId);
+  
+  if (sousGarantieId && sousGarantieId > 0) {
+    // Récupérer la sous-garantie sélectionnée
+    const sousGarantieDetails = this.getSousGarantieDetails(sousGarantieId);
+
+    if (sousGarantieDetails && sousGarantieDetails.garantie) {
+      
+      // Définir la garantie parent
+      garantie.garantieParentId = sousGarantieDetails.garantie.id;
+      garantie.garantieParentLibelle = sousGarantieDetails.garantie.libelle;
+
+      // 🔥 CORRECTION: Vider le cache AVANT de charger les exclusions
+      this.clearGroupingCache();
+
+      // 🔥 Charger les exclusions par branche et garantie parent
+      this.loadExclusionsForGarantieParent(garantie).then(() => {
+        // 🔥 CORRECTION: Forcer le rafraîchissement APRÈS le chargement
+        this.clearGroupingCache();
+        this.cd.detectChanges();
+      });
+    } else {
+      console.warn(`❌ Sous-garantie non trouvée pour l'ID: ${sousGarantieId}`);
+      this.tryFallbackGarantieParent(garantie);
+    }
+  } else {
+  }
+}
+// 🔥 NOUVELLE MÉTHODE: Fallback pour récupérer la garantie parent
+private tryFallbackGarantieParent(garantie: GarantieComposant) {
+  // Essayer de trouver dans sousGarantiesOptions
+  const sgOption = this.sousGarantiesOptions.find(sg => sg.value === garantie.sousGarantieId);
+  
+  if (sgOption) {
+
+    this.loadExclusionsBySousGarantieFallback(garantie);
+  } else {
+    console.error(`❌ Sous-garantie ${garantie.sousGarantieId} non trouvée dans les options`);
+  }
+}
+
+// 🔥 NOUVELLE MÉTHODE: Fallback pour charger les exclusions par sous-garantie
+private loadExclusionsBySousGarantieFallback(garantie: GarantieComposant) {
+  
+  this.contratService.getExclusionsByGarantie(garantie.sousGarantieId).subscribe({
+    next: (data) => {
+      garantie.exclusionsOptions = data;
+      garantie.filteredExclusionsOptions = [...data];
+    },
+    error: (error) => { 
+      console.error('❌ Erreur chargement exclusions en fallback:', error);
+      garantie.exclusionsOptions = [];
+      garantie.filteredExclusionsOptions = [];
+    }
+  });
+}
   removeGarantie(situation: SituationRisque, index: number) { situation.garanties.splice(index, 1); }
 
  
 
-  getGarantieName(sousGarantieId: number): string {
+/*   getGarantieName(sousGarantieId: number): string {
     const sg = this.sousGarantiesOptions.find(s => s.value === sousGarantieId);
     return sg ? sg.label : '';
+  } */
+getGarantieName(sousGarantieId: number): string {
+  // 🔥 CORRECTION: Convertir en number
+  const id = Number(sousGarantieId);
+  
+  if (isNaN(id)) {
+    return 'ID invalide';
   }
 
+  const sg = this.sousGarantiesOptions.find(s => {
+    const optionId = Number(s.value);
+    return !isNaN(optionId) && optionId === id;
+  });
+  
+  return sg ? sg.label : `Sous-garantie ${id}`;
+}
  
  submit() {
 
@@ -1319,7 +1500,6 @@ applyGarantieOptionsFilter(garantie: GarantieComposant ) {
   }
   // Ajoutez cette méthode dans votre classe ModifierContratComponent
 onBrancheChange() {
-  console.log("branche change", this.branche);
   if (this.branche) {
     this.loadSousGarantiesWithDetails().then(() => {
       // Recharger les sous-garanties pour toutes les garanties existantes
@@ -1371,18 +1551,22 @@ private garantiesGroupedCache = new Map<SituationRisque, any[]>();
 private sousGarantieNameCache = new Map<number, string>();
 private exclusionNameCache = new Map<string, string>();
 
-// Remplacer la méthode getGarantiesGroupedByParent
+
 getGarantiesGroupedByParent(situation: SituationRisque): any[] {
-  // Utiliser le cache pour éviter les recalculs
+  
+  // Vérifier le cache
   if (this.garantiesGroupedCache.has(situation)) {
     return this.garantiesGroupedCache.get(situation)!;
   }
 
   const groups: { [key: string]: any } = {};
   
-  situation.garanties.forEach(garantie => {
+  
+  situation.garanties.forEach((garantie, index) => {
+    
     if (garantie.garantieParentId) {
       const key = `${garantie.garantieParentId}-${garantie.garantieParentLibelle}`;
+    
       
       if (!groups[key]) {
         groups[key] = {
@@ -1393,11 +1577,12 @@ getGarantiesGroupedByParent(situation: SituationRisque): any[] {
       }
       
       groups[key].garanties.push(garantie);
+    } else {
     }
   });
 
   const result = Object.values(groups);
-  
+
   // Synchroniser les exclusions UNE SEULE FOIS
   result.forEach((group: any) => {
     this.syncExclusionsForGroup(group.garanties);
@@ -1408,7 +1593,6 @@ getGarantiesGroupedByParent(situation: SituationRisque): any[] {
   
   return result;
 }
-
 getSousGarantieName(sousGarantieId: number | string): string {
   
   // Convertir l'ID en nombre pour le cache (toujours stocker en number)

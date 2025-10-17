@@ -1,43 +1,94 @@
 
+<p-toast></p-toast>
 <div class="sous-garanties-container">
   <h2>Les garanties de {{ garantieLabel }}</h2>
 
   <!-- Card blanche avec shadow vert -->
   <div class="card-container">
+    
+    <!-- Onglets Garanties/Exclusions -->
+    <div class="tabs">
+      <div (click)="switchMode('Garanties')" [class.active]="mode==='Garanties'" class="tab">Garanties</div>
+      <div (click)="switchMode('Exclusions')" [class.active]="mode==='Exclusions'" class="tab">Exclusions</div>
+    </div>
+
     <!-- Barre de recherche -->
     <div class="search-bar">
       <input
         type="text"
-        placeholder="Rechercher une garantie..."
+        [placeholder]="mode === 'Garanties' ? 'Rechercher une garantie...' : 'Rechercher une exclusion...'"
         [(ngModel)]="searchTerm"
-        (input)="filterSousGaranties()"
+        (input)="filterItems()"
       />
       <button *ngIf="searchTerm" (click)="clearSearch()" class="clear-btn">
         <i class="pi pi-times"></i>
       </button>
     </div>
 
-    <!-- Message si aucune sous-garantie -->
-    <div *ngIf="filteredSousGaranties.length === 0" class="empty">
-      Aucune garantie correspondante.
+    <!-- Champ d'ajout -->
+    <div class="add-item">
+      <input
+        type="text"
+        [placeholder]="mode === 'Garanties' ? 'Nom de la nouvelle garantie...' : 'Nom de la nouvelle exclusion...'"
+        [(ngModel)]="nouvelItemNom"
+      />
+      <button (click)="ajouterItem()" class="add-btn">
+        <i class="pi pi-plus"></i> Ajouter
+      </button>
+    </div>
+
+    <!-- Message si aucun élément -->
+    <div *ngIf="filteredItems.length === 0" class="empty">
+      {{ mode === 'Garanties' ? 'Aucune garantie correspondante.' : 'Aucune exclusion correspondante.' }}
     </div>
 
     <!-- Liste scrollable -->
-    <div *ngIf="filteredSousGaranties.length > 0" class="sous-garantie-list">
-      <div *ngFor="let sg of filteredSousGaranties" class="sous-garantie-card">
-        <span>{{ sg.nom }}</span>
+    <div *ngIf="filteredItems.length > 0" class="item-list">
+      <div *ngFor="let item of filteredItems" class="item-card">
+        <span>{{ item.nom }}</span>
         <!-- Bouton corbeille -->
-     <i class="pi pi-trash delete-icon" (click)="confirmDelete(sg)" title="Supprimer la sous-garantie"></i>
+        <i class="pi pi-trash delete-icon" 
+           (click)="confirmDelete(item)" 
+           [title]="getDeleteTitle()"></i>
       </div>
     </div>
   </div>
 </div>
 
 <!-- Dialog de confirmation -->
-<p-dialog header="Confirmation" [(visible)]="displayConfirm" [modal]="true" [closable]="false">
-  <p>Voulez-vous vraiment supprimer cette garantie ?</p>
-  <p-footer>
-    <button pButton type="button" label="Annuler" (click)="displayConfirm=false"></button>
-    <button pButton type="button" label="Supprimer" class="p-button-danger" (click)="deleteSousGarantie()"></button>
-  </p-footer>
+<p-dialog 
+  header="Confirmation de suppression" 
+  [(visible)]="displayConfirm" 
+  [modal]="true" 
+  [style]="{ width: '450px', borderRadius: '12px' }"
+  [closable]="true"
+  [draggable]="false"
+  [resizable]="false">
+  
+  <div class="confirmation-content">
+    <div class="confirmation-icon">
+      <i class="pi pi-exclamation-triangle"></i>
+    </div>
+    <div class="confirmation-text">
+      <h3>Êtes-vous sûr de vouloir supprimer cet élément ?</h3>
+      <p>Cette action est irréversible et ne peut pas être annulée.</p>
+    </div>
+  </div>
+  
+  <ng-template pTemplate="footer">
+    <div class="confirmation-footer">
+      <button pButton 
+              type="button" 
+              label="Annuler" 
+              icon="pi pi-times" 
+              (click)="displayConfirm=false" 
+              class="p-button-text p-button-secondary"></button>
+      <button pButton 
+              type="button" 
+              label="Supprimer" 
+              icon="pi pi-trash" 
+              (click)="deleteItem()" 
+              class="p-button-danger"></button>
+    </div>
+  </ng-template>
 </p-dialog>

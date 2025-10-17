@@ -122,8 +122,7 @@
       <button pButton label="Annuler" class="p-button-danger" (click)="cancel()"></button>
     </div>
   </div>
-
-  <!-- Étape 3 : Garanties -->
+<!-- Étape 3 : Garanties -->
 <div *ngIf="currentStep === 3" class="contrat-section">
   <h3>Garanties</h3>
   <div *ngFor="let s of situationRisques; let i=index" class="situation-card">
@@ -134,7 +133,8 @@
         <i class="pi pi-trash delete-icon" (click)="removeGarantie(s,j)" title="Supprimer"></i>
       </div>
 
-      <select [(ngModel)]="g.sousGarantieId" (change)="loadExclusionsForGarantie(g)">
+      <!-- 🔥 CORRECTION: Changer loadExclusionsForGarantie(g) par onGarantieChange(g) -->
+      <select [(ngModel)]="g.sousGarantieId" (change)="onGarantieChange(g)">
         <option [value]="0">Sélectionner</option>
         <option *ngFor="let sg of sousGarantiesOptions" [value]="sg.value">{{sg.label}}</option>
       </select>
@@ -144,14 +144,14 @@
       
       <!-- Checkbox Franchise avec affichage conditionnel -->
       <div class="checkbox-container">
-           <label>
-        <p-checkbox 
-          [(ngModel)]="g.hasFranchise" 
-          [binary]="true" 
-          inputId="franchise{{i}}{{j}}"
-          label="Franchise">
-        </p-checkbox>
-        Franchise
+        <label>
+          <p-checkbox 
+            [(ngModel)]="g.hasFranchise" 
+            [binary]="true" 
+            inputId="franchise{{i}}{{j}}"
+            label="Franchise">
+          </p-checkbox>
+          Franchise
         </label>
       </div>
 
@@ -181,11 +181,10 @@
     <button pButton label="Annuler" class="p-button-danger" (click)="cancel()"></button>
   </div>
 </div>
-
 <div *ngIf="currentStep === 4" class="contrat-section">
   <h3>Exclusions par garantie</h3>
   
-  <!-- Indicateur de chargement -->
+  <!-- Indicateur de chargement global -->
   <div *ngIf="isLoadingExclusions" class="loading-indicator">
     <p>Chargement des exclusions en cours...</p>
   </div>
@@ -202,9 +201,15 @@
         
         <h5 style="color: #499946; margin-bottom: 1rem;">Garantie : {{ groupe.parentLibelle || 'Garantie sans nom' }}</h5>
 
+        <!-- 🔥 AJOUT: Indicateur de chargement pour ce groupe -->
+        <div *ngIf="!groupe.garanties[0]?.exclusionsOptions && groupe.garanties[0]?.sousGarantieId" 
+             class="loading-exclusions" style="color: #007ad9; font-style: italic;">
+          Chargement des exclusions pour {{ groupe.parentLibelle }}...
+        </div>
+
         <!-- Section pour ajouter une nouvelle exclusion -->
         <div class="ajout-exclusion" 
-             *ngIf="groupe.garanties && groupe.garanties.length > 0 && groupe.garanties[0]"
+             *ngIf="groupe.garanties && groupe.garanties.length > 0 && groupe.garanties[0] && groupe.garanties[0].exclusionsOptions"
              style="margin-bottom: 1rem; padding: 1rem; background: #f8f9fa; border-radius: 4px;">
           
           <label style="font-weight: bold; display: block; margin-bottom: 0.5rem;">
@@ -273,14 +278,18 @@
         </div>
 
         <!-- Message si aucune exclusion disponible -->
-        <div *ngIf="!(groupe.garanties && groupe.garanties[0] && groupe.garanties[0].exclusionsOptions) || 
-                    (groupe.garanties && groupe.garanties[0] && groupe.garanties[0].exclusionsOptions && 
-                     groupe.garanties[0].exclusionsOptions.length === 0)">
+        <div *ngIf="groupe.garanties && groupe.garanties[0] && groupe.garanties[0].exclusionsOptions && 
+                    groupe.garanties[0].exclusionsOptions.length === 0">
           <p style="color: #999; font-style: italic;">Aucune exclusion disponible pour cette garantie.</p>
         </div>
 
-        <!-- Affichage des sous-garanties individuelles avec leurs sélections -->
-      
+        <!-- Message si aucune sous-garantie sélectionnée -->
+        <div *ngIf="groupe.garanties && groupe.garanties[0] && !groupe.garanties[0].sousGarantieId">
+          <p style="color: #ff9800; font-style: italic;">
+            Veuillez sélectionner une sous-garantie dans l'étape "Garanties" pour voir les exclusions disponibles.
+          </p>
+        </div>
+
       </div>
     </div>
 

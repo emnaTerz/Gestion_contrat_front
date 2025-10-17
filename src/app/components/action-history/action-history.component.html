@@ -1,5 +1,5 @@
 
- <div class="history-container">
+<div class="history-container">
   <div class="card">
 
     <!-- Onglets -->
@@ -29,11 +29,11 @@
                [tableStyle]="{'min-width':'800px'}"
                [rowGroupMode]="mode==='user' ? 'subheader' : undefined"
                [groupRowsBy]="mode==='user' ? 'username' : undefined"
-               sortField="username" sortMode="single"
-               [globalFilterFields]="mode==='user' ? ['action','timestamp'] : ['action','username','date']">
+               [globalFilterFields]="mode==='user' ? ['action','timestamp'] : ['action','username','date']"
+               dataKey="id">
 
         <!-- Header -->
-        <ng-template #header>
+        <ng-template pTemplate="header">
           <tr>
             <th *ngIf="mode==='user'">Action</th>
             <th *ngIf="mode==='user'">Date</th>
@@ -47,21 +47,20 @@
             <th *ngIf="mode==='locked'">Utilisateur</th>
             <th *ngIf="mode==='locked'">Date de verrouillage</th>
             <th *ngIf="mode==='locked'">Action</th>
-
           </tr>
         </ng-template>
 
         <!-- Group header utilisateur -->
-        <ng-template #groupheader let-historyItem *ngIf="mode==='user'">
-          <tr pRowGroupHeader class="user-group-header">
+        <ng-template pTemplate="groupheader" let-historyItem *ngIf="mode==='user'">
+          <tr class="user-group-header">
             <td colspan="2">
-              {{ historyItem.username }} (Total: {{ calculateActionTotal(historyItem.username, history) }})
+              {{ historyItem.username }} (Total: {{ calculateActionTotal(historyItem.username) }})
             </td>
           </tr>
         </ng-template>
 
         <!-- Body -->
-        <ng-template #body let-historyItem>
+        <ng-template pTemplate="body" let-historyItem let-rowIndex="rowIndex">
           <tr *ngIf="mode==='user'">
             <td>{{ historyItem.action }}</td>
             <td>{{ historyItem.timestamp | date:'dd/MM/yyyy HH:mm' }}</td>
@@ -78,28 +77,25 @@
             <td>{{ historyItem.numPolice }}</td>
             <td>{{ historyItem.editingUser }}</td>
             <td>{{ parseDate(historyItem.editingStart) | date:'dd/MM/yyyy HH:mm' }}</td>
-
-<td>
-  <button pButton 
-          type="button" 
-          class="p-button-text p-button-plain p-button-sm"
-          (click)="unlock(historyItem)">
-    <i class="pi pi-lock-open" style="color: #375829;"></i>
-  </button>
-</td>
-       </tr>
-
+            <td>
+              <button pButton 
+                      type="button" 
+                      class="p-button-text p-button-plain p-button-sm"
+                      (click)="unlock(historyItem)">
+                <i class="pi pi-lock-open" style="color: #375829;"></i>
+              </button>
+            </td>
+          </tr>
         </ng-template>
 
         <!-- Empty message -->
-      <ng-template #emptymessage>
-  <tr>
-    <td [attr.colspan]="mode==='contrat' || mode==='user' ? 4 : 3">
-      {{ mode==='locked' ? 'Aucun contrat verrouillé.' : 'Aucun historique trouvé.' }}
-    </td>
-  </tr>
-</ng-template>
-
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td [attr.colspan]="mode==='contrat' ? 4 : mode==='user' ? 2 : 4">
+              {{ mode==='locked' ? 'Aucun contrat verrouillé.' : 'Aucun historique trouvé.' }}
+            </td>
+          </tr>
+        </ng-template>
 
       </p-table>
     </ng-container>

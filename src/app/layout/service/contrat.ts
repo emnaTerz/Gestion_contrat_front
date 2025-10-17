@@ -38,6 +38,7 @@ interface SousGarantieWithDetails {
 export interface Exclusion {
   id: number;
   nom: string;
+  branche: Branche;
 }
 export interface AdherentDTO {
   codeId: string;
@@ -241,99 +242,146 @@ export interface Tarif {
 })
 export class ContratService {
 
-  private extractApiUrl = 'http://localhost:5000/extract'; // ton API Flask
-  private sousGarantieApiUrl = 'http://localhost:8082/contrat/catalogue/sous-garantie'; // ton API sous-garanties
-  private GarantieApiUrl = 'http://localhost:8082/contrat/catalogue/garantie'; // ton API sous-garanties
+private readonly BASE_URL = 'https://localhost:8082/contrat';
+private readonly CATALOGUE_URL = `${this.BASE_URL}/catalogue`;
+private readonly EXTRACT_API_URL = 'https://localhost:5000/extract';
 
-  private exclusionApiUrl = 'http://localhost:8082/contrat/catalogue/exclusion/garantie'; // API exclusions
-private baseUrl = 'http://localhost:8082/contrat';
-  private tarifApiUrl = 'http://localhost:8082/contrat/tarifs';
-  constructor(private http: HttpClient) { }
+// URLs spécifiques
+private readonly garantieApiUrl = `${this.CATALOGUE_URL}/garantie`;
+private readonly sousGarantieApiUrl = `${this.CATALOGUE_URL}/sous-garantie`;
+private readonly exclusionApiUrl = `${this.CATALOGUE_URL}/exclusion`;
+private readonly tarifApiUrl = `${this.BASE_URL}/tarifs`;
 
+constructor(private http: HttpClient) { }
+
+// Méthodes pour le statut du contrat
 toggleContratStatus(numPolice: string): Observable<any> {
-  return this.http.patch(`http://localhost:8082/contrat/${numPolice}/status`, {});
+  return this.http.patch(`${this.BASE_URL}/${numPolice}/status`, {});
 }
 
 getContratStatus(numPolice: string) {
-  // responseType: 'text' dit à HttpClient de traiter la réponse comme simple texte
-  return this.http.get(`http://localhost:8082/contrat/${numPolice}/status`, { responseType: 'text' });
+  return this.http.get(`${this.BASE_URL}/${numPolice}/status`, { responseType: 'text' });
 }
 
-   deleteSousGarantie(id: number): Observable<void> {
-    return this.http.delete<void>(`http://localhost:8082/contrat/catalogue/sous-garantie/${id}`);
-  }
+// Méthodes pour les sous-garanties
+deleteSousGarantie(id: number): Observable<void> {
+  return this.http.delete<void>(`${this.sousGarantieApiUrl}/${id}`);
+}
 
 getSousGarantiesbybranche(garantieId: number, branche: string): Observable<SousGarantie[]> {
   const params = new HttpParams().set('branche', branche);
   return this.http.get<SousGarantie[]>(
-    `http://localhost:8082/contrat/catalogue/sous-garantie-branche/${garantieId}`, 
+    `${this.sousGarantieApiUrl}-branche/${garantieId}`, 
     { params }
   );
 }
 
- deleteGarantie(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.GarantieApiUrl}/${id}`);
-  }
-  createGarantie(garantie: Garantie): Observable<Garantie> {
-    return this.http.post<Garantie>(`${this.GarantieApiUrl}`, garantie);
-  }
+getallSousGaranties(): Observable<SousGarantie[]> {
+  return this.http.get<SousGarantie[]>(this.sousGarantieApiUrl);
+}
+
+getSousGaranties(branche: string): Observable<SousGarantie[]> {
+  const url = `${this.sousGarantieApiUrl}/by-and-branche/${branche}`;
+  return this.http.get<SousGarantie[]>(url);
+}
+createSousGarantie(sousGarantie: SousGarantie): Observable<SousGarantie> {
+  return this.http.post<SousGarantie>(this.sousGarantieApiUrl, sousGarantie).pipe(
+    catchError(err => {
+      console.error('Erreur création sous-garantie', err);
+      return throwError(() => err);
+    })
+  );
+}
+
+
+// Méthodes pour les garanties
+deleteGarantie(id: number): Observable<void> {
+  return this.http.delete<void>(`${this.garantieApiUrl}/${id}`);
+}
+
+createGarantie(garantie: Garantie): Observable<Garantie> {
+  return this.http.post<Garantie>(this.garantieApiUrl, garantie);
+}
+
 getAllGaranties(): Observable<Garantie[]> {
-    return this.http.get<Garantie[]>(`${this.GarantieApiUrl}`);
+  return this.http.get<Garantie[]>(this.garantieApiUrl);
+}
+
+getGaranties(): Observable<Garantie[]> {
+  return this.http.get<Garantie[]>(this.garantieApiUrl).pipe(
+    catchError(err => {
+      console.error('Erreur récupération garanties', err);
+      return throwError(() => err);
+    })
+  );
+}
+
+// Méthodes pour les exclusions
+createExclusion(exclusion: any): Observable<Exclusion> {
+  return this.http.post<Exclusion>(`${this.exclusionApiUrl}`, exclusion);
+}
+  deleteExclusion(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.exclusionApiUrl}/${id}`);
   }
-  getAllContrat(): Observable<Contrat[]> {
-  const token = localStorage.getItem('token'); // récupère le token stocké
+createExclusionRC(request: any): Observable<ExclusionRCResponseDTO> {
+  return this.http.post<Exclusion>(`${this.exclusionApiUrl}-rc`, request);
+}
+
+getExclusionsByGarantie(garantieId: number): Observable<Exclusion[]> {
+  return this.http.get<Exclusion[]>(`${this.exclusionApiUrl}/garantie/${garantieId}`);
+}
+
+getExclusionsRC(): Observable<Exclusion[]> {
+  return this.http.get<Exclusion[]>(`${this.exclusionApiUrl}-rc`);
+}
+
+getExclusionrc(id: number): Observable<string> {
+  return this.http.get(`${this.exclusionApiUrl}-rc/${id}`, { responseType: 'text' });
+}
+
+getExclusionById(id: number): Observable<Exclusion> {
+  return this.http.get<Exclusion>(`${this.exclusionApiUrl}/${id}`);
+}
+
+getExclusion(): Observable<Exclusion> {
+  return this.http.get<Exclusion>(this.exclusionApiUrl);
+}
+// Dans votre ContratService
+
+// Méthode pour récupérer les exclusions par branche et garantie
+getExclusionsByBrancheAndGarantie(branche: Branche, garantieId: number): Observable<Exclusion[]> {
+  return this.http.get<Exclusion[]>(
+    `${this.exclusionApiUrl}/branche/${branche}/garantie/${garantieId}`
+  ).pipe(
+    catchError(err => {
+      console.error('Erreur récupération exclusions par branche et garantie', err);
+      return throwError(() => err);
+    })
+  );
+}
+// Méthodes pour les contrats
+getAllContrat(): Observable<Contrat[]> {
+  const token = localStorage.getItem('token');
   const headers = { 
     'Authorization': `Bearer ${token}` 
   };
-  return this.http.get<Contrat[]>(`${this.baseUrl}/all`, { headers });
+  return this.http.get<Contrat[]>(`${this.BASE_URL}/all`, { headers });
 }
 
-  // Méthode existante pour uploader PDF
-  uploadPdf(file: File): Observable<{ lines: string[] }> {
-    const formData = new FormData();
-    formData.append('file', file);
-    return this.http.post<{ lines: string[] }>(this.extractApiUrl, formData);
-  }
- getGaranties(): Observable<Garantie[]> {
-    return this.http.get<Garantie[]>('http://localhost:8082/contrat/catalogue/garantie').pipe(
-      catchError(err => {
-        console.error('Erreur récupération garanties', err);
-        return throwError(() => err);
-      })
-    );
-  }
-  // Méthode pour récupérer toutes les sous-garanties
-  getallSousGaranties(): Observable<SousGarantie[]> {
-    return this.http.get<SousGarantie[]>(this.sousGarantieApiUrl);
-  }
-  getSousGaranties(branche: string): Observable<SousGarantie[]> {
-    const url = `${this.sousGarantieApiUrl}/by-and-branche/${branche}`;
-    return this.http.get<SousGarantie[]>(url);
-  }
-createExclusion(exclusion: any): Observable<Exclusion> {
-  return this.http.post<Exclusion>('http://localhost:8082/contrat/catalogue/exclusion', exclusion);
-}
-
-createExclusionRC(request: any): Observable<ExclusionRCResponseDTO> {
-  return this.http.post<Exclusion>('http://localhost:8082/contrat/catalogue/exclusion-rc', request);
-}
-  // Nouvelle méthode pour récupérer les exclusions d'une garantie spécifique
-  getExclusionsByGarantie(garantieId: number): Observable<Exclusion[]> {
-    return this.http.get<Exclusion[]>(`${this.exclusionApiUrl}/${garantieId}`);
-  }
-  
 createContrat(contrat: ContratDTO) {
-const token = localStorage.getItem('token');
-    const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
-  return this.http.post('http://localhost:8082/contrat/creer', contrat, { headers });
-}
-checkContratExists(numPolice: string): Observable<boolean> {
-    return this.http.get<boolean>(`${this.baseUrl}/exists/${numPolice}`);
-  }
-  getHistoriqueContrat(): Observable<any[]> {
   const token = localStorage.getItem('token');
   const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
-  return this.http.get<any[]>(`${this.baseUrl}/historique`, { headers })
+  return this.http.post(`${this.BASE_URL}/creer`, contrat, { headers });
+}
+
+checkContratExists(numPolice: string): Observable<boolean> {
+  return this.http.get<boolean>(`${this.BASE_URL}/exists/${numPolice}`);
+}
+
+getHistoriqueContrat(): Observable<any[]> {
+  const token = localStorage.getItem('token');
+  const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
+  return this.http.get<any[]>(`${this.BASE_URL}/historique`, { headers })
     .pipe(
       catchError(err => {
         console.error('Erreur récupération historique contrat', err);
@@ -341,11 +389,12 @@ checkContratExists(numPolice: string): Observable<boolean> {
       })
     );
 }
+
 getContrat(numPolice: string): Observable<ContratResponseDTO> {
   const token = localStorage.getItem('token');
   const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
   
-  return this.http.get<ContratResponseDTO>(`${this.baseUrl}/${numPolice}`, { headers })
+  return this.http.get<ContratResponseDTO>(`${this.BASE_URL}/${numPolice}`, { headers })
     .pipe(
       catchError(err => {
         console.error('Erreur récupération contrat', err);
@@ -353,31 +402,33 @@ getContrat(numPolice: string): Observable<ContratResponseDTO> {
       })
     );
 }
- downloadContratPdf(numPolice: string): Observable<Blob> {
-    const token = localStorage.getItem('token');
-    const headers = new HttpHeaders({ 
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    });
-    
-    return this.http.get(`http://localhost:8082/contrat/${numPolice}/pdf`, {
-      headers: headers,
-      responseType: 'blob'
-    }).pipe(
-      catchError(err => {
-        console.error('Erreur téléchargement PDF', err);
-        return throwError(() => err);
-      })
-    );
-  }
+
+downloadContratPdf(numPolice: string): Observable<Blob> {
+  const token = localStorage.getItem('token');
+  const headers = new HttpHeaders({ 
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json'
+  });
+  
+  return this.http.get(`${this.BASE_URL}/${numPolice}/pdf`, {
+    headers: headers,
+    responseType: 'blob'
+  }).pipe(
+    catchError(err => {
+      console.error('Erreur téléchargement PDF', err);
+      return throwError(() => err);
+    })
+  );
+}
+
 lockContrat(numPolice: string): Observable<ContratDTO> {
   const token = localStorage.getItem('token');
   const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
-  return this.http.post<ContratDTO>(`${this.baseUrl}/lock/${numPolice}`, {}, { headers });
+  return this.http.post<ContratDTO>(`${this.BASE_URL}/lock/${numPolice}`, {}, { headers });
 }
-// Dans votre ContratService
+
 checkLockStatus(numPolice: string): Observable<boolean> {
-  return this.http.get<boolean>(`http://localhost:8082/contrat/${numPolice}/lock-status`);
+  return this.http.get<boolean>(`${this.BASE_URL}/${numPolice}/lock-status`);
 }
 
 unlockContrat(numPolice: string, cancelled: boolean, startTime: string): Observable<string> {
@@ -386,63 +437,17 @@ unlockContrat(numPolice: string, cancelled: boolean, startTime: string): Observa
 
   const params = { cancelled: cancelled.toString(), startTime };
 
-  return this.http.post(`${this.baseUrl}/unlock/${numPolice}`, null, { 
+  return this.http.post(`${this.BASE_URL}/unlock/${numPolice}`, null, { 
     headers, 
     params,
-    responseType: 'text' // 👈 important pour que Angular accepte le texte
+    responseType: 'text'
   });
 }
-// Ajouter cette méthode pour récupérer toutes les exclusions RC
-getExclusionsRC(): Observable<Exclusion[]> {
-  return this.http.get<Exclusion[]>(`http://localhost:8082/contrat/catalogue/exclusion-rc`);
-}
 
-  getTarifByBranche(branche: Branche): Observable<Tarif> {
-
-  console.log('💡 Branche envoyée à l’API:', branche);
-
-
-
-    return this.http.get<Tarif>(`${this.tarifApiUrl}/${branche}`).pipe(
-      catchError(err => {
-        console.error('Erreur récupération tarif', err);
-        return throwError(() => err);
-      })
-    );
-  }
-
-  // 🔹 Mettre à jour un tarif par ID
-  updateTarif(id: number, tarif: Tarif): Observable<Tarif> {
-    const token = localStorage.getItem('token');
-    const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
-
-    return this.http.put<Tarif>(`${this.tarifApiUrl}/${id}`, tarif, { headers }).pipe(
-      catchError(err => {
-        console.error('Erreur mise à jour tarif', err);
-        return throwError(() => err);
-      })
-    );
-  }
-
-getExclusionrc(id: number): Observable<string> {
-  const url = `http://localhost:8082/contrat/catalogue/exclusion-rc`;
-  return this.http.get(`${url}/${id}`, { responseType: 'text' });
-}
-
- getExclusionById(id: number): Observable<Exclusion> {
-  const url = `http://localhost:8082/contrat/catalogue/exclusion`;
-
-  return this.http.get<Exclusion>(`${url}/${id}`);
-}
- getExclusion(): Observable<Exclusion> {
-  const url = `http://localhost:8082/contrat/catalogue/exclusion`;
-
-  return this.http.get<Exclusion>(`${url}`);
-}
 modifierContrat(contrat: ContratDTO): Observable<ContratDTO> {
   const token = localStorage.getItem('token');
   const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
-  return this.http.put<ContratDTO>(`${this.baseUrl}/modifier`, contrat, { headers })
+  return this.http.put<ContratDTO>(`${this.BASE_URL}/modifier`, contrat, { headers })
     .pipe(
       catchError(err => {
         console.error('Erreur modification contrat', err);
@@ -450,11 +455,38 @@ modifierContrat(contrat: ContratDTO): Observable<ContratDTO> {
       })
     );
 }
+
 getLockedContrats(): Observable<ContratVerrouille[]> {
-  const token = localStorage.getItem('token'); // récupérer le JWT du localStorage
+  const token = localStorage.getItem('token');
   const headers = { Authorization: `Bearer ${token}` };
-
-  return this.http.get<ContratVerrouille[]>(`${this.baseUrl}/locked`, { headers });
+  return this.http.get<ContratVerrouille[]>(`${this.BASE_URL}/locked`, { headers });
 }
 
+// Méthodes pour les tarifs
+getTarifByBranche(branche: Branche): Observable<Tarif> {
+  console.log('💡 Branche envoyée à l\'API:', branche);
+  return this.http.get<Tarif>(`${this.tarifApiUrl}/${branche}`).pipe(
+    catchError(err => {
+      console.error('Erreur récupération tarif', err);
+      return throwError(() => err);
+    })
+  );
 }
+
+updateTarif(id: number, tarif: Tarif): Observable<Tarif> {
+  const token = localStorage.getItem('token');
+  const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
+  return this.http.put<Tarif>(`${this.tarifApiUrl}/${id}`, tarif, { headers }).pipe(
+    catchError(err => {
+      console.error('Erreur mise à jour tarif', err);
+      return throwError(() => err);
+    })
+  );
+}
+
+// Méthode pour uploader PDF (utilise l'URL d'extraction séparée)
+uploadPdf(file: File): Observable<{ lines: string[] }> {
+  const formData = new FormData();
+  formData.append('file', file);
+  return this.http.post<{ lines: string[] }>(this.EXTRACT_API_URL, formData);
+}}

@@ -10,7 +10,7 @@ import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { MessageService } from 'primeng/api';
 import { PdfGeneratorService } from '@/layout/service/PdfGeneratorService';
-import { firstValueFrom, lastValueFrom } from 'rxjs';
+import { lastValueFrom } from 'rxjs';
 interface SousGarantieWithDetails {
   id: number;
   nom: string;
@@ -52,28 +52,6 @@ exclusionsOptions: any[] = []; // tableau pour stocker toutes les exclusions du 
     this.errorMessage = '';
     this.displayModifyDialog = true;
   }
-
-  // onSubmitNumPolice() {
-  //   if (!this.numPoliceInput || this.numPoliceInput.trim() === '') {
-  //     this.errorMessage = 'Veuillez entrer le numéro de police';
-  //     return;
-  //   }
-
-  //   this.contratService.checkContratExists(this.numPoliceInput.trim()).subscribe(
-  //     exists => {
-  //       if (exists) {
-  //         this.displayModifyDialog = false;
-  //         this.router.navigate([`/Modif_Contrat/${this.numPoliceInput.trim()}`]);
-  //       } else {
-  //         this.errorMessage = "Aucun contrat trouvé avec ce numéro";
-  //       }
-  //     },
-  //     err => {
-  //       this.errorMessage = "Erreur lors de la vérification du contrat";
-  //       console.error(err);
-  //     }
-  //   );
-  // }
   onSubmitNumPolice() {
   const numPolice = this.numPoliceInput.trim();
 
