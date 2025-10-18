@@ -1,7 +1,7 @@
 
  @use "sass:color"; 
  $green-mae: #008037;
-
+$color: #008037; 
 .garantie-container {
   padding: 20px;
   font-family: Arial, sans-serif;
@@ -159,7 +159,7 @@ display: flex;
 
     &:focus {
       outline: none;
-      border-color: darken($green-mae, 10%);
+      border-color: color.adjust($color, $lightness: -10%);
       box-shadow: 0 0 5px rgba(0,128,55,0.5);
     }
   }
@@ -211,5 +211,23 @@ display: flex;
   .popup-content {
     min-width: 90%;
     padding: 20px;
+  }
+}
+:host ::ng-deep .p-dialog {
+  .field {
+    margin-bottom: 1rem;
+    
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+    }
+    
+    input, select {
+      width: 100%;
+      padding: 0.5rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
   }
 }

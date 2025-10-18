@@ -82,19 +82,41 @@
   </div>
 
   <!-- Dialogue de confirmation et toast -->
-  <p-confirmDialog></p-confirmDialog>
+ <!--  <p-confirmDialog></p-confirmDialog>
   <p-toast></p-toast>
 </div>
 
-<!-- Popup de sélection de branche -->
 <div *ngIf="displayBrancheDialog" class="popup-overlay">
   <div class="popup-content">
     <h3>Sélectionner la branche</h3>
 
-    <!-- Select HTML natif -->
     <select [(ngModel)]="selectedBranche">
       <option *ngFor="let b of Branche" [value]="b.value">{{ b.label }}</option>
     </select>
+
+    <div class="popup-actions">
+      <button (click)="onBrancheSelected()">Valider</button>
+      <button (click)="displayBrancheDialog = false">Annuler</button>
+    </div>
+  </div>
+</div>
+ -->
+<p-confirmDialog></p-confirmDialog>
+<p-toast></p-toast>
+</div>
+
+<!-- Popup de sélection de branche -->
+<div *ngIf="displayBrancheDialog" class="popup-overlay">
+  <div class="p-dialog popup-content">
+    <h3>Sélectionner la branche</h3>
+
+    <!-- Ajout du conteneur field avec label -->
+    <div class="field">
+      <label for="branche-select">Branche</label>
+      <select id="branche-select" [(ngModel)]="selectedBranche">
+        <option *ngFor="let b of Branche" [value]="b.value">{{ b.label }}</option>
+      </select>
+    </div>
 
     <!-- Footer avec boutons -->
     <div class="popup-actions">
