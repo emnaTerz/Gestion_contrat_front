@@ -3,21 +3,23 @@ FROM node:20-bullseye AS build
 
 WORKDIR /app
 
-# Copier package.json et installer les dépendances
+# Copier les fichiers nécessaires pour installer les dépendances
 COPY package*.json ./
 RUN npm install
 
-# Copier tout le projet et builder Angular
+# Copier tout le reste du projet
 COPY . .
+
+# Builder l'application Angular pour la production
 RUN npm run build --prod
 
 # Étape 2 : Servir Angular avec Nginx
 FROM nginx:alpine
 
-# Copier les fichiers compilés Angular
-COPY --from=build /app/dist/gestion_contrat_front /usr/share/nginx/html
+# Copier les fichiers compilés Angular vers le dossier Nginx
+COPY --from=build /app/dist/contratouktaw /usr/share/nginx/html
 
-# Config Nginx pour Angular (SPA routing)
+# Configurer Nginx pour les routes Angular (SPA)
 RUN echo 'server { \
     listen 4200; \
     server_name localhost; \
