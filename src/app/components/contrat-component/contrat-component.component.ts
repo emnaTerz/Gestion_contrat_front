@@ -934,17 +934,147 @@ onGarantieChange(g: any) {
     return garantie.exclusionsIds?.includes(exclusionId) || false;
   }
 
-  toggleExclusion(garantie: GarantieSection, exclusionId: number) {
+/*   toggleExclusion(garantie: GarantieSection, exclusionId: number) {
     if (!garantie.exclusionsIds) garantie.exclusionsIds = [];
     const index = garantie.exclusionsIds.indexOf(exclusionId);
     if (index > -1) garantie.exclusionsIds.splice(index, 1);
     else garantie.exclusionsIds.push(exclusionId);
     garantie.exclusionsIds = [...garantie.exclusionsIds];
+     if (this.situationRisques.length > 0 && this.situationRisques[0].garanties.includes(garantie)) {
+    this.synchronizeExclusionsFromFirstSituation();
   }
 
+  }
 
+synchronizeExclusionsFromFirstSituation() {
+  if (this.situationRisques.length > 1) {
+    const firstSituation = this.situationRisques[0];
+    
+    for (let i = 1; i < this.situationRisques.length; i++) {
+      const currentSituation = this.situationRisques[i];
+      
+      currentSituation.garanties.forEach((garantie, index) => {
+        const firstGarantie = firstSituation.garanties[index];
+        garantie.exclusionsIds = firstGarantie?.exclusionsIds ? [...firstGarantie.exclusionsIds] : [];
+      });
+    }
+  }
+} */
+toggleExclusion(garantie: GarantieSection, exclusionId: number) {
+    if (!garantie.exclusionsIds) garantie.exclusionsIds = [];
+    const index = garantie.exclusionsIds.indexOf(exclusionId);
+    if (index > -1) {
+        garantie.exclusionsIds.splice(index, 1);
+    } else {
+        garantie.exclusionsIds.push(exclusionId);
+    }
+    garantie.exclusionsIds = [...garantie.exclusionsIds];
+    
+    // Synchroniser avec les autres situations
+    this.synchronizeExclusionsByParentGarantie(garantie);
+}
 
+synchronizeExclusionsByParentGarantie(modifiedGarantie: GarantieSection) {
+    // Récupérer la garantie parent via la sous-garantie
+    const sousGarantie = this.sousGarantiesMap[modifiedGarantie.sousGarantieId];
+    if (!sousGarantie || !sousGarantie.garantie) {
+        console.warn('Garantie parent non trouvée pour la sous-garantie:', modifiedGarantie.sousGarantieId);
+        return;
+    }
 
+    const parentGarantieId = sousGarantie.garantie.id;
+    
+    console.log('Synchronisation pour garantie parent:', parentGarantieId, sousGarantie.garantie.libelle);
+    console.log('Exclusions modifiées:', modifiedGarantie.exclusionsIds);
+    
+    // Trouver l'index de la situation qui contient la garantie modifiée
+    let modifiedSituationIndex = -1;
+    this.situationRisques.forEach((situation, index) => {
+        if (situation.garanties.some(g => g === modifiedGarantie)) {
+            modifiedSituationIndex = index;
+        }
+    });
+    
+    console.log('Situation modifiée index:', modifiedSituationIndex);
+    
+    if (modifiedSituationIndex === -1) return;
+    
+    // Parcourir seulement les situations APRÈS la situation modifiée (synchronisation descendante)
+    for (let i = modifiedSituationIndex + 1; i < this.situationRisques.length; i++) {
+        const situation = this.situationRisques[i];
+        
+        console.log(`Vérification situation ${i}:`, situation.identification);
+        
+        // Trouver TOUTES les garanties de la même garantie parent dans cette situation
+        const correspondingGaranties = situation.garanties.filter(garantie => {
+            const sg = this.sousGarantiesMap[garantie.sousGarantieId];
+            return sg && sg.garantie && sg.garantie.id === parentGarantieId;
+        });
+        
+        // Synchroniser chaque garantie correspondante
+        correspondingGaranties.forEach(correspondingGarantie => {
+            console.log(`Synchronisation situation ${i} - garantie:`, correspondingGarantie.sousGarantieId, {
+                avant: correspondingGarantie.exclusionsIds,
+                apres: modifiedGarantie.exclusionsIds
+            });
+            
+            correspondingGarantie.exclusionsIds = modifiedGarantie.exclusionsIds 
+                ? [...modifiedGarantie.exclusionsIds] 
+                : [];
+        });
+    }
+}
+
+synchronizeExclusionsByGarantieType(modifiedGarantie: GarantieSection) {
+    const garantieType = this.getGarantieType(modifiedGarantie);
+    
+    console.log('Synchronisation pour garantie type:', garantieType);
+    console.log('Exclusions modifiées:', modifiedGarantie.exclusionsIds);
+    
+    // Trouver l'index de la situation qui contient la garantie modifiée
+    let modifiedSituationIndex = -1;
+    this.situationRisques.forEach((situation, index) => {
+        if (situation.garanties.some(g => g === modifiedGarantie)) {
+            modifiedSituationIndex = index;
+        }
+    });
+    
+    console.log('Situation modifiée index:', modifiedSituationIndex);
+    
+    if (modifiedSituationIndex === -1) return;
+    
+    // Parcourir seulement les situations APRÈS la situation modifiée (synchronisation descendante)
+    for (let i = modifiedSituationIndex + 1; i < this.situationRisques.length; i++) {
+        const situation = this.situationRisques[i];
+        
+        console.log(`Situation ${i}:`, situation.garanties.map(g => ({
+            type: this.getGarantieType(g),
+            exclusions: g.exclusionsIds
+        })));
+        
+        // Trouver la garantie du même type dans cette situation
+        const correspondingGarantie = situation.garanties.find(garantie => 
+            this.getGarantieType(garantie) === garantieType
+        );
+        
+        // Si on trouve une garantie correspondante, synchroniser les exclusions
+        if (correspondingGarantie) {
+            console.log(`Synchronisation situation ${i}`, {
+                avant: correspondingGarantie.exclusionsIds,
+                apres: modifiedGarantie.exclusionsIds
+            });
+            
+            correspondingGarantie.exclusionsIds = modifiedGarantie.exclusionsIds 
+                ? [...modifiedGarantie.exclusionsIds] 
+                : [];
+        }
+    }
+}
+
+// Méthode pour identifier le type de garantie
+getGarantieType(garantie: GarantieSection): number {
+    return garantie.sousGarantieId;
+}
  nextStep() {
   this.sousGarantiesParParentCache.clear();
     if (this.currentStep === 0) {

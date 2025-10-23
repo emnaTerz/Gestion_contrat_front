@@ -225,22 +225,19 @@
     </div>
 
     <!-- Étape 4 : Exclusions -->
-    <div *ngIf="currentStep === 4" class="contrat-section">
+   <div *ngIf="currentStep === 4" class="contrat-section">
       <h3>Exclusions par garantie</h3>
       
       <div *ngFor="let s of situationRisques; let i = index">
         <h4>Situation {{ i + 1 }} : {{ s.identification }}</h4>
 
-        <!-- Vérification si des groupes existent -->
         <div *ngIf="getSousGarantiesParParent(s).length > 0; else noGaranties">
           
-          <!-- Parcourir les groupes de sous-garanties par garantie parent -->
           <div *ngFor="let groupe of getSousGarantiesParParent(s); let groupeIndex = index" 
                class="groupe-garantie">
             
             <h5>Garantie : {{ groupe.parent.libelle || 'Garantie sans nom' }}</h5>
 
-            <!-- Section pour ajouter une nouvelle exclusion -->
             <div class="ajout-exclusion" 
                  *ngIf="groupe.sousGaranties && groupe.sousGaranties.length > 0 && groupe.sousGaranties[0]"
                  style="margin-bottom: 1rem; padding: 1rem; background: #f8f9fa; border-radius: 4px;">
@@ -269,7 +266,6 @@
               </div>
             </div>
 
-            <!-- Liste des exclusions -->
             <div *ngIf="groupe.sousGaranties && groupe.sousGaranties.length > 0 && groupe.sousGaranties[0] && 
                         groupe.sousGaranties[0].exclusionsOptions && groupe.sousGaranties[0].exclusionsOptions.length > 0" 
                  class="exclusions-container">
@@ -300,7 +296,6 @@
               </div>
             </div>
 
-            <!-- Message si aucune exclusion disponible -->
             <div *ngIf="!(groupe.sousGaranties && groupe.sousGaranties[0] && groupe.sousGaranties[0].exclusionsOptions) || 
                         (groupe.sousGaranties && groupe.sousGaranties[0] && groupe.sousGaranties[0].exclusionsOptions && 
                          groupe.sousGaranties[0].exclusionsOptions.length === 0)">
@@ -308,7 +303,7 @@
             </div>
 
           </div>
-        </div>
+        </div> 
 
         <ng-template #noGaranties>
           <p>Aucune garantie disponible pour cette situation.</p>
@@ -319,7 +314,7 @@
         <button pButton label="← Précédent" (click)="prevStep()"></button>
         <button pButton label="Suivant →" (click)="nextStep()"></button>
       </div>
-    </div>
+    </div>    
 
     <!-- Étape 5 : RC Exploitation -->
     <div *ngIf="currentStep === 5" class="contrat-section">

@@ -25,7 +25,8 @@ export class PdfGeneratorService {
     const sectionsClausesCommunes = this.prepareClausesCommunes(data);
  const sectionCotisationAnnuelle = await this.prepareCotisationAnnuelle(data);
    const sectionsAttestations = this.prepareAttestations(data);
-
+// Montrez-moi 2 sections différentes avec quelques garanties
+console.log("DATA COMPLÈTE:", JSON.stringify(data.sections, null, 2));
     const docDefinition: any = {
  pageMargins: [40, 100, 40, 90],
         header: function(currentPage: number, pageCount: number) {
@@ -36,7 +37,10 @@ export class PdfGeneratorService {
       },
       footer: function(currentPage: number, pageCount: number) {
         return {
-          text: '',
+       text: `Page ${currentPage.toString()} sur ${pageCount.toString()}`,
+       alignment: 'center',
+          fontSize: 9,
+          color: '#666666',
           margin: [0, 0, 0, 25] // Espace réservé pour le footer
         };
       },
@@ -124,19 +128,7 @@ export class PdfGeneratorService {
             },
 
             // Signature
-        /*     {
-              columns: [
-                { text: '', width: '*' },
-                {
-                  stack: [
-                    { text: 'Signature de l\'assuré', style: 'signatureLabel' },
-                    { text: '____________________', style: 'signatureLine' },
-                    { text: 'Date : ____/____/______', style: 'signatureDate' }
-                  ],
-                  width: 'auto'
-                }
-              ]
-            } */
+      
           ]
         },
 
@@ -167,7 +159,15 @@ export class PdfGeneratorService {
                 paddingLeft: function() { return 4; },
                 paddingRight: function() { return 4; },
                 paddingTop: function() { return 2; },
-                paddingBottom: function() { return 2; }
+                paddingBottom: function() { return 2; },
+                 fillColor: function(rowIndex: number) {
+          return (rowIndex % 2 === 0) ? '#f5f5f5' : null;
+        },
+        vLineWidth: function() { return 1; },
+        hLineWidth: function() { return 1; },
+        // Configuration pour le centrage vertical
+        cellPadding: { top: 8, bottom: 8, left: 4, right: 4 } // Augmenter le padding pour mieux voir le centrage
+      
               }
             }
           ]
@@ -255,7 +255,11 @@ export class PdfGeneratorService {
             alignment: 'justify',
             margin: [0, 10, 0, 10]
           },
-           { text: '', pageBreak: 'before' },
+            {
+            text: `Annexe au Contrat N° : ${data.adherent.codeId || '-'}/${data.service || '-'}/${data.numPolice || '-'}`,
+            style: 'headerCenter',
+            pageBreak: 'before'
+          },
 
           // 🟦 NOUVELLE SECTION : ESTIMATION DES DOMMAGES
           { text: 'ESTIMATION DES DOMMAGES', style: 'subSectionTitle' },
@@ -376,8 +380,13 @@ margin: [0, 5, 0, 5]
                 lineHeight: 1.5,
                 style: 'paragraph',}))
           },
-          // --- Autres sections II, III, IV ---
-          { text: 'II. FUMÉES', style: 'subSectionTitleCenter',pageBreak: 'before'  },
+        {
+            text: `Annexe au Contrat N° : ${data.adherent.codeId || '-'}/${data.service || '-'}/${data.numPolice || '-'}`,
+            style: 'headerCenter',
+            pageBreak: 'before'
+          },
+
+          { text: 'II. FUMÉES', style: 'subSectionTitleCenter' },
           {
             text: `L'assureur garantit les dommages matériels causés aux biens assurés par des fumées dues à une défectuosité soudaine et imprévisible d'un appareil de chauffage ou de cuisine, relié à une cheminée et situé dans l’enceinte des risques spécifiés dans la police.`,
             style: 'paragraph',
@@ -492,7 +501,13 @@ Il faut entendre par inondation toute situation temporaire et générale pendant
               style: 'paragraph',
               alignment: 'justify'
             },
-            { text: 'IV. FRANCHISE', style: 'subSectionTitleCenter',pageBreak: 'before'  },
+            {
+            text: `Annexe au Contrat N° : ${data.adherent.codeId || '-'}/${data.service || '-'}/${data.numPolice || '-'}`,
+            style: 'headerCenter',
+            pageBreak: 'before'
+          },
+
+            { text: 'IV. FRANCHISE', style: 'subSectionTitleCenter' },
             {
               text: `L'assuré conservera à sa charge, par sinistre une franchise égale à 10% des dommages avec un minimum de Mille Dinars (1 000DT) par sinistre et un maximum de Cinq Mille Dinars (5 000DT) par sinistre.
 Cette franchise sera déduite du montant de l'indemnité qui aurait été versée à l'assuré sans l'existence de la dite franchise.`,
@@ -606,6 +621,27 @@ Si l’Assureur allègue qu’en raison du présent avenant, une perte, un domma
                 'MUTINERIE, SOULEVEMENT POPULAIRE, PUTSCH MILITAIRE, INSURRECTION, REBELLION, REVOLUTION, MUTINERIE, PRISE DE POUVOIR PAR DES MILITAIRES OU DES USURPATEURS ;',
                 'MOUVEMENTS POPULAIRES PRENANT LES PROPORTIONS D’UN SOULEVEMENT POPULAIRE ;',
                 'PROCLAMATION DE LA LOI MARTIALE, ETAT DE SIEGE OU ETAT D’URGENCE AINSI QUE TOUT EVENEMENT OU CAUSE CONDUISANT A LA PROCLAMATION OU AU MAINTIEN DE LA LOI MARTIALE OU D’UN ETAT DE SIEGE, OU ENTRAINANT UN CHANGEMENT DE GOUVERNEMENT OU DE CHEF D’ETAT ;',
+                 ].map(text => ({
+    text,
+    bold: true,
+    alignment: 'justify',
+    lineHeight: 1.2,
+    style: 'paragraph',
+  }))
+},
+{
+  stack: [
+    {
+      text: `Annexe au Contrat N° : ${data.adherent.codeId || '-'}/${data.service || '-'}/${data.numPolice || '-'}`,
+      style: 'headerCenter',
+      pageBreak: 'before'
+    },
+    { text: 'EXCLUSIONS', style: 'subSectionTitleCenter' }
+  ]
+},
+// Suite des exclusions
+{
+  ul: [
                 'EXPROPRIATION DEFINITIVE OU PROVISOIRE PAR SUITE DE CONFISCATION, REQUISITION ORDONNEE PAR TOUTE AUTORITE PUBLIQUE ;',
                 'ACTE DE QUELQUES NATURES QUE CE SOIT VISANT A RENVERSER OU INFLUENCER TOUT OU PARTIE DU GOUVERNEMENT OU DES AUTORITES LOCALES, PAR UN RECOURS A LA FORCE, A LA PEUR OU A LA VIOLENCE ET PRENANT LA DIMENSION D’UNE REVOLUTION ;',
                 'PERTES, DOMMAGES, FRAIS ET DEPENSES OCCASIONNEES DIRECTEMENT OU INDIRECTEMENT, PAR CONTAMINATION CHIMIQUE OU BIOLOGIQUE OU MISSILES, BOMBES, GRENADES, EXPLOSIFS OU N’IMPORTE QUELLE MUNITION ;',
@@ -770,7 +806,7 @@ La présente extension s’applique exclusivement aux sinistres dépassant 10.00
             text: `Annexe au Contrat N° : ${data.adherent.codeId || '-'}/${data.service || '-'}/${data.numPolice || '-'}`,
             style: 'headerCenter'
           },
-            { text: 'EXCLUSIONS COMMUNES', style: 'sectionTitle', margin: [0, 10, 0, 10], pageBreak: 'before'  },
+            { text: 'EXCLUSIONS COMMUNES', style: 'sectionTitle', margin: [0, 10, 0, 10] },
             
             // Texte introductif avant les puces
             {
@@ -863,6 +899,21 @@ La présente extension s’applique exclusivement aux sinistres dépassant 10.00
           decoration: 'underline',
           lineHeight: 1.2
         },
+          // ... vos styles existants
+  
+  garantieTableCellGrised: {
+    fontSize: 8,
+    color: '#999999', // Texte grisé
+    alignment: 'right',
+    fillColor: '#f8f8f8' // Fond gris clair
+  },
+  garantieTableCellGrisedCenter: {
+    fontSize: 8,
+    color: '#999999', // Texte grisé
+    alignment: 'center',
+    fillColor: '#f8f8f8' // Fond gris clair
+  },
+
         paragraphBold: { fontSize: 10, bold: true, margin: [0, 2, 0, 2] },
         paragraphCenterBold: {  fontSize: 8,
           color: '#000000',
@@ -1089,7 +1140,8 @@ La présente extension s’applique exclusivement aux sinistres dépassant 10.00
     });
   }
 
-private async prepareCotisationAnnuelle(data: any): Promise<any> {
+
+    private async prepareCotisationAnnuelle(data: any): Promise<any> {
     // Calculer la prime nette totale
     
     const primeNetteTotale = this.calculerPrimeNetteTotale(data);
@@ -1133,13 +1185,13 @@ if (!data?.branche) {
     const headers = [
       { text: 'Prime Nette (DT)', style: 'cotisationTableHeader' },
       { text: 'Frais (DT)', style: 'cotisationTableHeader' },
-      { text: 'Taxes (DT)', style: 'cotisationTableHeader' }
+      { text: 'Taxes (%)', style: 'cotisationTableHeader' }
     ];
     
     const values = [
       { text: this.formatMontant(primeNetteTotale), style: 'cotisationTableCellRight' },
       { text: this.formatMontant(frais), style: 'cotisationTableCellRight' },
-      { text: this.formatMontant(taxes), style: 'cotisationTableCellRight' }
+      { text: this.formatTaux(taxes), style: 'cotisationTableCellRight' }
     ];
 
     // Ajouter le droit d'entrée seulement pour les nouveaux adhérents
@@ -1161,10 +1213,41 @@ if (!data?.branche) {
 
     return {
       stack: [
+        // EN-TÊTE DANS UN CADRE - COMME LA PREMIÈRE PAGE
+        {
+          table: {
+            widths: ['*'],
+            body: [
+              [
+                {
+                  stack: [
+                    { 
+                      text: `Annexe au Contrat N° :${data.adherent.codeId || '-'}/${data.service|| '-'}/ ${data.numPolice || '-'}`, 
+                      style: 'headerCenter',
+                      alignment: 'center'
+                    },
+                  ],
+                  border: [true, true, true, true], // Bordures sur les 4 côtés
+                  margin: [10, 10, 10, 10],
+                  fillColor: '#f8f8f8' // Fond gris clair optionnel
+                }
+              ]
+            ]
+          },
+          layout: {
+            defaultBorder: true, // Activer les bordures
+            paddingLeft: () => 0,
+            paddingRight: () => 0,
+            paddingTop: () => 0,
+            paddingBottom: () => 0
+          },
+          pageBreak: 'before', // Saut de page avant cette section
+          margin: [0, 0, 0, 30] // Marge en bas
+        },
         { 
           text: 'COTISATION ANNUELLE', 
           style: 'sectionTitle',
-          pageBreak: 'before' 
+          margin: [0, 10, 0, 10]
         },
         {
            table: {
@@ -1204,6 +1287,21 @@ if (!data?.branche) {
       ]
     };
   }
+  private formatTaux(taux: any): string {
+  if (taux === null || taux === undefined || taux === '' || isNaN(taux)) {
+    return '-';
+  }
+  
+  const valeur = typeof taux === 'string' ? parseFloat(taux) : taux;
+  
+  if (isNaN(valeur)) {
+    return '-';
+  }
+  
+  // Convertir 0.12 en 12%
+  const pourcentage = valeur * 100;
+  return `${pourcentage.toFixed(3)}`; // ou toFixed(2) pour 12.00%
+}
 
   // Les autres méthodes restent inchangées...
   private calculerPrimeNetteTotale(data: any): number {
@@ -1416,78 +1514,6 @@ const numPolice = data?.numPolice || '-';
         }
     ];
 }
-  // MODIFICATION : Ajuster l'ordre des colonnes pour les garanties
- /*  private prepareTableauxGaranties(sections: any[]): any[] {
-    if (!sections || sections.length === 0) {
-      return [
-        {
-          stack: [
-            { text: 'GARANTIES', style: 'garantieSectionTitle' },
-            { text: 'Aucune garantie disponible', style: 'paragraph', alignment: 'center' }
-          ]
-        }
-      ];
-    }
-
-    return sections.map((section, index) => {
-      const situationLabel = `Situation ${String.fromCharCode(65 + index)}`;
-      const garanties = section.garanties || [];
-
-      const lignesGaranties = garanties.length > 0 
-        ? garanties.map((garantie: any) => [
-            { text: garantie.sousGarantieNom || garantie.sousGarantieId || '-', style: 'garantieTableCell' },
-            { text: this.formatMontant(garantie.capitale), style: 'garantieTableCellRight' },
-            { text: this.formatMontant(garantie.minimum), style: 'garantieTableCellRight' },
-            { text: this.formatMontant(garantie.maximum), style: 'garantieTableCellRight' },
-            { text: garantie.hasFranchise ? this.formatFranchise(garantie.franchise) : '0', style: 'garantieTableCellCenter' },
-            { text: this.formatMontant(garantie.primeNET), style: 'garantieTableCellRight' }
-          ])
-        : [
-            [
-              { text: 'Aucune garantie', style: 'garantieTableCell', colSpan: 6, alignment: 'center' },
-              {}, {}, {}, {}, {}
-            ]
-          ];
-
-      return {
-        stack: [
-          { 
-            text: `GARANTIES - ${situationLabel}`, 
-            style: 'garantieSectionTitle',
-          },
-          { 
-            text: `Situation : ${section.identification || '-'}`, 
-            style: 'garantieSubSectionTitle'
-          },
-          {
-            table: {
-              headerRows: 1,
-              widths: ['*', 'auto', 'auto', 'auto', 'auto', 'auto'],
-              body: [
-                [
-                  { text: 'Garantie', style: 'garantieTableHeader' },
-                  { text: 'Capital assuré (DT)', style: 'garantieTableHeader' },
-                  { text: 'Minimum (DT)', style: 'garantieTableHeader' },
-                  { text: 'Maximum (DT)', style: 'garantieTableHeader' },
-                  { text: 'Franchise', style: 'garantieTableHeader' },
-                  { text: 'Prime nette (DT)', style: 'garantieTableHeader' }
-                ],
-                ...lignesGaranties
-              ]
-            },
-            layout: {
-              defaultBorder: true,
-              paddingLeft: function() { return 5; },
-              paddingRight: function() { return 5; },
-              paddingTop: function() { return 3; },
-              paddingBottom: function() { return 3; }
-            },
-            margin: [0, 0, 0, 25]
-          }
-        ]
-      };
-    });
-  } */
 
 private prepareTableauxGaranties(sections: any[]): any[] {
   if (!sections || sections.length === 0) {
@@ -1513,7 +1539,6 @@ private prepareTableauxGaranties(sections: any[]): any[] {
           { 
             text: `GARANTIES - ${situationLabel}`, 
             style: 'garantieSectionTitle'
-            // SUPPRIMER pageBreak: 'before' 
           },
           { 
             text: `Situation : ${section.identification || '-'}`, 
@@ -1526,12 +1551,30 @@ private prepareTableauxGaranties(sections: any[]): any[] {
     }
 
     const lignesGaranties = garanties.map((garantie: any) => [
-      { text: garantie.sousGarantieNom || garantie.sousGarantieId || '-', style: 'garantieTableCell' },
-      { text: this.formatMontant(garantie.capitale), style: 'garantieTableCellRight' },
-      { text: this.formatMontant(garantie.minimum), style: 'garantieTableCellRight' },
-      { text: this.formatMontant(garantie.maximum), style: 'garantieTableCellRight' },
-      { text: garantie.hasFranchise ? this.formatFranchise(garantie.franchise) : '0', style: 'garantieTableCellCenter' },
-      { text: this.formatMontant(garantie.primeNET), style: 'garantieTableCellRight' }
+      { 
+        text: garantie.sousGarantieNom || garantie.sousGarantieId || '-', 
+        style: 'garantieTableCell' 
+      },
+      { 
+        text: this.formatMontant(garantie.capitale), 
+        style: 'garantieTableCellRight' 
+      },
+      { 
+        text: this.formatMontant(garantie.minimum), 
+        style: 'garantieTableCellRight' 
+      },
+      { 
+        text: this.formatMontant(garantie.maximum), 
+        style: 'garantieTableCellRight' 
+      },
+      { 
+        text: this.formatFranchise(garantie.franchise, garantie.hasFranchise), 
+        style: 'garantieTableCellCenter' 
+      },
+      { 
+        text: this.formatMontant(garantie.primeNET), 
+        style: 'garantieTableCellRight' 
+      }
     ]);
 
     allSectionsContent.push({
@@ -1539,7 +1582,6 @@ private prepareTableauxGaranties(sections: any[]): any[] {
         { 
           text: `GARANTIES - ${situationLabel}`, 
           style: 'garantieSectionTitle'
-          // SUPPRIMER pageBreak: 'before' - LAISSER pdfmake décider
         },
         { 
           text: `Situation : ${section.identification || '-'}`, 
@@ -1547,17 +1589,28 @@ private prepareTableauxGaranties(sections: any[]): any[] {
         },
         {
           table: {
-            headerRows: 1,
+            headerRows: 2, // Deux lignes d'en-tête
             widths: ['*', 'auto', 'auto', 'auto', 'auto', 'auto'],
             body: [
+              // Première ligne d'en-tête (principale)
               [
-                { text: 'Garantie', style: 'garantieTableHeader' },
-                { text: 'Capital assuré (DT)', style: 'garantieTableHeader' },
-                { text: 'Minimum (DT)', style: 'garantieTableHeader' },
-                { text: 'Maximum (DT)', style: 'garantieTableHeader' },
-                { text: 'Franchise', style: 'garantieTableHeader' },
-                { text: 'Prime nette (DT)', style: 'garantieTableHeader' }
+                { text: 'Garantie', style: 'garantieTableHeader', rowSpan: 2, alignment: 'center', verticalAlignment: 'middle' },
+                { text: 'Capital assuré (DT)', style: 'garantieTableHeader', rowSpan: 2, alignment: 'center', verticalAlignment: 'middle' },
+                { text: 'Franchise', style: 'garantieTableHeader', colSpan: 3, alignment: 'center', verticalAlignment: 'middle' },
+                {}, // Colonne vide pour le colspan
+                {}, // Colonne vide pour le colspan
+                { text: 'Prime nette (DT)', style: 'garantieTableHeader', rowSpan: 2, alignment: 'center', verticalAlignment: 'middle' }
               ],
+              // Deuxième ligne d'en-tête (sous-colonnes pour Franchise)
+              [
+                {}, // Vide (déjà couvert par Garantie)
+                {}, // Vide (déjà couvert par Capital assuré)
+                { text: 'Minimum (DT)', style: 'garantieTableHeader', alignment: 'center' },
+                { text: 'Maximum (DT)', style: 'garantieTableHeader', alignment: 'center' },
+                { text: 'Taux (%)', style: 'garantieTableHeader', alignment: 'center' },
+                {} // Vide (déjà couvert par Prime nette)
+              ],
+              // Données
               ...lignesGaranties
             ]
           },
@@ -1576,51 +1629,85 @@ private prepareTableauxGaranties(sections: any[]): any[] {
 
   return allSectionsContent;
 }
-  private prepareSituationsRisque(sections: any[]): any[] {
+
+// MÉTHODES UTILITAIRES MODIFIÉES
+private formatMontant(montant: any): string {
+  // Vérifier si la valeur est null, undefined, vide, NaN, ou égale à 0
+  if (montant === null || montant === undefined || montant === '' || isNaN(montant) || montant === 0) {
+    return '-';
+  }
+  
+  const valeur = typeof montant === 'string' ? parseFloat(montant) : montant;
+  
+  // Vérifier à nouveau après conversion
+  if (isNaN(valeur) || valeur === 0) {
+    return '-';
+  }
+  
+  return valeur.toFixed(3);
+}
+
+
+private formatFranchise(franchise: any, hasFranchise: boolean): string {
+  if (!hasFranchise) return '-';
+  if (!franchise && franchise !== 0) return '-';
+  
+  const valeur = typeof franchise === 'string' ? parseFloat(franchise) : franchise;
+  
+  if (isNaN(valeur)) return '-';
+  
+  return valeur.toFixed(3) ;
+}
+
+private prepareSituationsRisque(sections: any[]): any[] {
+    // Définir un style commun pour toutes les cellules
+    const cellStyle = {
+      style: 'tableCell',
+      alignment: 'center' as const,
+      fillColor: '#ffffff', // ou la couleur de votre fond
+      margin: [0, 15, 0, 0] // Ajustez la marge supérieure pour le centrage visuel
+    };
+
     if (!sections || sections.length === 0) {
       return [
         [
-          { text: '-', style: 'tableCell' },
-          { text: '-', style: 'tableCell' },
-          { text: '-', style: 'tableCell' },
-          { text: '-', style: 'tableCell' },
-          { text: '-', style: 'tableCell' },
-          { text: '-', style: 'tableCell' }
+          { text: '-', ...cellStyle },
+          { text: '-', ...cellStyle },
+          { text: '-', ...cellStyle },
+          { text: '-', ...cellStyle },
+          { text: '-', ...cellStyle },
+          { text: '-', ...cellStyle }
         ]
       ];
     }
 
-console.log(sections)
     return sections.map((section, index) => [
-      { text: `Situation ${String.fromCharCode(65 + index)}`, style: 'tableCell' },
-      { text: section.identification || '-', style: 'tableCell' },
-      { text: section.adresse || '-', style: 'tableCell' },
-      { text: section.natureConstruction || '-', style: 'tableCell' },
-      { text: section.contiguite || '-', style: 'tableCell' },
-      { text: section.avoisinage || '-', style: 'tableCell' }
+      { 
+        text: `Situation ${String.fromCharCode(65 + index)}`, 
+        ...cellStyle,
+        fillColor: '#f0f0f0' // Couleur différente pour la première colonne si besoin
+      },
+      { 
+        text: section.identification || '-', 
+        ...cellStyle 
+      },
+      { 
+        text: section.adresse || '-', 
+        ...cellStyle 
+      },
+      { 
+        text: section.natureConstruction || '-', 
+        ...cellStyle 
+      },
+      { 
+        text: section.contiguite || '-', 
+        ...cellStyle 
+      },
+      { 
+        text: section.avoisinage || '-', 
+        ...cellStyle 
+      }
     ]);
-  }
-
-  private formatMontant(montant: any): string {
-    if (!montant && montant !== 0) return '-';
-    
-    const valeur = typeof montant === 'string' ? parseFloat(montant) : montant;
-    
-    if (isNaN(valeur)) return '-';
-    
-    // Format simple sans séparateur de milliers, seulement 2 décimales
-    return valeur.toFixed(2);
-  }
-
-  private formatFranchise(franchise: any): string {
-    if (!franchise && franchise !== 0) return '-';
-    
-    const valeur = typeof franchise === 'string' ? parseFloat(franchise) : franchise;
-    
-    if (isNaN(valeur)) return '-';
-    
-    // Format pourcentage avec 2 décimales
-    return valeur.toFixed(2) + '%';
   }
 
   // Méthode pour formater la date
@@ -1671,142 +1758,13 @@ console.log(sections)
         return codeFractionnement;
     }
   }
-/* 
-  private prepareSectionsRC(rcConfigurations: any[], data: any): any[] {
-    if (!rcConfigurations || rcConfigurations.length === 0) {
-      return [
-        {
-          stack: [
-            { text: 'RESPONSABILITÉ CIVILE', style: 'sectionTitle', pageBreak: 'before' },
-            { text: 'Aucune configuration de responsabilité civile disponible', style: 'paragraph', alignment: 'center' }
-          ]
-        }
-      ];
-    }
 
-    // Section avec l'objet de garantie (affiché une seule fois)
-    const sectionObjetGarantie = {
-      stack: [
-        { text: 'RESPONSABILITÉ CIVILE', style: 'sectionTitle', pageBreak: 'before' },
-        { text: 'Objet de la garantie :', style: 'subSectionTitle' },
-        { text: data.objetDeLaGarantie || 'Non spécifié', style: 'paragraph', margin: [0, 0, 0, 20] }
-      ]
-    };
-
-    const allExclusions = data.exclusionsRC || [];
-
-
-if (!Array.isArray(allExclusions)) {
-
-
-    console.error('❌ allExclusions n\'est pas un tableau:', allExclusions);
-    return [];
-  }
-    // Sections pour chaque configuration RC
-    const sectionsConfigurations = rcConfigurations.map((rcConfig, index) => {
-      // Obtenir les labels des situations couvertes
-        console.log("rc",rcConfig.sectionIds)
-
-      const situationsCouvertes = rcConfig.sectionIds && rcConfig.sectionIds.length > 0
-        ? rcConfig.sectionIds.map((id: number) => `Situation ${String.fromCharCode(65 + id)}`).join(', ')
-        : 'Aucune situation spécifiée';
-        console.log ("ici cest service",  rcConfig.sectionIds  )
-      // Récupérer les exclusions correspondant aux IDs
-      const exclusionsTextes = rcConfig.exclusionsRcIds && rcConfig.exclusionsRcIds.length > 0
-        ? allExclusions
-            .filter((ex: any) => rcConfig.exclusionsRcIds.includes(ex.id))
-            .map((ex: any) => ex.libelle || ex.nom || 'Exclusion sans libellé')
-        : [];
-        return {
-        stack: [
-          { 
-            text: `RESPONSABILITÉ CIVILE ${index + 1}`, 
-            style: 'sectionTitle', 
-            pageBreak: index === 0 ? undefined : 'before' 
-          },
-
-          // Situations couvertes
-          { text: 'Situations de risque couvertes :', style: 'subSectionTitle' },
-          { text: situationsCouvertes, style: 'paragraph', margin: [0, 0, 0, 15] },
-
-          // Tableau RC
-          {
-            table: {
-              headerRows: 1,
-              widths: ['*', 'auto', 'auto', 'auto'],
-              body: [
-                [
-                  { text: 'Couvertures', style: 'rcTableHeader' },
-                  { text: 'Limite annuelle (DT)', style: 'rcTableHeader' },
-                  { text: 'Limite par sinistre (DT)', style: 'rcTableHeader' },
-                  { text: 'Franchise (%)', style: 'rcTableHeader' }
-                ],
-                [
-                  { text: 'Dommages corporels', style: 'rcTableCell', border: [true, true, true, false] },
-                  { text: this.formatMontant(rcConfig.limiteAnnuelleDomCorporels), style: 'rcTableCellRight', border: [true, true, true, false] },
-                  { text: '\n' + this.formatMontant(rcConfig.limiteParSinistre) + '\n', style: 'rcTableCellRight', rowSpan: 2, border: [true, true, true, true] },
-                  { text: '\n' + this.formatFranchise(rcConfig.franchise) + '\n', style: 'rcTableCellRight', rowSpan: 2, border: [true, true, true, true] }
-                ],
-                [
-                  { text: 'Dommages matériels', style: 'rcTableCell', border: [true, false, true, true] },
-                  { text: this.formatMontant(rcConfig.limiteAnnuelleDomMateriels), style: 'rcTableCellRight', border: [true, false, true, true] },
-                  { text: '', border: [false, false, false, false] },
-                  { text: '', border: [false, false, false, false] }
-                ]
-              ]
-            },
-            layout: {
-              hLineWidth: (i: number) => (i === 1 ? 0.5 : 1),
-              vLineWidth: () => 1,
-              hLineColor: () => '#000000',
-              vLineColor: () => '#000000',
-              paddingLeft: () => 5,
-              paddingRight: () => 5,
-              paddingTop: () => 3,
-              paddingBottom: () => 3
-            },
-            margin: [0, 0, 0, 20]
-          },
-
-          // Liste des exclusions (justifiées, interligne 1.5, gras)
-          ...(exclusionsTextes.length > 0
-            ? [
-                { text: 'Exclusions :', style: 'subSectionTitle' },
-                {
-                  ul: exclusionsTextes.map((exclusion: string) => ({
-                    text: exclusion,
-                    alignment: 'justify',
-                    lineHeight: 1.5,
-                    bold: true,
-                    style: 'paragraph',
-                    margin: [0, 0, 0, 5]
-                  })),
-                  margin: [10, 0, 0, 15],
-                  bulletRadius: 2
-                }
-              ]
-            : [
-                {
-                  text: 'Aucune exclusion spécifique.',
-                  style: 'paragraph',
-                  italics: true,
-                  alignment: 'justify',
-                  margin: [0, 5, 0, 15]
-                }
-              ])
-        ]
-      };
-    });
-
-    return [sectionObjetGarantie, ...sectionsConfigurations];
-  }
- */
 private prepareSectionsRC(rcConfigurations: any[], data: any): any[] {
   if (!rcConfigurations || rcConfigurations.length === 0) {
     return [
       {
         stack: [
-          { text: 'RESPONSABILITÉ CIVILE', style: 'sectionTitle', pageBreak: 'before' },
+          { text: 'RESPONSABILITÉ CIVILE EXPLOITATION', style: 'sectionTitle', pageBreak: 'before' },
           { text: 'Aucune configuration de responsabilité civile disponible', style: 'paragraph', alignment: 'center' }
         ]
       }
@@ -1816,7 +1774,7 @@ private prepareSectionsRC(rcConfigurations: any[], data: any): any[] {
   // Section avec l'objet de garantie (affiché une seule fois)
   const sectionObjetGarantie = {
     stack: [
-      { text: 'RESPONSABILITÉ CIVILE', style: 'sectionTitle', pageBreak: 'before' },
+      { text: 'RESPONSABILITÉ CIVILE EXPLOITATION', style: 'sectionTitle', pageBreak: 'before' },
       { text: 'Objet de la garantie :', style: 'subSectionTitle' },
       { text: data.objetDeLaGarantie || 'Non spécifié', style: 'paragraph', margin: [0, 0, 0, 20] }
     ]
@@ -1848,7 +1806,7 @@ private prepareSectionsRC(rcConfigurations: any[], data: any): any[] {
     return {
       stack: [
         { 
-          text: `RESPONSABILITÉ CIVILE ${index + 1}`, 
+          text: `RESPONSABILITÉ CIVILE EXPLOITATION ${index + 1}`, 
           style: 'sectionTitle', 
           pageBreak: index === 0 ? undefined : 'before' 
         },
@@ -1873,7 +1831,7 @@ private prepareSectionsRC(rcConfigurations: any[], data: any): any[] {
                 { text: 'Dommages corporels', style: 'rcTableCell', border: [true, true, true, false] },
                 { text: this.formatMontant(rcConfig.limiteAnnuelleDomCorporels), style: 'rcTableCellRight', border: [true, true, true, false] },
                 { text: '\n' + this.formatMontant(rcConfig.limiteParSinistre) + '\n', style: 'rcTableCellRight', rowSpan: 2, border: [true, true, true, true] },
-                { text: '\n' + this.formatFranchise(rcConfig.franchise) + '\n', style: 'rcTableCellRight', rowSpan: 2, border: [true, true, true, true] }
+                { text: '\n' + this.formatFranchise(rcConfig.franchise,true) + '\n', style: 'rcTableCellRight', rowSpan: 2, border: [true, true, true, true] }
               ],
               [
                 { text: 'Dommages matériels', style: 'rcTableCell', border: [true, false, true, true] },
@@ -1981,34 +1939,287 @@ private prepareRCExclusionsContent(exclusionsTextes: string[]): any[] {
   return content;
 }
 
-  private prepareExclusionsParSituation(data: any): any[] {
-    if (!data.sections || data.sections.length === 0) {
-      return [];
+private prepareExclusionsParSituation(data: any): any[] {
+  if (!data.sections || data.sections.length === 0) return [];
+
+  console.log('🔍 DÉBUT - Analyse des exclusions pour', data.sections.length, 'situations');
+
+  // 1️⃣ Identifier les exclusions globales groupées par garantie parent
+  const exclusionsGlobalesParGarantie = this.getExclusionsGlobalesParGarantieParent(data.sections, data);
+
+  console.log('📊 Exclusions globales par garantie parent:', exclusionsGlobalesParGarantie);
+
+  // 2️⃣ Préparer les sections spécifiques
+  const sectionsAvecExclusions = data.sections.map((section: any, index: number) => {
+    const situationLabel = `Situation ${String.fromCharCode(65 + index)}`;
+    
+    // Grouper les garanties par parent (méthode existante)
+    const garantiesParParent = this.groupGarantiesParParent(section.garanties, data);
+    
+    console.log(`📋 Situation ${index} - garantiesParParent:`, garantiesParParent);
+
+    // Filtrer pour garder seulement les exclusions spécifiques
+    const garantiesAvecExclusionsSpecifiques = this.filtrerExclusionsSpecifiquesParGarantieParent(
+      garantiesParParent, 
+      exclusionsGlobalesParGarantie
+    );
+
+    console.log(`🎯 Situation ${index} - garanties avec exclusions spécifiques:`, garantiesAvecExclusionsSpecifiques);
+
+    if (garantiesAvecExclusionsSpecifiques.length === 0) {
+      return null; // Section vide
     }
 
-    return data.sections.map((section: any, index: number) => {
-      const situationLabel = `Situation ${String.fromCharCode(65 + index)}`;
-      
-      // Obtenir les garanties groupées par parent pour cette situation
-      const garantiesParParent = this.groupGarantiesParParent(section.garanties, data);
+    return {
+      stack: [
+        { 
+          text: `EXCLUSIONS SPÉCIFIQUES - ${situationLabel}`, 
+          style: 'sectionTitle',
+        },
+        { 
+          text: `Situation : ${section.identification || '-'}`, 
+          style: 'subSectionTitle'
+        },
+        ...this.prepareExclusionsContent(garantiesAvecExclusionsSpecifiques)
+      ]
+    };
+  }).filter((section: any) => section !== null);
 
-      return {
-        stack: [
-          { 
-            text: `EXCLUSIONS - ${situationLabel}`, 
-            style: 'sectionTitle',
-          //  pageBreak: index === 0 ? 'before' : undefined 
-          },
-          { 
-            text: `Situation : ${section.identification || '-'}`, 
-            style: 'subSectionTitle'
-          },
-          // Contenu des exclusions groupées par garantie parent
-          ...this.prepareExclusionsContent(garantiesParParent)
-        ]
-      };
-    });
+  // 3️⃣ Préparer la section "EXCLUSIONS GLOBALES"
+  let sectionExclusionsGlobales: any[] = [];
+  if (exclusionsGlobalesParGarantie.length > 0) {
+    sectionExclusionsGlobales = [{
+      stack: [
+        { text: 'EXCLUSIONS GLOBALES', style: 'sectionTitle', pageBreak: 'before' },
+        ...this.prepareExclusionsGlobalesContent(exclusionsGlobalesParGarantie)
+      ]
+    }];
+    console.log('✅ Section exclusions globales créée');
+  } else {
+    console.log('❌ Aucune exclusion globale trouvée');
   }
+
+  // 4️⃣ Combinaison finale
+  const result = [...sectionExclusionsGlobales, ...sectionsAvecExclusions];
+  console.log('🏁 RÉSULTAT FINAL - Sections:', result.length);
+  return result;
+}
+
+// MÉTHODE MODIFIÉE - Identifier les exclusions globales avec la nouvelle logique
+private getExclusionsGlobalesParGarantieParent(sections: any[], data: any): any[] {
+  if (!sections || sections.length === 0) {
+    console.log('⚠️ Aucune section pour déterminer les exclusions globales');
+    return [];
+  }
+
+  // Étape 1: Pour chaque section, grouper les garanties par parent et compter les occurrences
+  const allExclusionsByParent = new Map<string, {
+    parent: any,
+    exclusions: Map<number, { exclusion: any, sections: Set<number> }>,
+    sectionCount: number, // Nombre de sections où cette garantie parent apparaît
+    firstSectionIndex: number // Première section où cette garantie apparaît
+  }>();
+
+  sections.forEach((section, sectionIndex) => {
+    console.log(`\n📦 Traitement de la situation ${sectionIndex}:`, section.identification);
+    
+    // Utiliser votre méthode existante pour grouper par parent
+    const garantiesParParent = this.groupGarantiesParParent(section.garanties, data);
+    
+    garantiesParParent.forEach((parentGroup: any) => {
+      const parentLibelle = parentGroup.parent?.libelle || 'GARANTIE_SANS_NOM';
+      const parentKey = parentLibelle.trim().toLowerCase();
+      
+      console.log(`  📍 Garantie Parent: ${parentLibelle} (${parentGroup.exclusionsUniques?.size || 0} exclusions)`);
+
+      if (!allExclusionsByParent.has(parentKey)) {
+        // Première occurrence de cette garantie parent
+        allExclusionsByParent.set(parentKey, {
+          parent: parentGroup.parent,
+          exclusions: new Map<number, { exclusion: any, sections: Set<number> }>(),
+          sectionCount: 1,
+          firstSectionIndex: sectionIndex
+        });
+      } else {
+        // Incrémenter le compteur de sections
+        const parentData = allExclusionsByParent.get(parentKey)!;
+        parentData.sectionCount++;
+      }
+
+      const parentData = allExclusionsByParent.get(parentKey)!;
+
+      // Récupérer les exclusions de ce parent
+      const exclusionsValues = this.getExclusionsArray(parentGroup.exclusionsUniques);
+
+      exclusionsValues.forEach((exclusion: any) => {
+        const exclusionId = exclusion.id;
+        
+        if (!parentData.exclusions.has(exclusionId)) {
+          parentData.exclusions.set(exclusionId, {
+            exclusion,
+            sections: new Set<number>()
+          });
+        }
+        
+        const exclusionData = parentData.exclusions.get(exclusionId)!;
+        exclusionData.sections.add(sectionIndex);
+        
+        console.log(`    ➕ Exclusion ID ${exclusionId} pour ${parentLibelle}: "${exclusion.nom?.substring(0, 50)}..." - Sections: ${Array.from(exclusionData.sections).join(',')}`);
+      });
+    });
+  });
+
+  // Étape 2: Appliquer la nouvelle logique
+  const totalSections = sections.length;
+  const globalExclusionsParGarantie: any[] = [];
+
+  allExclusionsByParent.forEach((parentData, parentKey) => {
+    const exclusionsGlobalesPourCeParent = new Map<number, any>();
+
+    console.log(`\n🔍 Analyse de la garantie parent: ${parentData.parent.libelle}`);
+    console.log(`   - Apparaît dans ${parentData.sectionCount}/${totalSections} sections`);
+
+    // NOUVELLE LOGIQUE : 
+    // Si la garantie n'apparaît que dans une seule situation → TOUTES ses exclusions sont globales
+    // Sinon → Seules les exclusions communes à toutes les situations sont globales
+    
+    if (parentData.sectionCount === 1) {
+      // CAS 1: Garantie dans une seule situation → TOUTES les exclusions sont globales
+      console.log(`🎯 GARANTIE DANS UNE SEULE SITUATION → TOUTES les exclusions sont globales`);
+      
+      parentData.exclusions.forEach((data, exclusionId) => {
+        exclusionsGlobalesPourCeParent.set(exclusionId, data.exclusion);
+        console.log(`   ✅ Exclusion globale (single-section): ID ${exclusionId} - "${data.exclusion.nom?.substring(0, 50)}..."`);
+      });
+    } else {
+      // CAS 2: Garantie dans plusieurs situations → Seules les exclusions communes sont globales
+      console.log(`🔍 GARANTIE DANS PLUSIEURS SITUATIONS → Recherche des exclusions communes`);
+      
+      parentData.exclusions.forEach((data, exclusionId) => {
+        if (data.sections.size === parentData.sectionCount) {
+          // Exclusion présente dans TOUTES les sections où cette garantie apparaît
+          exclusionsGlobalesPourCeParent.set(exclusionId, data.exclusion);
+          console.log(`   ✅ Exclusion globale (multi-section): ID ${exclusionId} - "${data.exclusion.nom?.substring(0, 50)}..."`);
+        } else {
+          console.log(`   ❌ Exclusion spécifique: ID ${exclusionId} - Présente dans ${data.sections.size}/${parentData.sectionCount} sections`);
+        }
+      });
+    }
+
+    if (exclusionsGlobalesPourCeParent.size > 0) {
+      globalExclusionsParGarantie.push({
+        parent: parentData.parent,
+        exclusionsUniques: exclusionsGlobalesPourCeParent,
+        sectionCount: parentData.sectionCount // Pour information
+      });
+    }
+  });
+
+  console.log(`\n📊 RÉSULTAT FINAL: ${globalExclusionsParGarantie.length} garanties parents avec exclusions globales`);
+  globalExclusionsParGarantie.forEach(garantie => {
+    console.log(`   - ${garantie.parent.libelle}: ${garantie.exclusionsUniques.size} exclusions globales (${garantie.sectionCount} sections)`);
+  });
+  
+  return globalExclusionsParGarantie;
+}
+
+// MÉTHODE MODIFIÉE pour filtrer les exclusions spécifiques
+private filtrerExclusionsSpecifiquesParGarantieParent(
+  garantiesParParent: any[], 
+  exclusionsGlobalesParGarantie: any[]
+): any[] {
+  if (!garantiesParParent || garantiesParParent.length === 0) return [];
+
+  // Créer une Map des IDs d'exclusions globales par garantie parent
+  const globalExclusionsParParentMap = new Map<string, Set<number>>();
+  exclusionsGlobalesParGarantie.forEach((parentGroup: any) => {
+    const parentLibelle = parentGroup.parent.libelle;
+    const exclusionIds = new Set<number>();
+    
+    parentGroup.exclusionsUniques.forEach((exclusion: any, exclusionId: number) => {
+      exclusionIds.add(exclusionId);
+    });
+    
+    globalExclusionsParParentMap.set(parentLibelle, exclusionIds);
+  });
+
+  console.log('🔍 Exclusions globales par garantie parent:', globalExclusionsParParentMap);
+
+  return garantiesParParent.map(parentGroup => {
+    const parentLibelle = parentGroup.parent?.libelle;
+    const globalExclusionIds = globalExclusionsParParentMap.get(parentLibelle) || new Set<number>();
+    
+    const exclusionsValues = this.getExclusionsArray(parentGroup.exclusionsUniques);
+    const exclusionsSpecifiques = new Map<number, any>();
+
+    exclusionsValues.forEach((exclusion: any) => {
+      const exclusionId = exclusion.id;
+      
+      // Garder seulement si ce n'est PAS une exclusion globale pour cette garantie parent
+      if (!globalExclusionIds.has(exclusionId)) {
+        exclusionsSpecifiques.set(exclusionId, exclusion);
+        console.log(`✅ Exclusion spécifique gardée pour ${parentLibelle}: ID ${exclusionId} - "${exclusion.nom?.substring(0, 50)}..."`);
+      } else {
+        console.log(`🚫 Exclusion globale retirée de ${parentLibelle}: ID ${exclusionId}`);
+      }
+    });
+
+    return {
+      ...parentGroup,
+      exclusionsUniques: exclusionsSpecifiques
+    };
+  }).filter(group => group.exclusionsUniques.size > 0);
+}
+
+// MÉTHODE POUR PRÉPARER LE CONTENU DES EXCLUSIONS GLOBALES (inchangée)
+private prepareExclusionsGlobalesContent(exclusionsGlobalesParGarantie: any[]): any[] {
+  if (!exclusionsGlobalesParGarantie || exclusionsGlobalesParGarantie.length === 0) return [];
+
+  const content: any[] = [];
+
+  exclusionsGlobalesParGarantie.forEach((garantieGroup, index) => {
+    const garantieNom = garantieGroup.parent.libelle;
+    const exclusionsList = Array.from(garantieGroup.exclusionsUniques.values()).map(
+      (exclusion: any) => exclusion.nom || 'Exclusion sans libellé'
+    );
+
+    content.push({
+      stack: [
+        { 
+          text: garantieNom.toUpperCase(), 
+          style: 'exclusionParentTitle', 
+          margin: [0, index === 0 ? 0 : 15, 0, 5] 
+        },
+        {
+          ul: exclusionsList.map(text => ({
+            text: text,
+            alignment: 'justify',
+            lineHeight: 1.5,
+            style: 'garantieExclusionText',
+            margin: [0, 0, 0, 5]
+          })),
+          margin: [10, 0, 0, 10],
+          bulletRadius: 2
+        }
+      ],
+      unbreakable: true
+    });
+  });
+
+  return content;
+}
+
+// MÉTHODE UTILITAIRE (inchangée)
+private getExclusionsArray(exclusions: any): any[] {
+  if (exclusions instanceof Map) {
+    return Array.from(exclusions.values());
+  } else if (Array.isArray(exclusions)) {
+    return exclusions;
+  } else {
+    return [];
+  }
+}
+
 
   // Grouper les garanties par parent pour une situation donnée
   private groupGarantiesParParent(garanties: any[], data: any): any[] {
@@ -2085,57 +2296,7 @@ private prepareRCExclusionsContent(exclusionsTextes: string[]): any[] {
       }
     });
   }
-/* 
-  // Préparer le contenu des exclusions pour l'affichage (FORMAT COMME RC)
- private prepareExclusionsContent(garantiesParParent: any[]): any[] {
-    if (!garantiesParParent || garantiesParParent.length === 0) {
-      return [
-        {
-          text: 'Aucune exclusion spécifique pour cette situation.',
-          style: 'paragraph',
-          italics: true,
-          margin: [0, 10, 0, 10]
-        }
-      ];
-    }
-
-    const content: any[] = [];
-
-    garantiesParParent.forEach((parentGroup, index) => {
-      const hasExclusions = parentGroup.exclusionsUniques && parentGroup.exclusionsUniques.size > 0;
-
-      if (hasExclusions) {
-        content.push(
-          { 
-            text: `EXCLUSIONS - ${parentGroup.parent.libelle || 'GARANTIE'}`.toUpperCase(), 
-            style: 'exclusionParentTitle',
-            margin: [0, index === 0 ? 0 : 15, 0, 5]
-          }
-        );
-
-        // LISTE DES EXCLUSIONS FORMATÉES COMME RC (interligne 1.5, justifié, gras)
-        const exclusionsList = Array.from(parentGroup.exclusionsUniques.values()).map((exclusion: any) => 
-          exclusion.nom || 'Exclusion sans libellé'
-        );
-
-        content.push({
-          ul: exclusionsList.map((text: string) => ({
-            text: text,
-            alignment: 'justify',
-            lineHeight: 1.5,
-            bold: true,
-            style: 'garantieExclusionText',
-            margin: [0, 0, 0, 5]
-          })),
-          margin: [10, 0, 0, 15],
-          bulletRadius: 2
-        });
-      }
-    });
-
-    return content;
-  } 
- */
+  
 private prepareExclusionsContent(garantiesParParent: any[]): any[] {
   if (!garantiesParParent || garantiesParParent.length === 0) {
     return [
