@@ -4,25 +4,39 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install
 COPY . .
-RUN npm run build
+RUN npm run build --prod
 
 # Étape 2 : Servir Angular avec Nginx
 FROM nginx:alpine
 
-RUN rm -f /etc/nginx/conf.d/default.conf
+# Supprimer COMPLÈTEMENT le site par défaut
+RUN rm -rf /usr/share/nginx/html/* && \
+    rm -f /etc/nginx/conf.d/default.conf
 
-COPY --from=build /app/dist/contratouktaw /usr/share/nginx/html
+# Copier les fichiers Angular depuis le sous-dossier browser
+COPY --from=build /app/dist/contratouktaw/browser/ /usr/share/nginx/html/
 
-RUN echo 'server { \
-    listen 80; \
-    server_name localhost; \
-    root /usr/share/nginx/html; \
-    index index.html index.htm; \
-    location / { \
-        try_files $uri $uri/ /index.html; \
-    } \
-    error_page 404 /index.html; \
+# Créer une configuration Nginx avec printf
+RUN printf 'server {\n\
+    listen 80;\n\
+    server_name _;\n\
+    root /usr/share/nginx/html;\n\
+    index index.html index.htm;\n\
+    \n\
+    location / {\n\
+        try_files $uri $uri/ /index.html;\n\
+    }\n\
+    \n\
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {\n\
+        expires 1y;\n\
+        add_header Cache-Control "public, immutable";\n\
+    }\n\
+    \n\
+    error_page 404 /index.html;\n\
 }' > /etc/nginx/conf.d/default.conf
+
+# Vérifier la configuration
+RUN nginx -t
 
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
