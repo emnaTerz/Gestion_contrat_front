@@ -68,8 +68,7 @@ export class UsersComponent implements OnInit {
 }
 
 
-
-  loadUsers() {
+loadUsers() {
   const token = localStorage.getItem('token');
   if (!token) {
     this.router.navigate(['/login']);
@@ -77,28 +76,49 @@ export class UsersComponent implements OnInit {
   }
 
   this.loading = true;
-  this.userService.getAllUsers().subscribe({
-    next: (data) => {
-      setTimeout(() => { 
-        this.users = data;
-        this.filteredUsers = [...this.users];
-        this.loading = false;
+
+  // On récupère d'abord l'utilisateur connecté
+  this.userService.getCurrentUser().subscribe({
+    next: (currentUser) => {
+
+      this.userService.getAllUsers().subscribe({
+        next: (data) => {
+          setTimeout(() => {
+
+            const isPole = currentUser.email.toLowerCase() === 'pole.si';
+
+            // ✅ Filtrage selon qui est connecté
+            this.users = isPole
+              ? data // Pole.si → voit tout
+              : data.filter((u: any) => (u.email || '').toLowerCase() !== 'pole.si');
+
+            this.filteredUsers = [...this.users];
+            this.loading = false;
+          });
+        },
+
+        error: (err) => {
+          console.error('Erreur lors du chargement des utilisateurs', err);
+          this.loading = false;
+          if (err.status === 401 || err.status === 403) {
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Erreur',
+              detail: 'Session expirée ou accès non autorisé. Veuillez vous reconnecter.'
+            });
+            localStorage.removeItem('token');
+            this.router.navigate(['/login']);
+          } else {
+            this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de charger les utilisateurs' });
+          }
+        }
       });
     },
-    error: (err) => {
-      console.error('Erreur lors du chargement des utilisateurs', err);
+
+    error: () => {
       this.loading = false;
-      if (err.status === 401 || err.status === 403) {
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Erreur',
-          detail: 'Session expirée ou accès non autorisé. Veuillez vous reconnecter.'
-        });
-        localStorage.removeItem('token');
-        this.router.navigate(['/login']);
-      } else {
-        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de charger les utilisateurs' });
-      }
+      localStorage.removeItem('token');
+      this.router.navigate(['/login']);
     }
   });
 }

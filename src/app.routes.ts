@@ -1,6 +1,4 @@
 import { Routes } from '@angular/router';
-import { AppLayout } from './app/layout/component/app.layout';
-
 import { LoginComponent } from '@/components/login/login.component';
 import { UsersComponent } from '@/components/users/users.component';
 import { ActionHistoryComponent } from '@/components/action-history/action-history.component';
@@ -34,7 +32,7 @@ export const appRoutes: Routes = [
             {  path: 'contrat-list',   component: ContratListComponent, canActivate: [AuthGuard],  data: { expectedRole: ['USER', 'ADMIN'] } },
             { path: 'Modif_Contrat/:numPolice', component: ModifierContratComponent, canActivate: [AuthGuard], data: { expectedRole: 'USER' } },
             { path: 'Landing', component: LandingComponent, canActivate: [AuthGuard], data: { expectedRole: 'USER' } },
-            { path: 'force-reset-password', component: ForceResetPasswordComponent, canActivate: [AuthGuard], data: { expectedRole: 'USER' } },
+            { path: 'force-reset-password', component: ForceResetPasswordComponent, canActivate: [AuthGuard], data: { expectedRole: ['USER', 'ADMIN'] }  },
 
     { path: '**', redirectTo: '/notfound' }
         ]

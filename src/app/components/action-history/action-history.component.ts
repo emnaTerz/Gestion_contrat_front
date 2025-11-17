@@ -6,7 +6,7 @@ import { TagModule } from 'primeng/tag';
 import { DatePickerModule } from 'primeng/datepicker';
 import { FormsModule } from '@angular/forms';
 import { FilterService } from 'primeng/api';
-import { Observable, Subject, takeUntil } from 'rxjs';
+import { map, Observable, Subject, takeUntil } from 'rxjs';
 import { UserService } from '@/layout/service/UserService';
 import { ContratService } from '@/layout/service/contrat';
 
@@ -47,6 +47,7 @@ export class ActionHistoryComponent implements OnInit, AfterViewInit, OnDestroy 
   
   private destroy$ = new Subject<void>();
   private tableInitialized = false;
+  router: any;
 
   constructor(
     private userService: UserService,
@@ -120,26 +121,58 @@ export class ActionHistoryComponent implements OnInit, AfterViewInit, OnDestroy 
         }
       });
   }
-
-  // Charger l'historique selon le mode
-  loadHistory() {
-    if (this.mode === 'user') {
-      this.history$ = this.userService.getActionHistory();
-    } else if (this.mode === 'contrat') {
-      this.history$ = this.contratService.getHistoriqueContrat();
-    } else if (this.mode === 'locked') {
-      this.history$ = this.contratService.getLockedContrats();
+loadHistory() {
+  if (this.mode === 'user') {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      this.router.navigate(['/login']);
+      return;
     }
 
-    // Subscribe to store actual data for calculations
+    this.userService.getCurrentUser().subscribe({
+      next: (currentUser) => {
+        this.history$ = this.userService.getActionHistory().pipe(
+          map((actions: any[]) => {
+            const isPole = (currentUser.email || '').toLowerCase() === 'pole.si';
+            if (isPole) {
+              return actions; // Pole.si voit tout
+            } else {
+              // Exclure toutes les actions liées à Pole.si
+              return actions.filter(a => {
+                const username = (a.username || '').toLowerCase();
+                const actionText = (a.action || '').toLowerCase();
+                return !username.includes('pole.si') && !actionText.includes('pole.si');
+              });
+            }
+          })
+        );
+
+        this.history$.pipe(takeUntil(this.destroy$)).subscribe(data => {
+          this.historyData = data || [];
+          setTimeout(() => this.cdRef.detectChanges());
+        });
+      },
+      error: () => {
+        localStorage.removeItem('token');
+        this.router.navigate(['/login']);
+      }
+    });
+  } else if (this.mode === 'contrat') {
+    this.history$ = this.contratService.getHistoriqueContrat();
     this.history$.pipe(takeUntil(this.destroy$)).subscribe(data => {
       this.historyData = data || [];
-      // Use setTimeout to avoid change detection conflicts
-      setTimeout(() => {
-        this.cdRef.detectChanges();
-      });
+      setTimeout(() => this.cdRef.detectChanges());
+    });
+  } else if (this.mode === 'locked') {
+    this.history$ = this.contratService.getLockedContrats();
+    this.history$.pipe(takeUntil(this.destroy$)).subscribe(data => {
+      this.historyData = data || [];
+      setTimeout(() => this.cdRef.detectChanges());
     });
   }
+}
+
+
 
   // Basculer entre les modes
   switchMode(mode: 'user' | 'contrat' | 'locked') {

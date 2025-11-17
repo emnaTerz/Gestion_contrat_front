@@ -435,14 +435,36 @@ toggleModele() {
           this.contratService.lockContrat(this.numPolice).subscribe({
             next: contrat => {
               this.contrat = contrat;
-               const now = new Date(); // date locale
+             /*   const now = new Date(); // date locale
 this.startTime = now.getFullYear() + '-' +
   String(now.getMonth()+1).padStart(2,'0') + '-' +
   String(now.getDate()).padStart(2,'0') + 'T' +
   String(now.getHours()).padStart(2,'0') + ':' +
   String(now.getMinutes()).padStart(2,'0') + ':' +
   String(now.getSeconds()).padStart(2,'0');
-console.log('Heure locale format ISO sans décalage:', this.startTime);
+console.log('Heure locale format ISO sans décalage:', this.startTime); */
+const now = new Date();
+const formatter = new Intl.DateTimeFormat('sv-SE', {
+  timeZone: 'Africa/Tunis',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+  hour: '2-digit',
+  minute: '2-digit',
+  second: '2-digit',
+  hour12: false
+});
+
+// Formater proprement en ISO (YYYY-MM-DDTHH:mm:ss)
+const parts = formatter.formatToParts(now).reduce((acc, part) => {
+  acc[part.type] = part.value;
+  return acc;
+}, {} as any);
+
+this.startTime = `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}:${parts.second}`;
+
+console.log("Heure Tunisie ISO:", this.startTime);
+
  this.startLockCheckTimer();
               this.loadContrat(this.numPolice);
             },

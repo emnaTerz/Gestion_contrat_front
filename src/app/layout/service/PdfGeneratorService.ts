@@ -26,7 +26,6 @@ export class PdfGeneratorService {
  const sectionCotisationAnnuelle = await this.prepareCotisationAnnuelle(data);
    const sectionsAttestations = this.prepareAttestations(data);
 // Montrez-moi 2 sections différentes avec quelques garanties
-console.log("DATA COMPLÈTE:", JSON.stringify(data.sections, null, 2));
     const docDefinition: any = {
  pageMargins: [40, 100, 40, 90],
         header: function(currentPage: number, pageCount: number) {
@@ -233,7 +232,7 @@ console.log("DATA COMPLÈTE:", JSON.stringify(data.sections, null, 2));
 
           { text: 'EXCLUSIONS', style: 'subSectionTitle' },
           {
-            ol: [
+            ul: [
               "AUX FUSIBLES, AUX RÉSISTANCES CHAUFFANTES, AUX LAMPES DE TOUTES NATURES, AUX TUBES ÉLECTRONIQUES.",
               "AUX COMPOSANTS ÉLECTRONIQUES LORSQUE LE SINISTRE RESTE LIMITÉ À UN SEUL ENSEMBLE INTERCHANGEABLE.",
               "AUX MATÉRIELS INFORMATIQUES (Y COMPRIS LES MICROS ET MINI ORDINATEURS) PARTICIPANT AUX TÂCHES DE GESTION (DITS ORDINATEURS DE GESTION) LORSQUE LA VALEUR DE REMPLACEMENT À NEUF EXCÈDE 20.000 D.",
@@ -310,7 +309,7 @@ margin: [0, 5, 0, 5]
             style: 'paragraph',
             bold: false,
             alignment: 'justify',
-            margin: [0, 0, 0, 0]
+           margin: [0, 0, 0, 0] 
           },
             { text: `
                 L’assuré conservera à sa charge par sinistre, et par appareil, une franchise absolue de 100 Dinars.
@@ -318,7 +317,7 @@ margin: [0, 5, 0, 5]
             style: 'paragraph',
             bold: true,
             alignment: 'justify',
-            margin: [0, 10, 0, 20]
+            margin: [0, 0, 0, 20]
           },
 
           {
@@ -356,7 +355,7 @@ margin: [0, 5, 0, 5]
             style: 'paragraph',
             margin: [0, 7, 0, 7]
           },
-          { text: 'I. TEMPÊTES', style: 'subSectionTitleCenter' },
+          { text: 'I. TEMPÊTES', style: 'subSectionTitle' },
           {
             text: `La MAE garantit les dommages matériels causés aux biens assurés par :
 - Par les tempêtes : action directe du vent ou choc d’un corps projeté, détruisant ou endommageant bâtiments de bonne construction, arbres, et autres objets dans un rayon de 5 km autour du risque assuré. Attestation météorologique obligatoire si contestation.
@@ -365,9 +364,9 @@ margin: [0, 5, 0, 5]
             alignment: 'justify',
             margin: [0, 3, 0, 5]
           },
-          { text: 'EXCLUSIONS', style: 'paragraphCenterBoldUnderline' },
+          { text: 'EXCLUSIONS', style: 'paragraphCenterBoldUnderline', alignment: 'left', },
           {
-            ol: [
+            ul: [
               'TOUS LES DOMMAGES AUTRES QUE CEUX DÉFINIS CI-DESSUS, AINSI QUE CEUX OCCASIONNÉS DIRECTEMENT OU INDIRECTEMENT, MEME EN CAS D’ORAGE, PAR TES EAUX DE RUISSELLEMENT DANS LES COURS ET JARDINS, VOIES PUBLIQUES OU PRIVÉES, INONDATIONS, RAZ-DE-MARÉE, MAREES, ENGORGEMENT ET REFOULEMENT DES ÉGOUTS, DÉBORDEMENT DES SOURCES, COURS D’EAU ET PLUS GÉNÉRALEMENT PAR LA MER ET AUTRES PLANS D’EAU NATURELS OU ARTIFICIELS.',
               'LES BÂTIMENTS EN COURS DE CONSTRUCTION OU DE RÉFECTION (À MOINS QU’ILS NE SOIENT ENTIÈREMENT CLOS ET COUVERTS AVEC PORTES ET FENÊTRES PLACÉES À DEMEURE) ET LES BÂTIMENTS OUVERTS SUR UN OU PLUSIEURS CÔTÉS ET PLUS GÉNÉRALEMENT TOUT BÂTIMENT NON ENTIÈREMENT CLOS.',
               'LES BÂTIMENTS DONT LES MURS SONT CONSTRUITS EN TOUT OU PARTIE EN BOIS, CARREAUX DE PLÂTRE, TÔLE ONDULÉE, AMIANTE-CIMENT, MATIÈRES PLASTIQUES, AINSI QUE CEUX DANS LESQUELS LES MATÉRIAUX DURS (PIERRE, BRIQUES, MOELLONS, FER, BÉTON DE CIMENT, PARPAINGS DE CIMENT, MÂCHEFER SANS ADDITION DE BOIS, PAILLE OU AUTRES SUBSTANCES ÉTRANGÈRES) ENTRANT POUR MOINS DE 50 %.',
@@ -386,15 +385,15 @@ margin: [0, 5, 0, 5]
             pageBreak: 'before'
           },
 
-          { text: 'II. FUMÉES', style: 'subSectionTitleCenter' },
+          { text: 'II. FUMÉES', style: 'subSectionTitle' },
           {
             text: `L'assureur garantit les dommages matériels causés aux biens assurés par des fumées dues à une défectuosité soudaine et imprévisible d'un appareil de chauffage ou de cuisine, relié à une cheminée et situé dans l’enceinte des risques spécifiés dans la police.`,
             style: 'paragraph',
             alignment: 'justify'
           },
-          { text: 'EXCLUSIONS', style: 'paragraphCenterBoldUnderline' },
+          { text: 'EXCLUSIONS', style: 'paragraphCenterBoldUnderline', alignment: 'left', },
           {
-             ol: [
+             ul: [
              `SONT EXCLUS LES DOMMAGES PROVENANT DE FOYERS EXTÉRIEURS ET APPAREILS INDUSTRIELS AUTRES QUE LES APPAREILS DE CHAUFFAGE.`,
               ].map(text => ({ text,
                 bold: true,
@@ -402,22 +401,22 @@ margin: [0, 5, 0, 5]
                 lineHeight: 1.5,
                 style: 'paragraph',}))
           },
-          { text: 'III. CHUTE D’APPAREILS DE NAVIGATION AÉRIENNE', style: 'subSectionTitleCenter' },
+          { text: 'III. CHUTE D’APPAREILS DE NAVIGATION AÉRIENNE', style: 'subSectionTitle' },
           {
             text: `L'assureur garantit les dommages matériels, y compris incendie et explosion, causés aux objets assurés par le choc ou la chute d'appareils de navigation aérienne.`,
             style: 'paragraph',
             alignment: 'justify'
           },
 
-          { text: 'IV. CHOC D’UN VÉHICULE TERRESTRE', style: 'subSectionTitleCenter' },
+          { text: 'IV. CHOC D’UN VÉHICULE TERRESTRE', style: 'subSectionTitle' },
           {
             text: `L'assureur garantit les dommages matériels, y compris incendie et explosion, causés aux biens assurés par le choc d'un véhicule terrestre.`,
             style: 'paragraph',
             alignment: 'justify'
           },
-          { text: 'EXCLUSIONS', style: 'paragraphCenterBoldUnderline' },
+          { text: 'EXCLUSIONS', style: 'paragraphCenterBoldUnderline', alignment: 'left', },
           {
-            ol: [
+            ul: [
               `OCCASIONNÉS PAR TOUT VÉHICULE DONT L'ASSURÉ OU LOCATAIRE EST PROPRIÉTAIRE OU USAGER.`,
               `CAUSÉS AUX ROUTES, PISTES OU PELOUSES.`,
               `SUBIS PAR TOUT VÉHICULE ET SON CONTENU.`
@@ -428,14 +427,14 @@ margin: [0, 5, 0, 5]
                 style: 'paragraph', }))
           },
 
-          { text: 'LIMITE DE LA GARANTIE', style: 'paragraphCenterBoldUnderline' },
+          { text: 'LIMITE DE LA GARANTIE', style: 'paragraphCenterBoldUnderline', alignment: 'left', },
           {
             text: `La présente extension est accordée pour une limite de 25% des existences assurées par sinistre et par année d’assurance.`,
             style: 'paragraph',
             alignment: 'justify'
           },
 
-          { text: 'FRANCHISES', style: 'paragraphCenterBoldUnderline' },
+          { text: 'FRANCHISES', style: 'paragraphCenterBoldUnderline', alignment: 'left', },
           {
             text: `L'assuré conservera à sa charge, par sinistre, une franchise égale à 10% des dommages avec un minimum de 1 000 DT et un maximum de 5 000 DT. Cette franchise sera déduite du montant de l'indemnité.`,
             style: 'paragraph',
@@ -466,7 +465,7 @@ margin: [0, 5, 0, 5]
               pageBreak: 'before'
             },
             { text: 'GARANTIE INONDATION', style: 'sectionTitle' },
-            { text: 'I. OBJET DE LA GARANTIE', style: 'subSectionTitleCenter' },
+            { text: 'I. OBJET DE LA GARANTIE', style: 'subSectionTitle' },
             {
               text: `Par dérogation à toute autre clause contraire aux Conditions Générales, l'assureur garantit les dommages matériels causés aux biens assurés par les inondations.
 Il faut entendre par inondation toute situation temporaire et générale pendant laquelle la zone territoriale dans laquelle sont situés les bâtiments assurés et ses voisins immédiats se trouvant normalement à sec est complètement ou partiellement sous eau ou sous la boue suite à une accumulation d'eaux provenant de :
@@ -479,9 +478,10 @@ Il faut entendre par inondation toute situation temporaire et générale pendant
 - L'eau pluviale.`,
               style: 'paragraph',
               alignment: 'justify',
+              lineHeight: 1.1,
               margin: [0, 2, 0, 5]
             },
-            { text: 'II. EXCLUSIONS', style: 'subSectionTitleCenter' },
+            { text: 'II. EXCLUSIONS', style: 'subSectionTitle' },
             {
               ul: [
                 'LES DOMMAGES SUBIS PAR LES BIENS SE TROUVANT EN PLEIN AIR ;',
@@ -493,21 +493,17 @@ Il faut entendre par inondation toute situation temporaire et générale pendant
                 bold: true,
                 alignment: 'justify',
                 lineHeight: 1.2,
+                margin: [0, 0, 0, 10],
                 style: 'paragraph', }))
             },
-            { text: 'III. LIMITE DE LA GARANTIE', style: 'subSectionTitleCenter' },
+            { text: 'III. LIMITE DE LA GARANTIE', style: 'subSectionTitle' },
             {
               text: `La présente extension est accordée pour une limite de 25% des existences assurées par sinistre et par année d’assurance.`,
               style: 'paragraph',
               alignment: 'justify'
             },
-            {
-            text: `Annexe au Contrat N° : ${data.adherent.codeId || '-'}/${data.service || '-'}/${data.numPolice || '-'}`,
-            style: 'headerCenter',
-            pageBreak: 'before'
-          },
-
-            { text: 'IV. FRANCHISE', style: 'subSectionTitleCenter' },
+          
+            { text: 'IV. FRANCHISE', style: 'subSectionTitle' },
             {
               text: `L'assuré conservera à sa charge, par sinistre une franchise égale à 10% des dommages avec un minimum de Mille Dinars (1 000DT) par sinistre et un maximum de Cinq Mille Dinars (5 000DT) par sinistre.
 Cette franchise sera déduite du montant de l'indemnité qui aurait été versée à l'assuré sans l'existence de la dite franchise.`,
@@ -534,7 +530,7 @@ Cette franchise sera déduite du montant de l'indemnité qui aurait été versé
               style: 'headerCenter',
               pageBreak: 'before'
             },
-            { text: 'EXTENSION DE GARANTIE AUX TREMBLEMENTS DE TERRE', style: 'sectionTitle' },
+            { text: ' EXTENSION DE GARANTIE AUX TREMBLEMENTS DE TERRE', style: 'sectionTitle', alignment: 'center' },
             {
               text: `La présente extension de garantie, ou toute modification des garanties en cours, ne sera considérée comme acquise, que si le lieu de situation des biens garantis n'est pas l'objet, au moment de la demande par l'assuré, d'un avis d'alerte émanant des services compétents, ou de tout organisme en tenant lieu.
 
@@ -543,7 +539,7 @@ Les Conditions Générales et Particulières qui régissent la garantie « Incen
               alignment: 'justify',
               margin: [0, 2, 0, 5]
             },
-            { text: 'OBJET ET ETENDUE DE LA GARANTIE', style: 'subSectionTitleCenter' },
+            { text: 'I. OBJET ET ETENDUE DE LA GARANTIE', style: 'subSectionTitle' },
             {
               ul: [
                 `Par dérogation aux Conditions Générales et moyennant une prime distincte, l'assureur garantit les dommages matériels, y compris ceux d'incendie et/ ou d'explosion, causés directement aux biens assurés au titre du contrat auquel est annexée la présente convention.`,
@@ -557,13 +553,13 @@ Les Conditions Générales et Particulières qui régissent la garantie « Incen
                 lineHeight: 1.2,
                 style: 'paragraph', }))
             },
-            { text: 'LIMITE DE LA GARANTIE', style: 'subSectionTitleCenter' },
+            { text: 'II. LIMITE DE LA GARANTIE', style: 'subSectionTitle' },
             {
               text: `La présente extension est accordée pour une limite de 25% des existences assurées par sinistre et par année d’assurance.`,
               style: 'paragraph',
               alignment: 'justify'
             },
-            { text: 'FRANCHISE', style: 'subSectionTitleCenter' },
+            { text: 'II. FRANCHISE', style: 'subSectionTitle' },
             {
               text: `L'assuré conservera à sa charge, par sinistre et par établissement, une franchise égale à 10% des dommages avec un minimum de Mille Dinars (1 000DT) par sinistre et un maximum de Cinq Mille Dinars (5 000DT) par sinistre.
 Cette franchise sera déduite du montant de l'indemnité qui aurait été versée à l'assuré sans l'existence de ladite franchise.`,
@@ -604,7 +600,7 @@ Pour l'application de cette annexe, il faut entendre par dommage matériel résu
     'Tout acte commis dans le cadre d’actes de terrorisme et de sabotage, de grèves, émeutes et mouvements populaires entraînant un trouble de l’ordre public par quiconque y prend part ;',
     'Tout acte délibéré d’un gréviste ou d’un employé dans le cadre d’une grève, que cet acte ait été ou non commis au cours d’un trouble de l’ordre public ;',
     'Tout acte d’une autorité légalement constituée dans le but d’endiguer, de prévenir, de faire cesser ou de minimiser les conséquences de ces actes, ou visant à empêcher la réalisation d’un acte listé aux deux alinéas précédents ou à en minimiser les conséquences.'
-  ].map(text => ({ text, style: 'paragraph', alignment: 'justify' }))
+  ].map(text => ({ text, style: 'paragraph', alignment: 'justify' ,margin: [0, 0, 0, 0.5]}))
 },
 {
   text: `Il est toutefois convenu que la définition des trois derniers ne vaut aucunement renonciation ou dérogation relative aux exclusions en matière des risques liés aux actes de Guerre, de Terrorisme, e Sabotage, de grèves, Emeutes et mouvements populaires contenu dans la présente convention, lorsque les évènements GEMP prennent les dimensions d’un soulèvement populaire tel que prévu dans le 3ème point des exclusions, ou lorsqu’ils entraînent la réalisation de l’un des évènements prévus au point 4 de l’annexe.  
@@ -614,13 +610,15 @@ Si l’Assureur allègue qu’en raison du présent avenant, une perte, un domma
   alignment: 'justify',
   margin: [0, 2, 0, 5]
 },
-            { text: 'EXCLUSIONS', style: 'subSectionTitleCenter' },
+            { text: 'I. EXCLUSIONS', style: 'subSectionTitle' },
             {
               ul: [
                 'GUERRE, GUERRE CIVILE OU ETAT DE GUERRE, QUE LA GUERRE AIT ETE DECLAREE OU NON, INVASION, ACTES QUELCONQUES D’ENNEMIS ETRANGERS, HOSTILITES OU ACTES EQUIVALENTS A DES OPERATIONS DE GUERRE ;',
                 'MUTINERIE, SOULEVEMENT POPULAIRE, PUTSCH MILITAIRE, INSURRECTION, REBELLION, REVOLUTION, MUTINERIE, PRISE DE POUVOIR PAR DES MILITAIRES OU DES USURPATEURS ;',
                 'MOUVEMENTS POPULAIRES PRENANT LES PROPORTIONS D’UN SOULEVEMENT POPULAIRE ;',
                 'PROCLAMATION DE LA LOI MARTIALE, ETAT DE SIEGE OU ETAT D’URGENCE AINSI QUE TOUT EVENEMENT OU CAUSE CONDUISANT A LA PROCLAMATION OU AU MAINTIEN DE LA LOI MARTIALE OU D’UN ETAT DE SIEGE, OU ENTRAINANT UN CHANGEMENT DE GOUVERNEMENT OU DE CHEF D’ETAT ;',
+                 'EXPROPRIATION DEFINITIVE OU PROVISOIRE PAR SUITE DE CONFISCATION, REQUISITION ORDONNEE PAR TOUTE AUTORITE PUBLIQUE ;',
+                
                  ].map(text => ({
     text,
     bold: true,
@@ -636,27 +634,30 @@ Si l’Assureur allègue qu’en raison du présent avenant, une perte, un domma
       style: 'headerCenter',
       pageBreak: 'before'
     },
-    { text: 'EXCLUSIONS', style: 'subSectionTitleCenter' }
+    { text: 'I. EXCLUSIONS', style: 'subSectionTitle' }
   ]
 },
 // Suite des exclusions
 {
   ul: [
-                'EXPROPRIATION DEFINITIVE OU PROVISOIRE PAR SUITE DE CONFISCATION, REQUISITION ORDONNEE PAR TOUTE AUTORITE PUBLIQUE ;',
                 'ACTE DE QUELQUES NATURES QUE CE SOIT VISANT A RENVERSER OU INFLUENCER TOUT OU PARTIE DU GOUVERNEMENT OU DES AUTORITES LOCALES, PAR UN RECOURS A LA FORCE, A LA PEUR OU A LA VIOLENCE ET PRENANT LA DIMENSION D’UNE REVOLUTION ;',
                 'PERTES, DOMMAGES, FRAIS ET DEPENSES OCCASIONNEES DIRECTEMENT OU INDIRECTEMENT, PAR CONTAMINATION CHIMIQUE OU BIOLOGIQUE OU MISSILES, BOMBES, GRENADES, EXPLOSIFS OU N’IMPORTE QUELLE MUNITION ;',
-                'LES DOMMAGES IMMATERIELS NOTAMMENT LES PERTES FINANCIERES, LES PERTES D’EXPLOITATION, LES PERTES INDIRECTES, LES PERTES D’USAGE, LA PRIVATION DE JOUISSANCE, LES PERTES DE LOYERS, LES PERTES DE MARCHE ;',
+                 'LES DOMMAGES IMMATERIELS NOTAMMENT LES PERTES FINANCIERES, LES PERTES D’EXPLOITATION, LES PERTES INDIRECTES, LES PERTES D’USAGE, LA PRIVATION DE JOUISSANCE, LES PERTES DE LOYERS, LES PERTES DE MARCHE ;',
                 'LES DOMMAGES CAUSES AUX VERRES, VITRES OU GLACES FAISANT PARTIE DU BATIMENT A MOINS QU\'ILS NE SOIENT DUS A UN INCENDIE OU A UNE EXPLOSION ;',
                 'TOUT VOL AVEC OU SANS EFFRACTION, PILLAGE, MISE A SAC ET CAMBRIOLAGES ;',
                 'LES PERTES DE LIQUIDES ;',
+                'EXPROPRIATION DEFINITIVE OU PROVISOIRE PAR SUITE DE CONFISCATION, REQUISITION ORDONNEE PAR TOUTE AUTORITE PUBLIQUE ;',
+                'PERTES, DOMMAGES, FRAIS ET DEPENSES OCCASIONNEES DIRECTEMENT OU INDIRECTEMENT, PAR CONTAMINATION CHIMIQUE OU BIOLOGIQUE OU MISSILES, BOMBES, GRENADES, EXPLOSIFS OU N’IMPORTE QUELLE MUNITION ;',
+                'LES DOMMAGES CAUSES AUX VERRES, VITRES OU GLACES FAISANT PARTIE DU BATIMENT A MOINS QU\'ILS NE SOIENT DUS A UN INCENDIE OU A UNE EXPLOSION ;',
                 'LES DOMMAGES AUTRES QUE CEUX D’INCENDIE OU D’EXPLOSIONS CAUSES AUX MARCHANDISES REFRIGEREES PAR L’INTERRUPTION DE FONCTIONNEMENT DE L’INSTALLATION FRIGORIFIQUE.'
               ].map(text => ({  text,
                 bold: true,
                 alignment: 'justify',
                 lineHeight: 1.2,
+                margin: [0, 0, 0, 10],
                 style: 'paragraph', }))
             },
-            { text: 'DISPOSITIONS SPECIALES EN CAS DE SINISTRE', style: 'subSectionTitleCenter' },
+            { text: 'II. DISPOSITIONS SPECIALES EN CAS DE SINISTRE', style: 'subSectionTitle' },
             {
               text: `L'assuré s'engage, en cas de sinistre, à accomplir dans les délais réglementaires auprès des Autorités, les démarches relatives à l'indemnisation prévue par la législation en vigueur.
 L'indemnité à la charge de l'Assureur ne sera versée à l'Assuré que sur le vu du récépissé délivré par l'autorité compétente.
@@ -664,20 +665,29 @@ Dans le cas où, l'Assuré serait appelé à recevoir une indemnité de la part 
               style: 'paragraph',
               alignment: 'justify'
             },
-            { text: 'RESILIATION', style: 'subSectionTitleCenter' },
+            { text: 'III. RESILIATION', style: 'subSectionTitle' },
             {
               text: `Indépendamment des autres cas de résiliation prévus au contrat, l’Assureur et l’Assuré se réservent la faculté de résilier la présente extension de garantie à tout moment.
 La résiliation prendra effet sept jours après réception par l’assuré ou l’Assureur d’une notification faite par lettre recommandée ou par acte extrajudiciaire.`,
               style: 'paragraph',
               alignment: 'justify'
             },
-            { text: 'LIMITE DE GARANTIE', style: 'subSectionTitleCenter' },
+            { stack: [
+    {
+      text: `Annexe au Contrat N° : ${data.adherent.codeId || '-'}/${data.service || '-'}/${data.numPolice || '-'}`,
+      style: 'headerCenter',
+      pageBreak: 'before'
+    },
+    { text: 'IV. LIMITE DE GARANTIE', style: 'subSectionTitle' },
+  ]
+},
+           
             {
               text: `Il est expressément convenu entre les parties que l’extension de garantie, telle que définie au chapitre « Garantie » faisant l’objet de la présente annexe, est accordée suivant les conditions générales et particulières qui régissent le contrat de base ci-dessus référencé. Les garanties du présent avenant sont obligatoirement limitées à 25% des existences assurées.`,
               style: 'paragraph',
               alignment: 'justify'
             },
-            { text: 'FRANCHISE', style: 'subSectionTitleCenter',pageBreak: 'before'  },
+            { text: 'v. FRANCHISE', style: 'subSectionTitle' },
             {
               text: `L'assuré conservera à sa charge, par sinistre et par établissement, une franchise égale à 10% du montant des dommages matériels directs subis avec un minimum de 5 000 dinars et un maximum de 75 000 dinars.
 Cette franchise sera déduite du montant de l'indemnité qui aurait été versée à l'assuré en l'absence de cette franchise.`,
@@ -804,7 +814,7 @@ La présente extension s’applique exclusivement aux sinistres dépassant 10.00
           stack: [
              { 
             text: `Annexe au Contrat N° : ${data.adherent.codeId || '-'}/${data.service || '-'}/${data.numPolice || '-'}`,
-            style: 'headerCenter'
+            style: 'headerCenter',pageBreak: 'before'
           },
             { text: 'EXCLUSIONS COMMUNES', style: 'sectionTitle', margin: [0, 10, 0, 10] },
             
@@ -1152,9 +1162,6 @@ La présente extension s’applique exclusivement aux sinistres dépassant 10.00
     let feFg = 0;
 
     try {
-   console.log('💡 data au moment de getTarifByBranche:', data);
-console.log('💡 data.branche:', data.branche);
-
 if (!data?.branche) {
   throw new Error('La branche est undefined !');
 }
@@ -1166,7 +1173,8 @@ if (!data?.branche) {
       taxes = tarif?.taux || 0;
       droitEntree = tarif?.prixAdhesion || 0;
       feFg = tarif?.feFg || 0;
-      
+     
+
     } catch (error) {
       // Utiliser des valeurs par défaut en cas d'erreur
       frais = 0;
@@ -1177,7 +1185,7 @@ if (!data?.branche) {
     
     // Calcul de la prime TTC
     const primeTTC = data.primeTTC;
-
+const primeAvecTaxes = (primeNetteTotale + frais) * (taxes); 
     // Déterminer si on affiche le droit d'entrée
     const isNouvelAdherent = data.adherent?.nouveau !== false;
     
@@ -1185,13 +1193,13 @@ if (!data?.branche) {
     const headers = [
       { text: 'Prime Nette (DT)', style: 'cotisationTableHeader' },
       { text: 'Frais (DT)', style: 'cotisationTableHeader' },
-      { text: 'Taxes (%)', style: 'cotisationTableHeader' }
+      { text: 'Taxes (DT) ', style: 'cotisationTableHeader' }
     ];
     
     const values = [
       { text: this.formatMontant(primeNetteTotale), style: 'cotisationTableCellRight' },
       { text: this.formatMontant(frais), style: 'cotisationTableCellRight' },
-      { text: this.formatTaux(taxes), style: 'cotisationTableCellRight' }
+      { text: this.formatMontant(primeAvecTaxes), style: 'cotisationTableCellRight' }
     ];
 
     // Ajouter le droit d'entrée seulement pour les nouveaux adhérents
@@ -1271,19 +1279,34 @@ if (!data?.branche) {
           },
           margin: [0, 0, 0, 30]
         },
-        {
-          columns: [
-            { text: '', width: '*' },
-            {
-              stack: [
-                { text: 'Le Souscripteur', style: 'souscripteur' },
-                { text: '____________________', style: 'signatureLine' },
-                { text: 'Date : ____/____/______', style: 'signatureDate' }
-              ],
-              width: 'auto'
-            }
-          ]
-        }
+      {
+  columns: [
+    {
+      text: 'Fait en triple exemplaires le : ____/____/______',
+      margin: [0, 0, 0, 20],
+      alignment: 'right'  
+    }
+  ]
+},
+{
+  columns: [
+    {
+      width: '*',
+      stack: [
+        { text: 'Le Souscripteur', style: 'souscripteur', alignment: 'left' },
+        { text: '____________________', style: 'signatureLine', alignment: 'left' }
+      ]
+    },
+    {
+      width: '*',
+      stack: [
+        { text: 'P/ MAE Assurances', style: 'souscripteur', alignment: 'right' },
+        { text: '____________________', style: 'signatureLine', alignment: 'right' }
+      ]
+    }
+  ]
+}
+
       ]
     };
   }
@@ -1317,15 +1340,15 @@ if (!data?.branche) {
       });
     }
 
-    if (data.rcConfigurations) {
-      data.rcConfigurations.forEach((rc: any) => {
-        primeTotale += rc.primeNET || 0;
-      });
-    }
+  if (data.rcConfigurations) {
+  data.rcConfigurations.forEach((rc: any, index: number) => {
+    const nbSituations = rc.sectionIds?.length || 0;
+    const primeRC = Number(rc.primeNET || 0) * nbSituations;
+    primeTotale += primeRC;
+  });
+}
 
-    return primeTotale;}
-  // 🔥 MÉTHODE : Préparer les clauses communes
-// 🔥 MÉTHODE : Préparer les clauses communes
+return primeTotale;}
 
 
 private prepareClausesCommunes(data: any): any[] {
@@ -1497,20 +1520,32 @@ const numPolice = data?.numPolice || '-';
 
         // CLAUSE 5 : BALAYAGE QUOTIDIEN
         {
-            stack: [
-                { text: `Annexe au Contrat N° : ${codeId || '-'}/${data.service || '-'}/${data.numPolice || '-'}`, style: 'headerCenter', pageBreak: 'before' },
-                { text: 'BALAYAGE QUOTIDIEN', style: 'clauseTitle' },
-                { 
-                    text: 'L\'adhérent déclare que :',
-                    style: 'clauseText',
-                    bold: true
-                },
-                { 
-                    text: 'Une fois au moins par journée de travail, les ateliers et magasins sont balayés et tous déchets et balayures sont transportés : - Soit au dehors à plus de 10m de ces ateliers ou magasins. - Soit dans un local spécial contigu sans aucune communication avec les ateliers et magasins.',
-                    style: 'clauseText'
-                },
-                { text: 'Le Souscripteur', style: 'souscripteur' }
-            ]
+          stack: [
+    { text: `Annexe au Contrat N° : ${codeId || '-'}/${data.service || '-'}/${data.numPolice || '-'}`, style: 'headerCenter', pageBreak: 'before' },
+    { text: 'BALAYAGE QUOTIDIEN', style: 'clauseTitle' },
+    { 
+        text: 'L\'adhérent déclare que :',
+        style: 'clauseText',
+        bold: true
+    },
+    {
+        stack: [
+            {
+                text: 'Une fois au moins par journée de travail, les ateliers et magasins sont balayés et tous déchets et balayures sont transportés :',
+                style: 'clauseText'
+            },
+            {
+                ul: [
+                    'Soit au dehors à plus de 10m de ces ateliers ou magasins.',
+                    'Soit dans un local spécial contigu sans aucune communication avec les ateliers et magasins.'
+                ],
+                style: 'clauseText'
+            }
+        ]
+    },
+    { text: 'Le Souscripteur', style: 'souscripteur' }
+]
+
         }
     ];
 }
@@ -1559,6 +1594,10 @@ private prepareTableauxGaranties(sections: any[]): any[] {
         text: this.formatMontant(garantie.capitale), 
         style: 'garantieTableCellRight' 
       },
+        { 
+        text: this.formatFranchise(garantie.franchise, garantie.hasFranchise), 
+        style: 'garantieTableCellCenter' 
+      },
       { 
         text: this.formatMontant(garantie.minimum), 
         style: 'garantieTableCellRight' 
@@ -1567,10 +1606,7 @@ private prepareTableauxGaranties(sections: any[]): any[] {
         text: this.formatMontant(garantie.maximum), 
         style: 'garantieTableCellRight' 
       },
-      { 
-        text: this.formatFranchise(garantie.franchise, garantie.hasFranchise), 
-        style: 'garantieTableCellCenter' 
-      },
+  
       { 
         text: this.formatMontant(garantie.primeNET), 
         style: 'garantieTableCellRight' 
@@ -1605,9 +1641,9 @@ private prepareTableauxGaranties(sections: any[]): any[] {
               [
                 {}, // Vide (déjà couvert par Garantie)
                 {}, // Vide (déjà couvert par Capital assuré)
+                { text: 'Taux (%)', style: 'garantieTableHeader', alignment: 'center' },
                 { text: 'Minimum (DT)', style: 'garantieTableHeader', alignment: 'center' },
                 { text: 'Maximum (DT)', style: 'garantieTableHeader', alignment: 'center' },
-                { text: 'Taux (%)', style: 'garantieTableHeader', alignment: 'center' },
                 {} // Vide (déjà couvert par Prime nette)
               ],
               // Données
@@ -1630,21 +1666,89 @@ private prepareTableauxGaranties(sections: any[]): any[] {
   return allSectionsContent;
 }
 
-// MÉTHODES UTILITAIRES MODIFIÉES
 private formatMontant(montant: any): string {
-  // Vérifier si la valeur est null, undefined, vide, NaN, ou égale à 0
-  if (montant === null || montant === undefined || montant === '' || isNaN(montant) || montant === 0) {
+ if (montant === null || montant === undefined || montant === '' || isNaN(montant) || montant === 0) {
     return '-';
   }
-  
-  const valeur = typeof montant === 'string' ? parseFloat(montant) : montant;
-  
-  // Vérifier à nouveau après conversion
-  if (isNaN(valeur) || valeur === 0) {
-    return '-';
+
+  // 🔥 On travaille uniquement en STRING pour éviter les erreurs de flottants
+  const montantStr = montant.toString();
+
+  // 🔥 Séparer les 3 derniers chiffres (millimes)
+  const millimesStr = montantStr.slice(-3);
+  const entierStr = montantStr.slice(0, -3) || '0';
+
+  // 🔥 Formater les milliers avec "."
+  const entierFormate = entierStr.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+
+  // 🔥 Format final
+  const montantFormate = `${entierFormate},${millimesStr}`;
+
+  // Convertir en nombres réels pour la conversion en lettres
+  const entierNumber = parseInt(entierStr, 10);
+  const millimesNumber = parseInt(millimesStr, 10);
+
+  // 🔥 Montant en lettres : dinars
+  let dinarsEnLettres = this.nombreEnToutesLettres(entierNumber);
+
+  // 🔥 Montant en lettres : millimes
+  let millimesEnLettres = '';
+  if (millimesNumber > 0) {
+    millimesEnLettres = ' et ' + this.nombreEnToutesLettres(millimesNumber) + ' millimes';
   }
-  
-  return valeur.toFixed(3);
+
+  // 🔥 Phrase complète
+  let montantEnLettres =
+    dinarsEnLettres + ' dinars' + millimesEnLettres;
+
+  // 🔥 Majuscule au début
+  montantEnLettres =
+    montantEnLettres.charAt(0).toUpperCase() + montantEnLettres.slice(1);
+
+  return `${montantFormate}\n${montantEnLettres}`;
+}
+
+private nombreEnToutesLettres(nombre: number): string {
+  const unites = [
+    "", "un", "deux", "trois", "quatre", "cinq", "six",
+    "sept", "huit", "neuf", "dix", "onze", "douze",
+    "treize", "quatorze", "quinze", "seize"
+  ];
+
+  const dizaines = [
+    "", "", "vingt", "trente", "quarante", "cinquante",
+    "soixante", "soixante", "quatre-vingt", "quatre-vingt"
+  ];
+
+  if (nombre < 17) {
+    return unites[nombre];
+  } else if (nombre < 20) {
+    return "dix-" + unites[nombre - 10];
+  } else if (nombre < 70) {
+    const d = Math.floor(nombre / 10);
+    const u = nombre % 10;
+    return dizaines[d] + (u ? "-" + unites[u] : "");
+  } else if (nombre < 80) {
+    return "soixante-" + this.nombreEnToutesLettres(nombre - 60);
+  } else if (nombre < 100) {
+    return "quatre-vingt" + (nombre > 80 ? "-" + this.nombreEnToutesLettres(nombre - 80) : "s");
+  } else if (nombre < 1000) {
+    const c = Math.floor(nombre / 100);
+    const r = nombre % 100;
+    return (c > 1 ? unites[c] + " " : "") + "cent" + (c > 1 && r === 0 ? "s" : "") +
+      (r ? " " + this.nombreEnToutesLettres(r) : "");
+  } else if (nombre < 1000000) {
+    const m = Math.floor(nombre / 1000);
+    const r = nombre % 1000;
+    return (m > 1 ? this.nombreEnToutesLettres(m) + " " : "") + "mille" +
+      (r ? " " + this.nombreEnToutesLettres(r) : "");
+  } else if (nombre < 1000000000) {
+    const M = Math.floor(nombre / 1000000);
+    const r = nombre % 1000000;
+    return this.nombreEnToutesLettres(M) + " million" + (M > 1 ? "s" : "") +
+      (r ? " " + this.nombreEnToutesLettres(r) : "");
+  }
+  return nombre.toString(); // limite
 }
 
 
@@ -1656,7 +1760,7 @@ private formatFranchise(franchise: any, hasFranchise: boolean): string {
   
   if (isNaN(valeur)) return '-';
   
-  return valeur.toFixed(3) ;
+  return valeur.toFixed(0) ;
 }
 
 private prepareSituationsRisque(sections: any[]): any[] {
@@ -1805,11 +1909,6 @@ private prepareSectionsRC(rcConfigurations: any[], data: any): any[] {
 
     return {
       stack: [
-        { 
-          text: `RESPONSABILITÉ CIVILE EXPLOITATION ${index + 1}`, 
-          style: 'sectionTitle', 
-          pageBreak: index === 0 ? undefined : 'before' 
-        },
 
         // Situations couvertes
         { text: 'Situations de risque couvertes :', style: 'subSectionTitle' },
@@ -1866,7 +1965,7 @@ private prepareSectionsRC(rcConfigurations: any[], data: any): any[] {
                 style: 'paragraph',
                 italics: true,
                 alignment: 'justify',
-                margin: [0, 5, 0, 15]
+                margin: [0, 5, 0, 0]
               }
             ])
       ]
@@ -1942,12 +2041,10 @@ private prepareRCExclusionsContent(exclusionsTextes: string[]): any[] {
 private prepareExclusionsParSituation(data: any): any[] {
   if (!data.sections || data.sections.length === 0) return [];
 
-  console.log('🔍 DÉBUT - Analyse des exclusions pour', data.sections.length, 'situations');
 
   // 1️⃣ Identifier les exclusions globales groupées par garantie parent
   const exclusionsGlobalesParGarantie = this.getExclusionsGlobalesParGarantieParent(data.sections, data);
 
-  console.log('📊 Exclusions globales par garantie parent:', exclusionsGlobalesParGarantie);
 
   // 2️⃣ Préparer les sections spécifiques
   const sectionsAvecExclusions = data.sections.map((section: any, index: number) => {
@@ -1956,15 +2053,12 @@ private prepareExclusionsParSituation(data: any): any[] {
     // Grouper les garanties par parent (méthode existante)
     const garantiesParParent = this.groupGarantiesParParent(section.garanties, data);
     
-    console.log(`📋 Situation ${index} - garantiesParParent:`, garantiesParParent);
 
     // Filtrer pour garder seulement les exclusions spécifiques
     const garantiesAvecExclusionsSpecifiques = this.filtrerExclusionsSpecifiquesParGarantieParent(
       garantiesParParent, 
       exclusionsGlobalesParGarantie
     );
-
-    console.log(`🎯 Situation ${index} - garanties avec exclusions spécifiques:`, garantiesAvecExclusionsSpecifiques);
 
     if (garantiesAvecExclusionsSpecifiques.length === 0) {
       return null; // Section vide
@@ -1994,21 +2088,19 @@ private prepareExclusionsParSituation(data: any): any[] {
         ...this.prepareExclusionsGlobalesContent(exclusionsGlobalesParGarantie)
       ]
     }];
-    console.log('✅ Section exclusions globales créée');
-  } else {
-    console.log('❌ Aucune exclusion globale trouvée');
+
   }
 
   // 4️⃣ Combinaison finale
   const result = [...sectionExclusionsGlobales, ...sectionsAvecExclusions];
-  console.log('🏁 RÉSULTAT FINAL - Sections:', result.length);
+
   return result;
 }
 
 // MÉTHODE MODIFIÉE - Identifier les exclusions globales avec la nouvelle logique
 private getExclusionsGlobalesParGarantieParent(sections: any[], data: any): any[] {
   if (!sections || sections.length === 0) {
-    console.log('⚠️ Aucune section pour déterminer les exclusions globales');
+
     return [];
   }
 
@@ -2021,7 +2113,6 @@ private getExclusionsGlobalesParGarantieParent(sections: any[], data: any): any[
   }>();
 
   sections.forEach((section, sectionIndex) => {
-    console.log(`\n📦 Traitement de la situation ${sectionIndex}:`, section.identification);
     
     // Utiliser votre méthode existante pour grouper par parent
     const garantiesParParent = this.groupGarantiesParParent(section.garanties, data);
@@ -2030,7 +2121,6 @@ private getExclusionsGlobalesParGarantieParent(sections: any[], data: any): any[
       const parentLibelle = parentGroup.parent?.libelle || 'GARANTIE_SANS_NOM';
       const parentKey = parentLibelle.trim().toLowerCase();
       
-      console.log(`  📍 Garantie Parent: ${parentLibelle} (${parentGroup.exclusionsUniques?.size || 0} exclusions)`);
 
       if (!allExclusionsByParent.has(parentKey)) {
         // Première occurrence de cette garantie parent
@@ -2064,7 +2154,6 @@ private getExclusionsGlobalesParGarantieParent(sections: any[], data: any): any[
         const exclusionData = parentData.exclusions.get(exclusionId)!;
         exclusionData.sections.add(sectionIndex);
         
-        console.log(`    ➕ Exclusion ID ${exclusionId} pour ${parentLibelle}: "${exclusion.nom?.substring(0, 50)}..." - Sections: ${Array.from(exclusionData.sections).join(',')}`);
       });
     });
   });
@@ -2074,35 +2163,21 @@ private getExclusionsGlobalesParGarantieParent(sections: any[], data: any): any[
   const globalExclusionsParGarantie: any[] = [];
 
   allExclusionsByParent.forEach((parentData, parentKey) => {
-    const exclusionsGlobalesPourCeParent = new Map<number, any>();
-
-    console.log(`\n🔍 Analyse de la garantie parent: ${parentData.parent.libelle}`);
-    console.log(`   - Apparaît dans ${parentData.sectionCount}/${totalSections} sections`);
-
-    // NOUVELLE LOGIQUE : 
-    // Si la garantie n'apparaît que dans une seule situation → TOUTES ses exclusions sont globales
-    // Sinon → Seules les exclusions communes à toutes les situations sont globales
-    
+    const exclusionsGlobalesPourCeParent = new Map<number, any>();    
     if (parentData.sectionCount === 1) {
       // CAS 1: Garantie dans une seule situation → TOUTES les exclusions sont globales
-      console.log(`🎯 GARANTIE DANS UNE SEULE SITUATION → TOUTES les exclusions sont globales`);
       
       parentData.exclusions.forEach((data, exclusionId) => {
         exclusionsGlobalesPourCeParent.set(exclusionId, data.exclusion);
-        console.log(`   ✅ Exclusion globale (single-section): ID ${exclusionId} - "${data.exclusion.nom?.substring(0, 50)}..."`);
       });
     } else {
       // CAS 2: Garantie dans plusieurs situations → Seules les exclusions communes sont globales
-      console.log(`🔍 GARANTIE DANS PLUSIEURS SITUATIONS → Recherche des exclusions communes`);
       
       parentData.exclusions.forEach((data, exclusionId) => {
         if (data.sections.size === parentData.sectionCount) {
           // Exclusion présente dans TOUTES les sections où cette garantie apparaît
           exclusionsGlobalesPourCeParent.set(exclusionId, data.exclusion);
-          console.log(`   ✅ Exclusion globale (multi-section): ID ${exclusionId} - "${data.exclusion.nom?.substring(0, 50)}..."`);
-        } else {
-          console.log(`   ❌ Exclusion spécifique: ID ${exclusionId} - Présente dans ${data.sections.size}/${parentData.sectionCount} sections`);
-        }
+        } 
       });
     }
 
@@ -2115,9 +2190,7 @@ private getExclusionsGlobalesParGarantieParent(sections: any[], data: any): any[
     }
   });
 
-  console.log(`\n📊 RÉSULTAT FINAL: ${globalExclusionsParGarantie.length} garanties parents avec exclusions globales`);
   globalExclusionsParGarantie.forEach(garantie => {
-    console.log(`   - ${garantie.parent.libelle}: ${garantie.exclusionsUniques.size} exclusions globales (${garantie.sectionCount} sections)`);
   });
   
   return globalExclusionsParGarantie;
@@ -2142,9 +2215,6 @@ private filtrerExclusionsSpecifiquesParGarantieParent(
     
     globalExclusionsParParentMap.set(parentLibelle, exclusionIds);
   });
-
-  console.log('🔍 Exclusions globales par garantie parent:', globalExclusionsParParentMap);
-
   return garantiesParParent.map(parentGroup => {
     const parentLibelle = parentGroup.parent?.libelle;
     const globalExclusionIds = globalExclusionsParParentMap.get(parentLibelle) || new Set<number>();
@@ -2158,9 +2228,7 @@ private filtrerExclusionsSpecifiquesParGarantieParent(
       // Garder seulement si ce n'est PAS une exclusion globale pour cette garantie parent
       if (!globalExclusionIds.has(exclusionId)) {
         exclusionsSpecifiques.set(exclusionId, exclusion);
-        console.log(`✅ Exclusion spécifique gardée pour ${parentLibelle}: ID ${exclusionId} - "${exclusion.nom?.substring(0, 50)}..."`);
       } else {
-        console.log(`🚫 Exclusion globale retirée de ${parentLibelle}: ID ${exclusionId}`);
       }
     });
 

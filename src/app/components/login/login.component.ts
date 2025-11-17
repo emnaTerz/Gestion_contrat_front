@@ -57,24 +57,22 @@ export class LoginComponent {
       } else {
         console.warn('Aucun token reçu dans la réponse');
       }
-
-      // 🔹 Si le mot de passe est le mot par défaut
       if (this.password === '123') {
-        // Appeler le service pour récupérer l'utilisateur courant
-        this.userService.getCurrentUser().subscribe({
-          next: (user) => {
-            // Stocker l'id pour le reset
-            localStorage.setItem('resetUserId', user.id.toString());
-            // Rediriger vers la page de changement de mot de passe
-            this.router.navigate(['/force-reset-password']);
-          },
-          error: (err) => {
-            console.error('Impossible de récupérer l’utilisateur courant:', err);
-            this.errorMessage = 'Impossible de récupérer les informations utilisateur';
-          }
-        });
-        return; // on stoppe le reste du flux
-      }
+  console.log('Mot de passe par défaut détecté, récupération user courant');
+  this.userService.getCurrentUser().subscribe({
+    next: (user) => {
+      console.log('Utilisateur courant récupéré:', user);
+      localStorage.setItem('resetUserId', user.id.toString());
+      this.router.navigate(['/force-reset-password']);
+    },
+    error: (err) => {
+      console.error('Impossible de récupérer l’utilisateur courant:', err);
+      this.errorMessage = 'Impossible de récupérer les informations utilisateur';
+    }
+  });
+  return;
+}
+
 
       const role = response.role;
 
