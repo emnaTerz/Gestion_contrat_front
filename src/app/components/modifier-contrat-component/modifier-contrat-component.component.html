@@ -68,7 +68,7 @@
     <input type="date" [(ngModel)]="dateFin">
 
     <div style="margin-top: 10px; display: flex; gap: 1rem;">
-      <button pButton label="Suivant →" (click)="currentStep=1"></button>
+<button pButton label="Suivant →" (click)="nextStep()"></button>
       <button pButton label="Annuler" class="p-button-danger" (click)="cancel()"></button>
     </div>
   </div>
@@ -85,16 +85,70 @@
             style="width:100%; resize:vertical;"></textarea>
 
     <div class="navigation">
-      <button pButton label="← Précédent" (click)="currentStep=0"></button>
-      <button pButton label="Suivant →" (click)="currentStep=2"></button>
+     <button pButton label="← Précédent" (click)="prevStep()"></button>
+<button pButton label="Suivant →" (click)="nextStep()"></button>
+
+      <button pButton label="Annuler" class="p-button-danger" (click)="cancel()"></button>
+    </div>
+</div>
+<!-- Étape Extensions (Step 2 si APPEL_D_OFFRE) -->
+<div *ngIf="currentStep === 2 && typeContrat === 'APPEL_D_OFFRE'" class="contrat-section">
+
+  <h3 class="section-title">📄 Extensions du contrat</h3>
+
+  <!-- Affichage des extensions existantes -->
+  <div *ngIf="extensions && extensions.length > 0; else noExtensions">
+    <div *ngFor="let ext of extensions; let i = index" class="extension-card">
+      
+      <div class="extension-header">
+        <span class="extension-number">Extension {{ i + 1 }}</span>
+        <button pButton 
+                icon="pi pi-trash" 
+                class="p-button-rounded p-button-danger p-button-sm"
+                (click)="removeExtension(i)">
+        </button>
+      </div>
+
+      <div class="extension-body">
+        <label class="input-label">Titre :</label>
+        <input type="text" [(ngModel)]="ext.titre"
+               placeholder="Saisir le titre de l'extension"
+               class="input-text">
+
+        <label class="input-label">Texte :</label>
+        <textarea [(ngModel)]="ext.texte"
+                  rows="3"
+                  placeholder="Saisir le texte de l'extension"
+                  class="input-textarea">
+        </textarea>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Message si aucune extension -->
+  <ng-template #noExtensions>
+    <p style="font-style: italic; color: #666;">Aucune extension définie pour ce contrat.</p>
+  </ng-template>
+
+  <!-- Ajouter une nouvelle extension -->
+  <button pButton 
+          icon="pi pi-plus" 
+          label="Ajouter une extension"
+          class="p-button-primary"
+          (click)="addExtension()">
+  </button>
+
+  <!-- Navigation -->
+   <div class="navigation">
+      <button pButton label="← Précédent" (click)="prevStep()"></button>
+<button pButton label="Suivant →" (click)="nextStep()"></button>
       <button pButton label="Annuler" class="p-button-danger" (click)="cancel()"></button>
     </div>
 </div>
 
-
-
   <!-- Étape 1 : Situations -->
-  <div *ngIf="currentStep === 2" class="contrat-section">
+  <div *ngIf="currentStep === 3" class="contrat-section">
     <h3>Situations de risque</h3>
     <div *ngFor="let s of situationRisques; let i = index" class="situation-card">
       <div class="situation-header">
@@ -117,13 +171,13 @@
     <button pButton label="Ajouter situation" (click)="addSituation()" class="add-btn"></button>
 
   <div class="navigation">
-      <button pButton label="← Précédent" (click)="currentStep=0"></button>
-      <button pButton label="Suivant →" (click)="currentStep=3"></button>
+      <button pButton label="← Précédent" (click)="prevStep()"></button>
+<button pButton label="Suivant →" (click)="nextStep()"></button>
       <button pButton label="Annuler" class="p-button-danger" (click)="cancel()"></button>
     </div>
   </div>
 <!-- Étape 3 : Garanties -->
-<div *ngIf="currentStep === 3" class="contrat-section">
+<div *ngIf="currentStep === 4" class="contrat-section">
   <h3>Garanties</h3>
   <div *ngFor="let s of situationRisques; let i=index" class="situation-card">
     <h4>Situation {{i+1}} : {{s.identification}}</h4>
@@ -176,12 +230,12 @@
   </div>
 
   <div style="margin-top:10px; display:flex; justify-content: space-between;">
-    <button pButton label="← Précédent" (click)="currentStep=2"></button>
-    <button pButton label="Suivant →" (click)="currentStep=4"></button>
+    <button pButton label="← Précédent" (click)="prevStep()"></button>
+<button pButton label="Suivant →" (click)="nextStep()"></button>
     <button pButton label="Annuler" class="p-button-danger" (click)="cancel()"></button>
   </div>
 </div>
-<div *ngIf="currentStep === 4" class="contrat-section">
+<div *ngIf="currentStep === 5" class="contrat-section">
   <h3>Exclusions par garantie</h3>
   
   <!-- Indicateur de chargement global -->
@@ -299,13 +353,13 @@
   </div>
 
   <div style="margin-top: 10px; display: flex; gap: 1rem;">
-    <button pButton label="← Précédent" (click)="currentStep = 3"></button>
-    <button pButton label="Suivant →" (click)="currentStep = 5"></button>
+    <button pButton label="← Précédent" (click)="prevStep()"></button>
+<button pButton label="Suivant →" (click)="nextStep()"></button>
     <button pButton label="Annuler" class="p-button-danger" (click)="cancel()"></button>
   </div>
 </div>
  <!-- Étape 5 : RC Exploitation -->
-<div *ngIf="currentStep === 5" class="contrat-section">
+<div *ngIf="currentStep === 6" class="contrat-section">
   <h3>RC Exploitation</h3>
 
   <!-- Objet de la garantie -->
@@ -502,11 +556,59 @@
  <!-- Navigation -->
         <div class="col-12">
         <div class="flex justify-content-between mt-4">
-          <button pButton label="Précédent" icon="pi pi-arrow-left" (click)="currentStep = 4" class="p-button-secondary"></button>
-          <button pButton label="Soumettre" icon="pi pi-check" (click)="submit()" class="p-button-success"></button>
+         <button pButton label="← Précédent" (click)="prevStep()"></button>
+<button pButton label="Suivant →" (click)="nextStep()"></button>
+    <button pButton label="Annuler" class="p-button-danger" (click)="cancel()"></button>
         </div>
       </div>
   </div>
+  
+    <!-- Étape 7 : Sélection des Clausiers -->
+<div *ngIf="currentStep === 7" class="contrat-section">
+  <h3>Sélection des Clausiers</h3>
+  
+  <div class="clausier-selection">
+    <p class="section-subtitle">Choisissez les clausiers à intégrer dans votre contrat</p>
+    
+    <div *ngIf="clausiers.length > 0; else noClausiers" class="clausiers-grid">
+      <div *ngFor="let clausier of clausiers" 
+           class="clausier-card" 
+           [class.selected]="isClausierSelected(clausier.id)"
+           (click)="toggleClausierSelection(clausier)">
+        
+        <div class="clausier-checkbox">
+          <input 
+            type="checkbox" 
+            [checked]="isClausierSelected(clausier.id)"
+            (change)="toggleClausierSelection(clausier)"
+            (click)="$event.stopPropagation()">
+        </div>
+        
+        <div class="clausier-content">
+          <i class="pi pi-file" [class.has-file]="clausier.file"></i>
+          <span class="clausier-name">{{ clausier.nom }}</span>
+        </div>
+        
+        <div *ngIf="isClausierSelected(clausier.id)" class="selection-indicator">
+          <i class="pi pi-check"></i>
+        </div>
+      </div>
+    </div>
+
+    <ng-template #noClausiers>
+      <div class="empty-state">
+        <i class="pi pi-inbox"></i>
+        <p>Aucun clausier disponible</p>
+      </div>
+    </ng-template>
+  </div>
+
+  <!-- Navigation -->
+  <div class="navigation-buttons">
+    <button pButton label="← Précédent" (click)="prevStep()"></button>
+    <button pButton label="Soumettre" (click)="submit()" class="p-button-success"></button>
+  </div>
+</div>
 </div>
 <div class="pdf-sidebar" *ngIf="showModele">
     <div class="pdf-container">
@@ -538,5 +640,6 @@
         </div>
       </ng-template>
     </div>
+    
   </div>
 </div> <!-- Fin de contrat-main-container -->

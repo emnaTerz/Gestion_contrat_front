@@ -323,10 +323,7 @@ private isForeignKeyConstraintErrorSousGarantie(error: any): boolean {
   return searchTerms.some(term => bodyMessage.includes(term.toLowerCase()));
 }
 
-
-
 ajouterSousGarantie() {
-  // Utiliser nouvelItemNom au lieu de nouvelleSousGarantieNom
   const nom = this.nouvelItemNom.trim();
   if (!nom) {
     alert('Veuillez saisir un nom pour la sous-garantie.');
@@ -335,7 +332,10 @@ ajouterSousGarantie() {
 
   const nouvelleSousGarantie = {
     nom: nom,
-    garantie: { id: this.garantieId }
+    branche: this.branche, // renseigne la branche sélectionnée
+    garantie: { 
+      id: this.garantieId, 
+    }
   };
 
   console.log('📤 Données envoyées pour sous-garantie:', nouvelleSousGarantie);
@@ -346,16 +346,15 @@ ajouterSousGarantie() {
       this.sousGaranties.push(res);
       this.filteredSousGaranties.push(res);
       this.nouvelItemNom = ''; // reset du champ
-      
-      // Message de succès
       this.showSuccessMessage('Sous-garantie créée avec succès');
     },
     error: (err) => {
       console.error('❌ Erreur création sous-garantie:', err);
-      console.error('Détails erreur:', err.error);
       this.showErrorMessage('Erreur lors de la création de la sous-garantie');
     }
   });
 }
+
+
 
 }

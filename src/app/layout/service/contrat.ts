@@ -3,6 +3,14 @@ import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { catchError, Observable, throwError } from 'rxjs';
 
 
+export interface ExtensionDTO {
+  titre: string;
+  texte: string;
+}
+export interface clausiersDTO {
+  nom: string;
+  id: number;
+}
 export interface SousGarantie {
   id: number;
   nom: string;
@@ -25,16 +33,6 @@ export interface Garantie {
   id: number;
   libelle: string; // ou "nom" si tu préfères
 }
-
-interface SousGarantieWithDetails {
-  id: number;
-  nom: string;
-  garantie: {
-    id: number;
-    libelle: string;
-  };
-}
-
 export interface Exclusion {
   id: number;
   nom: string;
@@ -90,6 +88,7 @@ export interface Contrat {
   dateDebut: string;
   dateFin: string;
   status: string;
+  clauseIds?: number[];
 }
 
 // Dans votre service/contrat.ts
@@ -122,6 +121,8 @@ export interface ContratDTO {
   startTime: string;
   preambule:string;
   rcConfigurations: RcConfigurationDTO[];
+   extensions?: ExtensionDTO[]; 
+   clauseIds?: number[];
 }
 export enum Fractionnement {
   ZERO = 'ZERO',
@@ -191,9 +192,6 @@ export interface GarantieResponseDTO {
     libelle: string;
   };
 }
-
-
-
 export interface SectionResponseDTO {
   id: number;
   identification: string;
@@ -225,6 +223,8 @@ export interface ContratResponseDTO {
   codeAgence: string;
   nom_assure: string;
   rcConfigurations: RcConfigurationDTO[];
+  extensions?: ExtensionDTO[];
+  clauseIds?: number[];
 
 }
 export interface Tarif {
@@ -251,9 +251,62 @@ private readonly garantieApiUrl = `${this.CATALOGUE_URL}/garantie`;
 private readonly sousGarantieApiUrl = `${this.CATALOGUE_URL}/sous-garantie`;
 private readonly exclusionApiUrl = `${this.CATALOGUE_URL}/exclusion`;
 private readonly tarifApiUrl = `${this.BASE_URL}/tarifs`;
-
+private readonly CLAUSIER_URL = `${this.CATALOGUE_URL}/clausier`;
 constructor(private http: HttpClient) { }
+createClausierWithPdf(file: File, nom: string): Observable<any> {
+  const token = localStorage.getItem('token');
+  const headers = new HttpHeaders({ 
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json'
+  });
 
+  // Convertir le fichier en base64 et retourner un Observable
+  return new Observable(observer => {
+    this.convertFileToBase64(file).then(base64Content => {
+      const clausierData = {
+        nom: nom, // Utiliser le nom saisi par l'utilisateur
+        file: base64Content
+      };
+
+      this.http.post(this.CLAUSIER_URL, clausierData, { headers }).subscribe({
+        next: (response) => {
+          observer.next(response);
+          observer.complete();
+        },
+        error: (err) => {
+          observer.error(err);
+        }
+      });
+    }).catch(error => {
+      observer.error(error);
+    });
+  });
+}
+
+// Méthode pour convertir un fichier en base64
+private convertFileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => {
+      const base64 = (reader.result as string).split(',')[1];
+      resolve(base64);
+    };
+    reader.onerror = error => reject(error);
+  });
+}
+
+  deleteClausier(id: number): Observable<void> {
+    const token = localStorage.getItem('token');
+    const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
+    return this.http.delete<void>(`${this.CLAUSIER_URL}/${id}`, { headers });
+  }
+
+  getAllClausiers(): Observable<any[]> {
+    const token = localStorage.getItem('token');
+    const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
+    return this.http.get<any[]>(this.CLAUSIER_URL, { headers });
+  }
 // Méthodes pour le statut du contrat
 toggleContratStatus(numPolice: string): Observable<any> {
   return this.http.patch(`${this.BASE_URL}/${numPolice}/status`, {});
@@ -262,30 +315,49 @@ toggleContratStatus(numPolice: string): Observable<any> {
 getContratStatus(numPolice: string) {
   return this.http.get(`${this.BASE_URL}/${numPolice}/status`, { responseType: 'text' });
 }
+private getHeaders(): HttpHeaders {
+  const token = localStorage.getItem('token');
+  return new HttpHeaders({
+    Authorization: `Bearer ${token}`
+  });
+}
 
 // Méthodes pour les sous-garanties
-deleteSousGarantie(id: number): Observable<void> {
-  return this.http.delete<void>(`${this.sousGarantieApiUrl}/${id}`);
-}
 
 getSousGarantiesbybranche(garantieId: number, branche: string): Observable<SousGarantie[]> {
   const params = new HttpParams().set('branche', branche);
+
   return this.http.get<SousGarantie[]>(
-    `${this.sousGarantieApiUrl}-branche/${garantieId}`, 
-    { params }
+    `${this.sousGarantieApiUrl}-branche/${garantieId}`,
+    { params, headers: this.getHeaders() }
   );
 }
-
-getallSousGaranties(): Observable<SousGarantie[]> {
-  return this.http.get<SousGarantie[]>(this.sousGarantieApiUrl);
+deleteSousGarantie(id: number): Observable<void> {
+  return this.http.delete<void>(
+    `${this.sousGarantieApiUrl}/${id}`,
+    { headers: this.getHeaders() }
+  );
 }
-
+getallSousGaranties(): Observable<SousGarantie[]> {
+  return this.http.get<SousGarantie[]>(
+    this.sousGarantieApiUrl,
+    { headers: this.getHeaders() }
+  );
+}
 getSousGaranties(branche: string): Observable<SousGarantie[]> {
   const url = `${this.sousGarantieApiUrl}/by-and-branche/${branche}`;
-  return this.http.get<SousGarantie[]>(url);
+
+  return this.http.get<SousGarantie[]>(
+    url,
+    { headers: this.getHeaders() }
+  );
 }
 createSousGarantie(sousGarantie: SousGarantie): Observable<SousGarantie> {
-  return this.http.post<SousGarantie>(this.sousGarantieApiUrl, sousGarantie).pipe(
+  return this.http.post<SousGarantie>(
+    this.sousGarantieApiUrl,
+    sousGarantie,
+    { headers: this.getHeaders() }
+  ).pipe(
     catchError(err => {
       console.error('Erreur création sous-garantie', err);
       return throwError(() => err);
@@ -295,20 +367,31 @@ createSousGarantie(sousGarantie: SousGarantie): Observable<SousGarantie> {
 
 
 // Méthodes pour les garanties
+
 deleteGarantie(id: number): Observable<void> {
-  return this.http.delete<void>(`${this.garantieApiUrl}/${id}`);
+  return this.http.delete<void>(
+    `${this.garantieApiUrl}/${id}`,
+    { headers: this.getHeaders() }
+  );
 }
-
 createGarantie(garantie: Garantie): Observable<Garantie> {
-  return this.http.post<Garantie>(this.garantieApiUrl, garantie);
+  return this.http.post<Garantie>(
+    this.garantieApiUrl,
+    garantie,
+    { headers: this.getHeaders() }
+  );
 }
-
 getAllGaranties(): Observable<Garantie[]> {
-  return this.http.get<Garantie[]>(this.garantieApiUrl);
+  return this.http.get<Garantie[]>(
+    this.garantieApiUrl,
+    { headers: this.getHeaders() }
+  );
 }
-
 getGaranties(): Observable<Garantie[]> {
-  return this.http.get<Garantie[]>(this.garantieApiUrl).pipe(
+  return this.http.get<Garantie[]>(
+    this.garantieApiUrl,
+    { headers: this.getHeaders() }
+  ).pipe(
     catchError(err => {
       console.error('Erreur récupération garanties', err);
       return throwError(() => err);
@@ -316,13 +399,23 @@ getGaranties(): Observable<Garantie[]> {
   );
 }
 
+
 // Méthodes pour les exclusions
 createExclusion(exclusion: any): Observable<Exclusion> {
-  return this.http.post<Exclusion>(`${this.exclusionApiUrl}`, exclusion);
+  return this.http.post<Exclusion>(
+    `${this.exclusionApiUrl}`,
+    exclusion,
+    { headers: this.getHeaders() }
+  );
 }
-  deleteExclusion(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.exclusionApiUrl}/${id}`);
-  }
+
+deleteExclusion(id: number): Observable<void> {
+  return this.http.delete<void>(
+    `${this.exclusionApiUrl}/${id}`,
+    { headers: this.getHeaders() }
+  );
+}
+
 createExclusionRC(request: any): Observable<ExclusionRCResponseDTO> {
   return this.http.post<Exclusion>(`${this.exclusionApiUrl}-rc`, request);
 }

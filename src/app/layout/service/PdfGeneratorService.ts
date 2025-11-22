@@ -9,12 +9,18 @@ import { ContratService } from './contrat';
   providedIn: 'root'
 })
 export class PdfGeneratorService {
+  clausiers: any[] = []; // Ajoutez cette propriété
 
   constructor( private contratService: ContratService) {
     
     (pdfMake as any).vfs = (pdfMake as any).vfs || (pdfFonts as any).vfs;
   }
-
+ private loadClausiers() {
+    this.contratService.getAllClausiers().subscribe({
+      next: (data) => this.clausiers = data,
+      error: (err) => console.error('Erreur chargement clausiers', err)
+    });
+  }
   async generateContratPDF(data: any): Promise<Blob> {
 
 
@@ -22,7 +28,6 @@ export class PdfGeneratorService {
     const tableauxGaranties = this.prepareTableauxGaranties(data.sections || []);
     const sectionsRC = this.prepareSectionsRC(data.rcConfigurations || [], data);
     const sectionsExclusionsParSituation = this.prepareExclusionsParSituation(data);
-    const sectionsClausesCommunes = this.prepareClausesCommunes(data);
  const sectionCotisationAnnuelle = await this.prepareCotisationAnnuelle(data);
    const sectionsAttestations = this.prepareAttestations(data);
 // Montrez-moi 2 sections différentes avec quelques garanties
@@ -125,11 +130,11 @@ export class PdfGeneratorService {
               },
               margin: [0, 0, 0, 40]
             },
-
-            // Signature
       
           ]
         },
+// EXTENSIONS
+...this.prepareExtensions(data),
 
         // Nouvelle page pour les situations de risque
         {
@@ -184,8 +189,6 @@ export class PdfGeneratorService {
         // Section Cotisation Annuelle
         sectionCotisationAnnuelle,
 
-        // Clauses Communes
-        ...sectionsClausesCommunes,
     ...(data.sections?.some(
   (section: any) => {
 
@@ -218,9 +221,9 @@ export class PdfGeneratorService {
             style: 'headerCenter',
             pageBreak: 'before'
           },
-          { text: 'GARANTIE DES ACCIDENTS AUX APPAREILS ÉLECTRIQUES', style: 'sectionTitle' },
+          { text: 'GARANTIE DES ACCIDENTS AUX APPAREILS ÉLECTRIQUES', style: 'sectionTitle',alignment: 'center' },
 
-          { text: 'ÉTENDUE DE LA GARANTIE', style: 'subSectionTitle' },
+          { text: 'I. ÉTENDUE DE LA GARANTIE', style: 'subSectionTitle', alignment: 'center' },
           {
             text: `L'assureur garantit les appareils, machines, moteurs, électriques et électroniques et leurs accessoires participant aux tâches de production ou d'exploitation, ainsi que les canalisations électriques (autres que les canalisations enterrées c'est à dire celles dont l'accès nécessite des travaux de terrassement) contre :`,
             style: 'paragraph'
@@ -230,9 +233,9 @@ export class PdfGeneratorService {
             style: 'paragraph'
           },
 
-          { text: 'EXCLUSIONS', style: 'subSectionTitle' },
+          { text: 'II. EXCLUSIONS', style: 'subSectionTitle',alignment: 'center' },
           {
-            ul: [
+            ol: [
               "AUX FUSIBLES, AUX RÉSISTANCES CHAUFFANTES, AUX LAMPES DE TOUTES NATURES, AUX TUBES ÉLECTRONIQUES.",
               "AUX COMPOSANTS ÉLECTRONIQUES LORSQUE LE SINISTRE RESTE LIMITÉ À UN SEUL ENSEMBLE INTERCHANGEABLE.",
               "AUX MATÉRIELS INFORMATIQUES (Y COMPRIS LES MICROS ET MINI ORDINATEURS) PARTICIPANT AUX TÂCHES DE GESTION (DITS ORDINATEURS DE GESTION) LORSQUE LA VALEUR DE REMPLACEMENT À NEUF EXCÈDE 20.000 D.",
@@ -261,7 +264,7 @@ export class PdfGeneratorService {
           },
 
           // 🟦 NOUVELLE SECTION : ESTIMATION DES DOMMAGES
-          { text: 'ESTIMATION DES DOMMAGES', style: 'subSectionTitle' },
+          { text: 'III. ESTIMATION DES DOMMAGES', style: 'subSectionTitle', alignment: 'center' },
           {
             text: `En cas de destruction totale d'un appareil ou d'une installation électrique, le montant des dommages est égal à la valeur de remplacement à neuf par un matériel équivalent, diminuée de la dépréciation, calculée forfaitairement par année depuis la date de sortie d'usine de l'appareil détruit ou de la mise en place des canalisations et dérivations, puis de la valeur de sauvetage. Le coefficient de dépréciation est fixé conformément au tableau ci-après.
 
@@ -277,7 +280,7 @@ Le montant d'un dommage partiel est estimé au prix de la réparation diminué d
             margin: [0, 10, 0, 10]
           },
 
-          { text: 'CAPITAL GARANTI : ASSIETTE DE LA PRIME', style: 'subSectionTitle' },
+          { text: 'IV. CAPITAL GARANTI : ASSIETTE DE LA PRIME', style: 'subSectionTitle', alignment: 'center' },
           {
           
  table: {
@@ -303,7 +306,7 @@ margin: [0, 5, 0, 5]
 
 },
 
-          { text: 'FRANCHISE', style: 'subSectionTitle' },
+          { text: 'V. FRANCHISE', style: 'subSectionTitle', alignment: 'center' },
           {
             text: `Le capital minimum assuré au titre de la présente garantie est fixé comme suit :`,
             style: 'paragraph',
@@ -348,52 +351,125 @@ margin: [0, 5, 0, 5]
             style: 'headerCenter',
             pageBreak: 'before'
           },
-          { text: 'EXTENSION DE GARANTIE À DES RISQUES SPÉCIAUX', style: 'sectionTitle' },
+          { text: 'EXTENSION DE GARANTIE À DES RISQUES SPÉCIAUX', style: 'sectionTitle', alignment: 'center' },
 
-          {
-            text: `La MAE garantit les dommages matériels causés directement aux biens assurés par :`,
-            style: 'paragraph',
-            margin: [0, 7, 0, 7]
-          },
-          { text: 'I. TEMPÊTES', style: 'subSectionTitle' },
-          {
-            text: `La MAE garantit les dommages matériels causés aux biens assurés par :
-- Par les tempêtes : action directe du vent ou choc d’un corps projeté, détruisant ou endommageant bâtiments de bonne construction, arbres, et autres objets dans un rayon de 5 km autour du risque assuré. Attestation météorologique obligatoire si contestation.
-- Par l'action directe de la grêle sur les toitures. Dommages de mouille inclus si pénétration dans le bâtiment dans les 48 heures suivant le sinistre.`,
-            style: 'paragraph',
-            alignment: 'justify',
-            margin: [0, 3, 0, 5]
-          },
-          { text: 'EXCLUSIONS', style: 'paragraphCenterBoldUnderline', alignment: 'left', },
-          {
-            ul: [
-              'TOUS LES DOMMAGES AUTRES QUE CEUX DÉFINIS CI-DESSUS, AINSI QUE CEUX OCCASIONNÉS DIRECTEMENT OU INDIRECTEMENT, MEME EN CAS D’ORAGE, PAR TES EAUX DE RUISSELLEMENT DANS LES COURS ET JARDINS, VOIES PUBLIQUES OU PRIVÉES, INONDATIONS, RAZ-DE-MARÉE, MAREES, ENGORGEMENT ET REFOULEMENT DES ÉGOUTS, DÉBORDEMENT DES SOURCES, COURS D’EAU ET PLUS GÉNÉRALEMENT PAR LA MER ET AUTRES PLANS D’EAU NATURELS OU ARTIFICIELS.',
-              'LES BÂTIMENTS EN COURS DE CONSTRUCTION OU DE RÉFECTION (À MOINS QU’ILS NE SOIENT ENTIÈREMENT CLOS ET COUVERTS AVEC PORTES ET FENÊTRES PLACÉES À DEMEURE) ET LES BÂTIMENTS OUVERTS SUR UN OU PLUSIEURS CÔTÉS ET PLUS GÉNÉRALEMENT TOUT BÂTIMENT NON ENTIÈREMENT CLOS.',
-              'LES BÂTIMENTS DONT LES MURS SONT CONSTRUITS EN TOUT OU PARTIE EN BOIS, CARREAUX DE PLÂTRE, TÔLE ONDULÉE, AMIANTE-CIMENT, MATIÈRES PLASTIQUES, AINSI QUE CEUX DANS LESQUELS LES MATÉRIAUX DURS (PIERRE, BRIQUES, MOELLONS, FER, BÉTON DE CIMENT, PARPAINGS DE CIMENT, MÂCHEFER SANS ADDITION DE BOIS, PAILLE OU AUTRES SUBSTANCES ÉTRANGÈRES) ENTRANT POUR MOINS DE 50 %.',
-              'LES BÂTIMENTS DONT LA COUVERTURE COMPORTE, EN QUELQUE PROPORTION QUE CE SOIT, DES PLAQUES OU TÔLES NON ACCROCHÉES, NON BOULONNÉES OU NON TIREFONNÉES.',
-              'LES BÂTIMENTS DONT LA COUVERTURE COMPREND PLUS DE 10 % DE MATÉRIAUX TELS QUE CHAUME, BOIS, CARTON ET/OU FEUTRE BITUMÉ NON FIXÉS SUR PANNEAUX OU VOLIGEAGE, TOILE OU PAPIER GOUDRONNÉ, PAILLE, ROSEAUX OU AUTRES VÉGÉTAUX.',
-              'LES CLÔTURES DE TOUTE NATURE ET LES MURS D’ENCEINTE, MARQUISES, VÉRANDAS, CONTREVENTS, PERSIENNES, VITRES ET VITRAGES, SERRES ET CHASSIS, VITRAUX ET GLACES, STORES, ENSEIGNES, PANNEAUX-RÉCLAME, BÂCHES EXTÉRIEURES, TENTES, ANTENNES T.S.F., TELEVISION, FILS AÉRIENS ET LEURS SUPPORTS.'
-            ].map(text => ({ text,
-                bold: true,
-                alignment: 'justify',
-                lineHeight: 1.5,
-                style: 'paragraph',}))
-          },
         {
-            text: `Annexe au Contrat N° : ${data.adherent.codeId || '-'}/${data.service || '-'}/${data.numPolice || '-'}`,
-            style: 'headerCenter',
-            pageBreak: 'before'
-          },
+  text: `La MAE garantit les dommages matériels causés directement aux biens assurés par :`,
+  style: 'paragraph',
+  margin: [0, 7, 0, 5] // petit ajustement pour espacement avant la liste
+},
+{
+  ul: [
+    'Tempêtes, Ouragans, Cyclones (ci-après dénommés "Tempêtes") et Grêle sur les Toitures',
+    'Fumées',
+    'Chutes d\'Appareils de Navigation Aérienne',
+    'Choc d\'un véhicule terrestre'
+  ],
+  style: 'paragraph',
+  margin: [20, 0, 0, 2], // indentation pour la liste
+  lineHeight: 1.5,
+  bulletRadius: 2
+},
 
-          { text: 'II. FUMÉES', style: 'subSectionTitle' },
+          { text: 'I. TEMPÊTES', style: 'subSectionTitle', alignment: 'center' },
+        {
+  text: 'La MAE garantit les dommages matériels causés aux biens assurés :',
+  style: 'paragraph',
+  alignment: 'justify',
+  margin: [0, 2, 0, 3]
+},
+{
+  ul: [
+    [
+      { text: 'Par les tempêtes, c\'est-à-dire par l\'action directe du vent ou le choc d\'un corps renversé ou projeté par le vent, lorsque celui-ci a une violence telle qu\'il détruit, brise ou endommage un certain nombre de bâtiments de bonne construction, d\'arbres, et autres objets dans un rayon de cinq kilomètres autour du risque assuré.\n', style: 'paragraph', alignment: 'justify' },
+      { text: 'En cas de contestation et à titre de complément de preuve, le rassuré devra produire une attestation de la station la plus proche de la météorologie nationale indiquant qu\'au moment du sinistre le vent dépassait la vitesse de 100 km/h.', style: 'paragraph', alignment: 'justify', margin: [0, 3, 0, 0] }
+    ],
+    [
+      { text: 'Par l\'action directe de la grêle sur les toitures.\n', style: 'paragraph', alignment: 'justify' },
+      { text: 'Cette garantie s\'étend en outre aux dommages de mouille causés par la pluie, la neige ou la grêle lorsque cette pluie, cette neige ou cette grêle pénètre à l\'intérieur du bâtiment assuré - ou renfermant les objets assurés - du fait de sa destruction totale ou partielle par la tempête ou par l\'action directe de la grêle et à condition que cette destruction ne remonte pas à plus de 48 heures.', style: 'paragraph', alignment: 'justify', margin: [0, 3, 0, 0] },
+      { text: 'Sont considérés comme constituant un seul et même sinistre les dégâts survenus dans les 48 heures qui suivent le moment où les biens assurés ont subi les premiers dommages.', style: 'paragraph', alignment: 'justify', margin: [0, 3, 0, 0] }
+    ]
+  ],
+  style: 'paragraph',
+  margin: [20, 0, 0, 5],
+  lineHeight: 1.5,
+  bulletRadius: 2
+},
+
+          { text: 'EXCLUSIONS', style: 'paragraphCenterBoldUnderline', alignment: 'center', },
+           {
+  text: 'Sont exclus de la présente garantie :',
+  style: 'paragraph',
+  alignment: 'justify',
+  margin: [0, 3, 0, 3]
+},
+         {
+    ol: [
+      'TOUS LES DOMMAGES AUTRES QUE CEUX DÉFINIS CI-DESSUS, AINSI QUE CEUX OCCASIONNÉS DIRECTEMENT OU INDIRECTEMENT, MEME EN CAS D’ORAGE, PAR TES EAUX DE RUISSELLEMENT DANS LES COURS ET JARDINS, VOIES PUBLIQUES OU PRIVÉES, INONDATIONS, RAZ-DE-MARÉE, MAREES, ENGORGEMENT ET REFOULEMENT DES ÉGOUTS, DÉBORDEMENT DES SOURCES, COURS D’EAU ET PLUS GÉNÉRALEMENT PAR LA MER ET AUTRES PLANS D’EAU NATURELS OU ARTIFICIELS.',
+      'LES BÂTIMENTS EN COURS DE CONSTRUCTION OU DE RÉFECTION (À MOINS QU’ILS NE SOIENT ENTIÈREMENT CLOS ET COUVERTS AVEC PORTES ET FENÊTRES PLACÉES À DEMEURE) ET LES BÂTIMENTS OUVERTS SUR UN OU PLUSIEURS CÔTÉS ET PLUS GÉNÉRALEMENT TOUT BÂTIMENT NON ENTIÈREMENT CLOS.'
+    ].map((text, index) => ({
+      text,
+      bold: true,
+      alignment: 'justify',
+      lineHeight: 1.5,
+      style: 'paragraph',
+      ol: undefined,
+      counter: index + 1 // numérotation 1, 2
+    }))
+  },
+  {
+    text: `Annexe au Contrat N° : ${data.adherent.codeId || '-'}/${data.service || '-'}/${data.numPolice || '-'}`,
+    style: 'headerCenter',
+    pageBreak: 'before'
+  },
+  {
+    ol: [
+      'LES BÂTIMENTS DONT LES MURS SONT CONSTRUITS EN TOUT OU PARTIE EN BOIS, CARREAUX DE PLÂTRE, TÔLE ONDULÉE, AMIANTE-CIMENT, MATIÈRES PLASTIQUES, AINSI QUE CEUX DANS LESQUELS LES MATÉRIAUX DURS (PIERRE, BRIQUES, MOELLONS, FER, BÉTON DE CIMENT, PARPAINGS DE CIMENT, MÂCHEFER SANS ADDITION DE BOIS, PAILLE OU AUTRES SUBSTANCES ÉTRANGÈRES) ENTRANT POUR MOINS DE 50 %.',
+      'LES BÂTIMENTS DONT LA COUVERTURE COMPORTE, EN QUELQUE PROPORTION QUE CE SOIT, DES PLAQUES OU TÔLES NON ACCROCHÉES, NON BOULONNÉES OU NON TIREFONNÉES.',
+      'LES BÂTIMENTS DONT LA COUVERTURE COMPREND PLUS DE 10 % DE MATÉRIAUX TELS QUE CHAUME, BOIS, CARTON ET/OU FEUTRE BITUMÉ NON FIXÉS SUR PANNEAUX OU VOLIGEAGE, TOILE OU PAPIER GOUDRONNÉ, PAILLE, ROSEAUX OU AUTRES VÉGÉTAUX.',
+      'LES CLÔTURES DE TOUTE NATURE ET LES MURS D’ENCEINTE, MARQUISES, VÉRANDAS, CONTREVENTS, PERSIENNES, VITRES ET VITRAGES, SERRES ET CHASSIS, VITRAUX ET GLACES, STORES, ENSEIGNES, PANNEAUX-RÉCLAME, BÂCHES EXTÉRIEURES, TENTES, ANTENNES T.S.F., TELEVISION, FILS AÉRIENS ET LEURS SUPPORTS.'
+    ].map((text, index) => ({
+      text,
+      bold: true,
+      alignment: 'justify',
+      lineHeight: 1.5,
+      style: 'paragraph',
+      ol: undefined,
+      counter: index + 3 // continuation 3, 4, 5, 6
+    }))
+  },
           {
-            text: `L'assureur garantit les dommages matériels causés aux biens assurés par des fumées dues à une défectuosité soudaine et imprévisible d'un appareil de chauffage ou de cuisine, relié à une cheminée et situé dans l’enceinte des risques spécifiés dans la police.`,
+          text: "Toutefois, sera couvert le bris des contrevents, persiennes, glaces, vitres et vitrages lorsqu'il est la conséquence d'une destruction totale ou partielle du bâtiment garanti.",
+          bold: true,
+          alignment: 'justify',
+          style: 'paragraph',
+          margin: [0, 5, 0, 5]
+        },
+
+        // Deuxième ol
+        {
+          ol: [
+            'LES BELVÉDÈRES, LES CLOCHERS ET CLOCHETONS, LES TOURS ET TOURELLES, LES CHEMINÉES MONUMENTALES, LES ÉOLIENNES ET LES MOULINS À VENT.',
+            'TOUS LES OBJETS OU ANIMAUX SE TROUVANT EN PLEIN AIR OU DANS DES BÂTIMENTS ET CONSTRUCTIONS VISÉS CI-DESSUS AINSI QUE LES BOIS SUR PIED, LES ARBRES, LES RÉCOLTES PENDANTES, SUR PIED, EN MEULES, EN JAVELLES, EN GERBES, EN DIZEAUX.',
+            'LES DOMMAGES RÉSULTANT D’UN DÉFAUT DE RÉPARATIONS INDISPENSABLES INCOMBANT À L’ASSURÉ (NOTAMMENT APRÈS SINISTRE) SAUF CAS DE FORCE MAJEURE.'
+          ].map(text => ({
+            text,
+            bold: true,
+            alignment: 'justify',
+            lineHeight: 1.5,
+            style: 'paragraph',
+          }))
+        },
+          { text: 'II. FUMÉES', style: 'subSectionTitle' , alignment: 'center' },
+          {
+            text: `L'assureur garantit les dommages matériels causés aux biens assurés par des fumées dues à une défectuosité soudaine et imprévisible d'un appareil quelconque de chauffage ou de cuisine, et seulement dans le cas où le dit appareil, d'une part, est relié à une cheminée par un conduit de fumée, et, d'autre part, se trouve dans l'enceinte des risques spécifiés dans la police.`,
             style: 'paragraph',
             alignment: 'justify'
           },
-          { text: 'EXCLUSIONS', style: 'paragraphCenterBoldUnderline', alignment: 'left', },
+       
+          { text: 'EXCLUSIONS', style: 'paragraphCenterBoldUnderline', alignment: 'center' },
           {
-             ul: [
+             ol: [
              `SONT EXCLUS LES DOMMAGES PROVENANT DE FOYERS EXTÉRIEURS ET APPAREILS INDUSTRIELS AUTRES QUE LES APPAREILS DE CHAUFFAGE.`,
               ].map(text => ({ text,
                 bold: true,
@@ -401,46 +477,74 @@ margin: [0, 5, 0, 5]
                 lineHeight: 1.5,
                 style: 'paragraph',}))
           },
-          { text: 'III. CHUTE D’APPAREILS DE NAVIGATION AÉRIENNE', style: 'subSectionTitle' },
+               {
+            text: `Annexe au Contrat N° : ${data.adherent.codeId || '-'}/${data.service || '-'}/${data.numPolice || '-'}`,
+            style: 'headerCenter',
+            pageBreak: 'before'
+          },
+          { text: 'III. CHUTE D’APPAREILS DE NAVIGATION AÉRIENNE', style: 'subSectionTitle', alignment: 'center' },
           {
             text: `L'assureur garantit les dommages matériels, y compris incendie et explosion, causés aux objets assurés par le choc ou la chute d'appareils de navigation aérienne.`,
             style: 'paragraph',
             alignment: 'justify'
           },
 
-          { text: 'IV. CHOC D’UN VÉHICULE TERRESTRE', style: 'subSectionTitle' },
+          { text: 'IV. CHOC D’UN VÉHICULE TERRESTRE', style: 'subSectionTitle' , alignment: 'center'},
           {
             text: `L'assureur garantit les dommages matériels, y compris incendie et explosion, causés aux biens assurés par le choc d'un véhicule terrestre.`,
             style: 'paragraph',
             alignment: 'justify'
           },
-          { text: 'EXCLUSIONS', style: 'paragraphCenterBoldUnderline', alignment: 'left', },
-          {
-            ul: [
-              `OCCASIONNÉS PAR TOUT VÉHICULE DONT L'ASSURÉ OU LOCATAIRE EST PROPRIÉTAIRE OU USAGER.`,
-              `CAUSÉS AUX ROUTES, PISTES OU PELOUSES.`,
-              `SUBIS PAR TOUT VÉHICULE ET SON CONTENU.`
-            ].map(text => ({  text,
-                bold: true,
-                alignment: 'justify',
-                lineHeight: 1.5,
-                style: 'paragraph', }))
-          },
-
-          { text: 'LIMITE DE LA GARANTIE', style: 'paragraphCenterBoldUnderline', alignment: 'left', },
-          {
-            text: `La présente extension est accordée pour une limite de 25% des existences assurées par sinistre et par année d’assurance.`,
+          { text: 'EXCLUSIONS', style: 'paragraphCenterBoldUnderline', alignment: 'center', },
+           {
+            text: `L'assureur ne répond pas des dommages :`,
             style: 'paragraph',
             alignment: 'justify'
           },
+                      {
+                ol: [
+                  `OCCASIONNÉS PAR TOUT VÉHICULE DONT L'ASSURÉ OU LOCATAIRE EST PROPRIÉTAIRE OU USAGER.`,
+                  `CAUSÉS AUX ROUTES, PISTES OU PELOUSES.`,
+                  `SUBIS PAR TOUT VÉHICULE ET SON CONTENU.`
+                ].map(text => ({
+                  text,
+                  bold: true,
+                  alignment: 'justify',
+                  lineHeight: 1.5,
+                  style: 'paragraph'
+                })),
+                type: 'lower-alpha',  // ← liste en a), b), c)
+                margin: [20, 0, 0, 5], // indentation si nécessaire
+                bulletRadius: 2
+              },
 
-          { text: 'FRANCHISES', style: 'paragraphCenterBoldUnderline', alignment: 'left', },
-          {
-            text: `L'assuré conservera à sa charge, par sinistre, une franchise égale à 10% des dommages avec un minimum de 1 000 DT et un maximum de 5 000 DT. Cette franchise sera déduite du montant de l'indemnité.`,
+
+          { text: 'LIMITE DE LA GARANTIE', style: 'paragraphCenterBoldUnderline', alignment: 'center', },
+         {
+                text: [
+                  'La présente extension est accordée pour une limite de ',
+                  { text: '25%', bold: true },
+                  ' des existences assurées par sinistre et par année d’assurance.'
+                ],
+                style: 'paragraph',
+                alignment: 'justify'
+              },
+
+
+          { text: 'FRANCHISES', style: 'paragraphCenterBoldUnderline', alignment: 'center' },
+       {
+  text: [
+    "L'assuré conservera à sa charge, par sinistre, une franchise égale à ",
+    { text: 'à 10% des dommages avec un minimum de Mille Dinars                1 000DT par sinistre et un maximum de Cinq Mille Dinars 5 000DT par sinistre.', bold: true },
+  ],
+  style: 'paragraph',
+  alignment: 'justify'
+},
+  {
+            text: `Cette franchise sera déduite du montant de l'indemnité qui aurait été versée à l'assuré sans l'existence de la dite franchise.`,
             style: 'paragraph',
             alignment: 'justify'
           },
-
           {
             columns: [
               { text: 'Le Souscripteur', alignment: 'left', margin: [0, 20, 0, 0], fontSize: 10 },
@@ -464,26 +568,40 @@ margin: [0, 5, 0, 5]
               style: 'headerCenter',
               pageBreak: 'before'
             },
-            { text: 'GARANTIE INONDATION', style: 'sectionTitle' },
-            { text: 'I. OBJET DE LA GARANTIE', style: 'subSectionTitle' },
+            { text: 'GARANTIE INONDATION', style: 'sectionTitle' , alignment: 'center' },
+            { text: 'I. OBJET DE LA GARANTIE', style: 'subSectionTitle' , alignment: 'center' },
             {
               text: `Par dérogation à toute autre clause contraire aux Conditions Générales, l'assureur garantit les dommages matériels causés aux biens assurés par les inondations.
-Il faut entendre par inondation toute situation temporaire et générale pendant laquelle la zone territoriale dans laquelle sont situés les bâtiments assurés et ses voisins immédiats se trouvant normalement à sec est complètement ou partiellement sous eau ou sous la boue suite à une accumulation d'eaux provenant de :
-
-- Débordement des lacs, rivières et canaux
-- La marée
-- Vagues ou à de l'eau de mer
-- Débordement de corps contenant de l'eau et entourés par des barrages ou des digues
-- Mouvement de boue, de rivière ou de fleuve de boue liquide provoqué par l'un des événements cités plus haut
-- L'eau pluviale.`,
+Il faut entendre par inondation toute situation temporaire et générale pendant laquelle la zone territoriale dans laquelle sont situés les bâtiments assurés et ses voisins immédiats se trouvant normalement à sec est complètement ou partiellement sous eau ou sous la boue suite à une accumulation d'eaux provenant de :`,
+              style: 'paragraph',
+              alignment: 'justify',
+              lineHeight: 1.5,
+              margin: [0, 2, 0, 5]
+            },
+             {
+              ul: [
+                `Débordement des lacs, rivières et canaux.`,
+                `La marée. `,
+                 `Vagues ou à de l'eau de mer.`,
+                `Débordement de corps contenant de l'eau et entourés par des barrages ou des digues.`,
+                `Mouvement de boue, de rivière ou de fleuve de boue liquide provoqué par l'un des événements cités plus haut.`,
+                 `L'eau pluviale.`
+              ].map(text => ({  text,
+                bold: true,
+                alignment: 'justify',
+                lineHeight: 1.2,
+                margin: [20, 0, 0, 10],
+                style: 'paragraph', }))
+            },
+            { text: 'II. EXCLUSIONS', style: 'subSectionTitle', alignment: 'center' },
+             { text: `Demeurent exclus de la garantie :`,
               style: 'paragraph',
               alignment: 'justify',
               lineHeight: 1.1,
               margin: [0, 2, 0, 5]
             },
-            { text: 'II. EXCLUSIONS', style: 'subSectionTitle' },
             {
-              ul: [
+              ol: [
                 'LES DOMMAGES SUBIS PAR LES BIENS SE TROUVANT EN PLEIN AIR ;',
                 'LES DOMMAGES MATERIELS RESULTANT DE REFOULEMENT DES EAUX DES CANALISATIONS, D\'EVACUATION ET DES APPAREILS A EFFET D\'EAU DE LA SOCIETE ASSUREE EN DEHORS D\'INONDATION TELLE QUE DEFINIE CI-DESSUS ;',
                 'LES DOMMAGES RESULTANT DE L\'EAU DONT L\'ORIGINE SE SITUE A L\'INTERIEUR DU BATIMENT FAISANT L\'OBJET DE LA PRESENTE EXTENSION NOTAMMENT CEUX RESULTANT DES FUITES PROVENANT DES CONDUITES D\'ADDUCTION ET DE DISTRIBUTION D\'EAU, DES CHENAUX ET GOUTTIERES ;',
@@ -496,20 +614,38 @@ Il faut entendre par inondation toute situation temporaire et générale pendant
                 margin: [0, 0, 0, 10],
                 style: 'paragraph', }))
             },
-            { text: 'III. LIMITE DE LA GARANTIE', style: 'subSectionTitle' },
+             {
+              text: `Annexe au Contrat N° : ${data.adherent.codeId || '-'}/${data.service || '-'}/${data.numPolice || '-'}`,
+              style: 'headerCenter',
+              pageBreak: 'before'
+            },
+            { text: 'III. LIMITE DE LA GARANTIE', style: 'subSectionTitle' , alignment: 'center'},
+
             {
-              text: `La présente extension est accordée pour une limite de 25% des existences assurées par sinistre et par année d’assurance.`,
+              text: [
+                "La présente extension est accordée pour une limite de ",
+                { text: '25%', bold: true },
+                ' des existences assurées par sinistre et par année d’assurance. ',
+               
+              ],
               style: 'paragraph',
               alignment: 'justify'
             },
-          
-            { text: 'IV. FRANCHISE', style: 'subSectionTitle' },
-            {
-              text: `L'assuré conservera à sa charge, par sinistre une franchise égale à 10% des dommages avec un minimum de Mille Dinars (1 000DT) par sinistre et un maximum de Cinq Mille Dinars (5 000DT) par sinistre.
-Cette franchise sera déduite du montant de l'indemnité qui aurait été versée à l'assuré sans l'existence de la dite franchise.`,
+            
+            { text: 'IV. FRANCHISE', style: 'subSectionTitle' , alignment: 'center'},
+                 {
+              text: [
+                "L'assuré conservera à sa charge, par sinistre, une franchise égale à ",
+                { text: 'à 10% des dommages avec un minimum de Mille Dinars                1 000DT par sinistre et un maximum de Cinq Mille Dinars 5 000DT par sinistre.', bold: true },
+              ],
               style: 'paragraph',
               alignment: 'justify'
             },
+              {
+            text: `Cette franchise sera déduite du montant de l'indemnité qui aurait été versée à l'assuré sans l'existence de la dite franchise.`,
+            style: 'paragraph',
+            alignment: 'justify'
+          },
             {
               columns: [
                 { text: 'Le Souscripteur', alignment: 'left', margin: [0, 20, 0, 0], fontSize: 10 },
@@ -539,33 +675,55 @@ Les Conditions Générales et Particulières qui régissent la garantie « Incen
               alignment: 'justify',
               margin: [0, 2, 0, 5]
             },
-            { text: 'I. OBJET ET ETENDUE DE LA GARANTIE', style: 'subSectionTitle' },
+            { text: 'I. OBJET ET ETENDUE DE LA GARANTIE', style: 'subSectionTitle', alignment: 'center' },
+              {
+              text:`Par dérogation aux Conditions Générales et moyennant une prime distincte, l'assureur garantit les dommages matériels, y compris ceux d'incendie et/ ou d'explosion, causés directement aux biens assurés au titre du contrat auquel est annexée la présente convention.`,
+
+              style: 'paragraph',
+              alignment: 'justify',
+              margin: [0, 2, 0, 5]
+            },
             {
-              ul: [
-                `Par dérogation aux Conditions Générales et moyennant une prime distincte, l'assureur garantit les dommages matériels, y compris ceux d'incendie et/ ou d'explosion, causés directement aux biens assurés au titre du contrat auquel est annexée la présente convention.`,
-                `Par un tremblement de terre, c'est à dire l'ensemble des phénomènes liés à la déformation de l'écorce terrestre en un lieu, dans la mesure où ils sont perçus par la population et/ ou par les sismographes.`,
-                `Par une éruption volcanique.`,
-                `Ou par un raz-de-marée, s'il est consécutif à un tremblement de terre ou à une éruption volcanique, sous réserve qu'un certain nombre de bâtiments soient détruits ou endommagés à l'occasion du même événement.`,
-                `Le choc sismique initial et les répliques survenant dans un délai de 72 heures sont considérés comme constituant un seul et même tremblement de terre.`
+              ol: [
+               `PAR UN TREMBLEMENT DE TERRE, C'EST À DIRE L'ENSEMBLE DES PHÉNOMÈNES LIÉS À LA DÉFORMATION DE L'ÉCORCE TERRESTRE EN UN LIEU, DANS LA MESURE OÙ ILS SONT PERÇUS PAR LA POPULATION ET/ OU PAR LES SISMO-GRAPHES.`,
+`PAR UNE ÉRUPTION VOLCANIQUE.`,
+`OU PAR UN RAZ-DE-MARÉE, S'IL EST CONSÉCUTIF À UN TREMBLEMENT DE TERRE OU À UNE ÉRUPTION VOLCANIQUE, SOUS RÉSERVE QU'UN CERTAIN NOMBRE DE BÂTIMENTS SOIENT DÉTRUITS OU ENDOMMAGÉS À L'OCCASION DU MÊME ÉVÉNEMENT.`,
+`LE CHOC SISMIQUE INITIAL ET LES RÉPLIQUES SURVENANT DANS UN DÉLAI DE 72 HEURES SONT CONSIDÉRÉS COMME CONSTITUANT UN SEUL ET MÊME TREMBLEMENT DE TERRE.`
+
               ].map(text => ({  text,
                 bold: true,
                 alignment: 'justify',
                 lineHeight: 1.2,
-                style: 'paragraph', }))
+                style: 'paragraph', 
+               margin: [20, 2, 0, 5]}))
             },
-            { text: 'II. LIMITE DE LA GARANTIE', style: 'subSectionTitle' },
+           { text: 'III. LIMITE DE LA GARANTIE', style: 'subSectionTitle' , alignment: 'center'},
+
             {
-              text: `La présente extension est accordée pour une limite de 25% des existences assurées par sinistre et par année d’assurance.`,
+              text: [
+                "La présente extension est accordée pour une limite de ",
+                { text: '25%', bold: true },
+                ' des existences assurées par sinistre et par année d’assurance. ',
+               
+              ],
               style: 'paragraph',
               alignment: 'justify'
             },
-            { text: 'II. FRANCHISE', style: 'subSectionTitle' },
-            {
-              text: `L'assuré conservera à sa charge, par sinistre et par établissement, une franchise égale à 10% des dommages avec un minimum de Mille Dinars (1 000DT) par sinistre et un maximum de Cinq Mille Dinars (5 000DT) par sinistre.
-Cette franchise sera déduite du montant de l'indemnité qui aurait été versée à l'assuré sans l'existence de ladite franchise.`,
+            
+            { text: 'IV. FRANCHISE', style: 'subSectionTitle' , alignment: 'center'},
+                 {
+              text: [
+                "L'assuré conservera à sa charge, par sinistre, une franchise égale à ",
+                { text: 'à 10% des dommages avec un minimum de Mille Dinars                1 000DT par sinistre et un maximum de Cinq Mille Dinars 5 000DT par sinistre.', bold: true },
+              ],
               style: 'paragraph',
               alignment: 'justify'
             },
+              {
+            text: `Cette franchise sera déduite du montant de l'indemnité qui aurait été versée à l'assuré sans l'existence de la dite franchise.`,
+            style: 'paragraph',
+            alignment: 'justify'
+          },
             {
               columns: [
                 { text: 'Le Souscripteur', alignment: 'left', margin: [0, 20, 0, 0], fontSize: 10 },
@@ -587,21 +745,50 @@ Cette franchise sera déduite du montant de l'indemnité qui aurait été versé
             },
             { text: 'GREVES, EMEUTES, MOUVEMENTS POPULAIRES (DOMMAGES MATERIELS Y COMPRIS CEUX D\'INCENDIE OU D\'EXPLOSION)', style: 'sectionTitle',  alignment: 'center' },
             
-            {
-  text: `L'assureur garantit les dommages matériels directs (y compris ceux d'incendie et/ou d'explosion) causés aux biens assurés et directement occasionnés ou découlant d’actes commis par des personnes ou des groupes de personnes prenant à des actes de Terrorisme et/ou de Sabotage (ATS), des Grèves et/ou des émeutes et/ou des mouvements populaires (GEMP), aux conditions de prime, franchise et limite telles qu’elles sont fixées aux Conditions Particulières :
+           {
+              text: [
+                `L'assureur garantit les dommages `,
+                { text: 'matériels directs (y compris ceux d\'incendie et/ou d\'explosion)', bold: true },
+                ` causés aux biens assurés et directement occasionnés ou découlant d’actes commis par des personnes ou des groupes de personnes prenant à des actes de Terrorisme et/ou de Sabotage `,
+                { text: '(ATS)', bold: true },
+                `, des Grèves et/ou des émeutes et/ou des mouvements populaires `,
+                { text: '(GEMP)', bold: true },
+                `, aux conditions de prime, franchise et limite telles qu’elles sont fixées aux Conditions Particulières :\n\nPour l'application de cette annexe, il faut entendre par `,
+                { text: 'dommage matériel', bold: true },
+                ` résultant d’actes de terrorisme et de sabotage, de grèves, émeutes ou mouvements populaires les dommages ou pertes subis au niveau d’un bâtiment ou d’autres biens assurés, et directement occasionnés par :`
+              ],
+              style: 'paragraph',
+              alignment: 'justify',
+              margin: [0, 2, 0, 5]
+            },
 
-Pour l'application de cette annexe, il faut entendre par dommage matériel résultant d’actes de terrorisme et de sabotage, de grèves, émeutes ou mouvements populaires les dommages ou pertes subis au niveau d’un bâtiment ou d’autres biens assurés, et directement occasionnés par :`,
-  style: 'paragraph',
-  alignment: 'justify',
-  margin: [0, 2, 0, 5]
-},
-{
-  ul: [
-    'Tout acte commis dans le cadre d’actes de terrorisme et de sabotage, de grèves, émeutes et mouvements populaires entraînant un trouble de l’ordre public par quiconque y prend part ;',
-    'Tout acte délibéré d’un gréviste ou d’un employé dans le cadre d’une grève, que cet acte ait été ou non commis au cours d’un trouble de l’ordre public ;',
-    'Tout acte d’une autorité légalement constituée dans le but d’endiguer, de prévenir, de faire cesser ou de minimiser les conséquences de ces actes, ou visant à empêcher la réalisation d’un acte listé aux deux alinéas précédents ou à en minimiser les conséquences.'
-  ].map(text => ({ text, style: 'paragraph', alignment: 'justify' ,margin: [0, 0, 0, 0.5]}))
-},
+          {
+            ul: [
+              // Phrase 1 complète
+              [
+                'Tout acte commis dans le cadre d’actes de ',
+                { text: 'terrorisme et de sabotage, de grèves, émeutes et mouvements populaires', bold: true },
+                ' entraînant un trouble de l’ordre public par quiconque y prend part ;'
+              ],
+
+              // Phrase 2 complète
+              [
+                'Tout acte délibéré d’un gréviste ou d’un employé dans le cadre d’une ',
+                { text: 'grève', bold: true },
+                ', que cet acte ait été ou non commis au cours d’un trouble de l’ordre public ;'
+              ],
+
+              // Phrase 3 inchangée
+              'Tout acte d’une autorité légalement constituée dans le but d’endiguer, de prévenir, de faire cesser ou de minimiser les conséquences de ces actes, ou visant à empêcher la réalisation d’un acte listé aux deux alinéas précédents ou à en minimiser les conséquences.'
+            ].map(item => ({
+              text: item,
+              style: 'paragraph',
+              alignment: 'justify',
+              margin: [0, 0, 0, 0.5]
+            }))
+          },
+
+
 {
   text: `Il est toutefois convenu que la définition des trois derniers ne vaut aucunement renonciation ou dérogation relative aux exclusions en matière des risques liés aux actes de Guerre, de Terrorisme, e Sabotage, de grèves, Emeutes et mouvements populaires contenu dans la présente convention, lorsque les évènements GEMP prennent les dimensions d’un soulèvement populaire tel que prévu dans le 3ème point des exclusions, ou lorsqu’ils entraînent la réalisation de l’un des évènements prévus au point 4 de l’annexe.  
 
@@ -610,14 +797,14 @@ Si l’Assureur allègue qu’en raison du présent avenant, une perte, un domma
   alignment: 'justify',
   margin: [0, 2, 0, 5]
 },
-            { text: 'I. EXCLUSIONS', style: 'subSectionTitle' },
+            { text: 'EXCLUSIONS', style: 'subSectionTitle',  alignment: 'center'  },
             {
               ul: [
-                'GUERRE, GUERRE CIVILE OU ETAT DE GUERRE, QUE LA GUERRE AIT ETE DECLAREE OU NON, INVASION, ACTES QUELCONQUES D’ENNEMIS ETRANGERS, HOSTILITES OU ACTES EQUIVALENTS A DES OPERATIONS DE GUERRE ;',
-                'MUTINERIE, SOULEVEMENT POPULAIRE, PUTSCH MILITAIRE, INSURRECTION, REBELLION, REVOLUTION, MUTINERIE, PRISE DE POUVOIR PAR DES MILITAIRES OU DES USURPATEURS ;',
-                'MOUVEMENTS POPULAIRES PRENANT LES PROPORTIONS D’UN SOULEVEMENT POPULAIRE ;',
-                'PROCLAMATION DE LA LOI MARTIALE, ETAT DE SIEGE OU ETAT D’URGENCE AINSI QUE TOUT EVENEMENT OU CAUSE CONDUISANT A LA PROCLAMATION OU AU MAINTIEN DE LA LOI MARTIALE OU D’UN ETAT DE SIEGE, OU ENTRAINANT UN CHANGEMENT DE GOUVERNEMENT OU DE CHEF D’ETAT ;',
-                 'EXPROPRIATION DEFINITIVE OU PROVISOIRE PAR SUITE DE CONFISCATION, REQUISITION ORDONNEE PAR TOUTE AUTORITE PUBLIQUE ;',
+                'GUERRE, GUERRE CIVILE OU ETAT DE GUERRE, QUE LA GUERRE AIT ETE DECLAREE OU NON, INVASION, ACTES QUELCONQUES D’ENNEMIS ETRANGERS, HOSTILITES OU ACTES EQUIVALENTS A DES OPERATIONS DE GUERRE.',
+                'MUTINERIE, SOULEVEMENT POPULAIRE, PUTSCH MILITAIRE, INSURRECTION, REBELLION, REVOLUTION, MUTINERIE, PRISE DE POUVOIR PAR DES MILITAIRES OU DES USURPATEURS.',
+                'MOUVEMENTS POPULAIRES PRENANT LES PROPORTIONS D’UN SOULEVEMENT POPULAIRE.',
+                'PROCLAMATION DE LA LOI MARTIALE, ETAT DE SIEGE OU ETAT D’URGENCE AINSI QUE TOUT EVENEMENT OU CAUSE CONDUISANT A LA PROCLAMATION OU AU MAINTIEN DE LA LOI MARTIALE OU D’UN ETAT DE SIEGE, OU ENTRAINANT UN CHANGEMENT DE GOUVERNEMENT OU DE CHEF D’ETAT.',
+                 'EXPROPRIATION DEFINITIVE OU PROVISOIRE PAR SUITE DE CONFISCATION, REQUISITION ORDONNEE PAR TOUTE AUTORITE PUBLIQUE.',
                 
                  ].map(text => ({
     text,
@@ -634,21 +821,18 @@ Si l’Assureur allègue qu’en raison du présent avenant, une perte, un domma
       style: 'headerCenter',
       pageBreak: 'before'
     },
-    { text: 'I. EXCLUSIONS', style: 'subSectionTitle' }
+    { text: 'EXCLUSIONS', style: 'subSectionTitle' ,  alignment: 'center' }
   ]
 },
 // Suite des exclusions
 {
   ul: [
-                'ACTE DE QUELQUES NATURES QUE CE SOIT VISANT A RENVERSER OU INFLUENCER TOUT OU PARTIE DU GOUVERNEMENT OU DES AUTORITES LOCALES, PAR UN RECOURS A LA FORCE, A LA PEUR OU A LA VIOLENCE ET PRENANT LA DIMENSION D’UNE REVOLUTION ;',
-                'PERTES, DOMMAGES, FRAIS ET DEPENSES OCCASIONNEES DIRECTEMENT OU INDIRECTEMENT, PAR CONTAMINATION CHIMIQUE OU BIOLOGIQUE OU MISSILES, BOMBES, GRENADES, EXPLOSIFS OU N’IMPORTE QUELLE MUNITION ;',
-                 'LES DOMMAGES IMMATERIELS NOTAMMENT LES PERTES FINANCIERES, LES PERTES D’EXPLOITATION, LES PERTES INDIRECTES, LES PERTES D’USAGE, LA PRIVATION DE JOUISSANCE, LES PERTES DE LOYERS, LES PERTES DE MARCHE ;',
-                'LES DOMMAGES CAUSES AUX VERRES, VITRES OU GLACES FAISANT PARTIE DU BATIMENT A MOINS QU\'ILS NE SOIENT DUS A UN INCENDIE OU A UNE EXPLOSION ;',
-                'TOUT VOL AVEC OU SANS EFFRACTION, PILLAGE, MISE A SAC ET CAMBRIOLAGES ;',
-                'LES PERTES DE LIQUIDES ;',
-                'EXPROPRIATION DEFINITIVE OU PROVISOIRE PAR SUITE DE CONFISCATION, REQUISITION ORDONNEE PAR TOUTE AUTORITE PUBLIQUE ;',
-                'PERTES, DOMMAGES, FRAIS ET DEPENSES OCCASIONNEES DIRECTEMENT OU INDIRECTEMENT, PAR CONTAMINATION CHIMIQUE OU BIOLOGIQUE OU MISSILES, BOMBES, GRENADES, EXPLOSIFS OU N’IMPORTE QUELLE MUNITION ;',
-                'LES DOMMAGES CAUSES AUX VERRES, VITRES OU GLACES FAISANT PARTIE DU BATIMENT A MOINS QU\'ILS NE SOIENT DUS A UN INCENDIE OU A UNE EXPLOSION ;',
+                'ACTE DE QUELQUES NATURES QUE CE SOIT VISANT A RENVERSER OU INFLUENCER TOUT OU PARTIE DU GOUVERNEMENT OU DES AUTORITES LOCALES, PAR UN RECOURS A LA FORCE, A LA PEUR OU A LA VIOLENCE ET PRENANT LA DIMENSION D’UNE REVOLUTION.',
+                'PERTES, DOMMAGES, FRAIS ET DEPENSES OCCASIONNEES DIRECTEMENT OU INDIRECTEMENT, PAR CONTAMINATION CHIMIQUE OU BIOLOGIQUE OU MISSILES, BOMBES, GRENADES, EXPLOSIFS OU N’IMPORTE QUELLE MUNITION.',
+                 'LES DOMMAGES IMMATERIELS NOTAMMENT LES PERTES FINANCIERES, LES PERTES D’EXPLOITATION, LES PERTES INDIRECTES, LES PERTES D’USAGE, LA PRIVATION DE JOUISSANCE, LES PERTES DE LOYERS, LES PERTES DE MARCHE.',
+                'LES DOMMAGES CAUSES AUX VERRES, VITRES OU GLACES FAISANT PARTIE DU BATIMENT A MOINS QU\'ILS NE SOIENT DUS A UN INCENDIE OU A UNE EXPLOSION.',
+                'TOUT VOL AVEC OU SANS EFFRACTION, PILLAGE, MISE A SAC ET CAMBRIOLAGES.',
+                'LES PERTES DE LIQUIDES.',
                 'LES DOMMAGES AUTRES QUE CEUX D’INCENDIE OU D’EXPLOSIONS CAUSES AUX MARCHANDISES REFRIGEREES PAR L’INTERRUPTION DE FONCTIONNEMENT DE L’INSTALLATION FRIGORIFIQUE.'
               ].map(text => ({  text,
                 bold: true,
@@ -657,7 +841,7 @@ Si l’Assureur allègue qu’en raison du présent avenant, une perte, un domma
                 margin: [0, 0, 0, 10],
                 style: 'paragraph', }))
             },
-            { text: 'II. DISPOSITIONS SPECIALES EN CAS DE SINISTRE', style: 'subSectionTitle' },
+            { text: ' DISPOSITIONS SPECIALES EN CAS DE SINISTRE', style: 'subSectionTitle'},
             {
               text: `L'assuré s'engage, en cas de sinistre, à accomplir dans les délais réglementaires auprès des Autorités, les démarches relatives à l'indemnisation prévue par la législation en vigueur.
 L'indemnité à la charge de l'Assureur ne sera versée à l'Assuré que sur le vu du récépissé délivré par l'autorité compétente.
@@ -665,7 +849,7 @@ Dans le cas où, l'Assuré serait appelé à recevoir une indemnité de la part 
               style: 'paragraph',
               alignment: 'justify'
             },
-            { text: 'III. RESILIATION', style: 'subSectionTitle' },
+            { text: ' RESILIATION', style: 'subSectionTitle',  alignment: 'center' },
             {
               text: `Indépendamment des autres cas de résiliation prévus au contrat, l’Assureur et l’Assuré se réservent la faculté de résilier la présente extension de garantie à tout moment.
 La résiliation prendra effet sept jours après réception par l’assuré ou l’Assureur d’une notification faite par lettre recommandée ou par acte extrajudiciaire.`,
@@ -678,22 +862,33 @@ La résiliation prendra effet sept jours après réception par l’assuré ou l�
       style: 'headerCenter',
       pageBreak: 'before'
     },
-    { text: 'IV. LIMITE DE GARANTIE', style: 'subSectionTitle' },
+    { text: ' LIMITE DE GARANTIE', style: 'subSectionTitle',  alignment: 'center' },
   ]
 },
-           
-            {
-              text: `Il est expressément convenu entre les parties que l’extension de garantie, telle que définie au chapitre « Garantie » faisant l’objet de la présente annexe, est accordée suivant les conditions générales et particulières qui régissent le contrat de base ci-dessus référencé. Les garanties du présent avenant sont obligatoirement limitées à 25% des existences assurées.`,
+                      {text: [
+                `Il est expressément convenu entre les parties que l’extension de garantie, telle que définie au chapitre « Garantie » faisant l’objet de la présente annexe, est accordée suivant les conditions générales et particulières qui régissent le contrat de base ci-dessus référencé. Les garanties du présent avenant sont obligatoirement limitées à `,
+                { text: '25% des existences assurées.', bold: true },
+              ],
               style: 'paragraph',
               alignment: 'justify'
             },
-            { text: 'v. FRANCHISE', style: 'subSectionTitle' },
+
+            { text: ' FRANCHISE', style: 'subSectionTitle' ,  alignment: 'center'},
             {
-              text: `L'assuré conservera à sa charge, par sinistre et par établissement, une franchise égale à 10% du montant des dommages matériels directs subis avec un minimum de 5 000 dinars et un maximum de 75 000 dinars.
-Cette franchise sera déduite du montant de l'indemnité qui aurait été versée à l'assuré en l'absence de cette franchise.`,
+              text: [
+                `L'assuré conservera à sa charge, par sinistre et par établissement, une franchise égale à `,
+                { text: '10%', bold: true },
+                ` du montant des dommages matériels directs subis avec un minimum de `,
+                { text: '5 000 dinars', bold: true },
+                ` et un maximum de `,
+                { text: '75 000 dinars', bold: true },
+                `. 
+            Cette franchise sera déduite du montant de l'indemnité qui aurait été versée à l'assuré en l'absence de cette franchise.`
+              ],
               style: 'paragraph',
               alignment: 'justify'
             },
+
             {
               columns: [
                 { text: 'Le Souscripteur', alignment: 'left', margin: [0, 20, 0, 0], fontSize: 10 },
@@ -720,11 +915,21 @@ Cette franchise sera déduite du montant de l'indemnité qui aurait été versé
             },
             {
               ol: [
-                {
-                  text: "L'assureur garantit l'assuré contre les pertes indirectes qu'il peut être amené à supporter à la suite d'un sinistre incendie ou explosions ayant causé aux biens assurés des dommages couverts par la présente extension. Cette garantie ne s'applique en aucun cas aux risques suivants :",
-                  style: 'paragraph',
-                  alignment: 'justify'
-                },
+                  {
+                    stack: [
+                      {
+                        text: "L'assureur garantit l'assuré contre les pertes indirectes qu'il peut être amené à supporter à la suite d'un sinistre incendie ou explosions ayant causé aux biens assurés des dommages couverts par la présente extension.",
+                        style: 'paragraph',
+                        alignment: 'justify'
+                      },
+                      {
+                        text: "Cette garantie ne s'applique en aucun cas aux risques suivants :",
+                        style: 'paragraph',
+                        alignment: 'justify',
+                        margin: [0, 5, 0, 0] // espace avant
+                      }
+                    ]
+                  },
                 {
                   ul: [
                     'Risque de responsabilité',
@@ -734,8 +939,13 @@ Cette franchise sera déduite du montant de l'indemnité qui aurait été versé
                   ].map(text => ({ text, style: 'paragraph', alignment: 'justify' }))
                 },
                 "En cas de sinistre, l'assureur paiera à l'assuré une somme égale au pourcentage convenu aux conditions particulières de l'indemnité qui lui sera versée au titre du contrat auquel est annexée la présente extension pour les dommages causés aux bâtiments, matériels et marchandises.",
-                "La garantie des pertes indirectes sera de plein droit suspendue pendant le chômage ou la Cessation d'affaires de l'établissement assuré et l'assuré aura alors droit au remboursement de la portion de prime afférente à la période de suspension. Toutefois, l'indemnité sera due si le sinistre survient pendant une période de chômage où l'assuré continue à payer son personnel et si cette période n'excède pas une durée de 30 jours sans interruption."
+                "La garantie des pertes indirectes sera de plein droit suspendue pendant le chômage ou la Cessation d'affaires de l'établissement assuré et l'assuré aura alors droit au remboursement de la portion de prime afférente à la période de suspension."
               ].map(item => typeof item === 'string' ? { text: item, style: 'paragraph', alignment: 'justify' } : item)
+            },
+               { 
+              text: " Toutefois, l'indemnité sera due si le sinistre survient pendant une période de chômage où l'assuré continue à payer son personnel et si cette période n'excède pas une durée de 30 jours sans interruption.", 
+               style: 'paragraph',
+              alignment: 'justify' 
             },
             {
               columns: [
@@ -757,7 +967,7 @@ Cette franchise sera déduite du montant de l'indemnité qui aurait été versé
               pageBreak: 'before'
             },
             { 
-              text: 'CLAUSE REMBOURSEMENT DES HONORAIRES', 
+              text: 'CLAUSE REMBOURSEMENT DES HONORAIRES D\'EXPERT', 
               style: 'sectionTitle', 
               alignment: 'center' 
             },
@@ -1140,15 +1350,82 @@ La présente extension s’applique exclusivement aux sinistres dépassant 10.00
       }
     };
 
-    return new Promise((resolve, reject) => {
-      try {
-        const pdfDocGenerator = pdfMake.createPdf(docDefinition as TDocumentDefinitions);
-        pdfDocGenerator.getBlob((blob: Blob) => resolve(blob));
-      } catch (error) {
-        reject(error);
+    // 2. Générer le PDF principal
+   const mainPdfBytes = await new Promise<Uint8Array>((resolve) => {
+    pdfMake.createPdf(docDefinition).getBuffer(resolve);
+  });
+
+  // 3. Fusionner avec les clausiers sélectionnés
+  const mergedPdfBytes = await this.mergeContractWithClausiers(mainPdfBytes, data);
+
+  // 4. Retourner le Blob fusionné - CORRECTION
+  return new Blob([new Uint8Array(mergedPdfBytes)], { type: 'application/pdf' });
+}
+
+
+private async mergeContractWithClausiers(mainPdfBytes: Uint8Array, data: any): Promise<Uint8Array> {
+  try {
+    const selectedClauseIds = data.clauseIds || [];
+    console.log("Selected IDs:", selectedClauseIds);
+    console.log("Available clausiers:", data.clausiers);
+
+
+    if (selectedClauseIds.length === 0) return mainPdfBytes;
+
+    const clausierPdfs: Uint8Array[] = [];
+
+    for (const clausierId of selectedClauseIds) {
+    const clausier = data.clausiers.find((c: any) => c.id == clausierId);
+
+      if (clausier?.file) {
+        const pdfBytes = this.base64ToUint8Array(clausier.file);
+        clausierPdfs.push(pdfBytes);
       }
-    });
+    }
+
+    if (clausierPdfs.length === 0) return mainPdfBytes;
+
+    const { PDFDocument } = await import('pdf-lib');
+    const mergedPdf = await PDFDocument.create();
+
+    // CONTRACT
+    const mainPdfDoc = await PDFDocument.load(mainPdfBytes);
+    const mainPages = await mergedPdf.copyPages(mainPdfDoc, mainPdfDoc.getPageIndices());
+    mainPages.forEach(p => mergedPdf.addPage(p));
+
+    // CLAUSIERS
+    for (const pdfBytes of clausierPdfs) {
+      const pdfDoc = await PDFDocument.load(pdfBytes);
+
+      if (pdfDoc.getPageCount() === 0) {
+        console.warn("Clausier ignoré : PDF vide ou invalide");
+        continue;
+      }
+
+      const pages = await mergedPdf.copyPages(pdfDoc, pdfDoc.getPageIndices());
+      pages.forEach(page => mergedPdf.addPage(page));
+    }
+
+    return await mergedPdf.save();
+
+  } catch (error) {
+    console.error("Erreur fusion PDFs:", error);
+    return mainPdfBytes;
   }
+}
+
+private base64ToUint8Array(base64: string): Uint8Array {
+  // Enlever header si présent
+  const cleaned = base64.includes(',') ? base64.split(',')[1] : base64;
+
+  const binaryString = atob(cleaned);
+  const bytes = new Uint8Array(binaryString.length);
+
+  for (let i = 0; i < binaryString.length; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+  return bytes;
+}
 
 
     private async prepareCotisationAnnuelle(data: any): Promise<any> {
@@ -1349,206 +1626,6 @@ const primeAvecTaxes = (primeNetteTotale + frais) * (taxes);
 }
 
 return primeTotale;}
-
-
-private prepareClausesCommunes(data: any): any[] {
-  const codeId = data?.adherent?.codeId || '-';
-const service = data?.service || '-';
-const numPolice = data?.numPolice || '-';
-    const headerClause = {
-        text: `Annexe au Contrat N° : ${codeId || '-'}/${data.service || '-'}/${data.numPolice || '-'}`,
-        style: 'headerCenter',
-       pageBreak: 'before' 
-    };
-
-    return [
-        // CLAUSE 1 : La règle proportionnelle
-        {
-            stack: [
-                headerClause,
-                { text: 'CLAUSES COMMUNES', style: 'clauseTitle' },
-                { text: 'La règle proportionnelle', style: 'clauseTitle' },
-                { 
-                    text: 'Indemnité réduite = dommage X valeur déclarée / valeur assurable',
-                    style: 'clauseText',
-                    bold: true
-                },
-                { 
-                    text: '1. Cas du sinistre total :',
-                    style: 'clauseText',
-                    bold: true,
-                    margin: [0, 10, 0, 5]
-                },
-                { 
-                    text: 'Un bien a une valeur déclarée de 30 000 dinars au jour du sinistre. Il n\'a été déclaré que pour une valeur de 20 000 dinars. La garantie de l\'assureur est limitée à la somme assurée. D\'où l\'indemnité = 30 000 x 20 000 / 30 000 = 20 000 dinars',
-                    style: 'clauseText'
-                },
-                { 
-                    text: '2. Cas du sinistre partiel :',
-                    style: 'clauseText',
-                    bold: true,
-                    margin: [0, 10, 0, 5]
-                },
-                { 
-                    text: 'S\'il y a sinistre partiel par exemple le bien n\'a été détruit que pour une partie, le dommage n\'est donc que de 15 000 dinars. Indemnité = 15 000 x 20 000 / 30 000 = 10 000 dinars',
-                    style: 'clauseText'
-                },
-                { text: 'Le Souscripteur', style: 'souscripteur' }
-            ]
-        },
-
-        // CLAUSE 2 : INSTALLATION ELECTRIQUES ORDINAIRES CONTROLEES
-        {
-            stack: [
-                { text: `Annexe au Contrat N° : ${codeId || '-'}/${data.service || '-'}/${data.numPolice || '-'}`, style: 'headerCenter', pageBreak: 'before' },
-                { text: 'INSTALLATION ELECTRIQUES ORDINAIRES CONTROLEES', style: 'clauseTitle'},
-                { 
-                    text: 'L\'adhérent déclare que :',
-                    style: 'clauseText',
-                    bold: true
-                },
-                { 
-                    text: 'a. Les installations électriques de forces et lumière sont conformes aux normes en vigueur ou à défaut aux règles de l\'Art ;',
-                    style: 'clauseText'
-                },
-                { 
-                    text: 'b. Les installations sont vérifiées une fois au moins par an par un organisme agréé ;',
-                    style: 'clauseText'
-                },
-                { 
-                    text: 'Bien entendu, chaque vérification doit porter sur la totalité des installations électriques soumise à cette vérification (circuits et matériels) et ne doit pas être limitée à des sondages.',
-                    style: 'clauseText',
-                    margin: [0, 5, 0, 10]
-                },
-                { 
-                    text: 'L\'adhérent s\'engage :',
-                    style: 'clauseText',
-                    bold: true
-                },
-                { 
-                    text: '1. À fournir, à l\'assureur un exemplaire des rapports annuels complets de vérification de ses installations électriques, établis par l\'organisme vérificateur',
-                    style: 'clauseText'
-                },
-                { 
-                    text: '2. À exécuter dans un délai maximal de trois mois les travaux d\'entretien ou les modifications qui auront été portés sur le rapport établi après la vérification',
-                    style: 'clauseText'
-                },
-                { 
-                    text: '3. À mettre les organes de protection générale (coupe-circuit ou disjoncteurs) hors d\'atteinte des personnes non qualifiées en les plaçant dans un local, une armoire, un coffret ou tout autre enceinte fermée à clé, et à ne confier la clé qu\'au personnel qualifié et responsable chargé du remplacement des fusibles ou du réarmement des relais des disjoncteurs',
-                    style: 'clauseText'
-                },
-                { 
-                    text: '4. À faire couper le courant force à la fermeture des ateliers. Pourra toutefois rester sous tension un circuit spécial alimentant uniquement les appareils à fonctionnement continu, mais seulement pendant le temps où il est nécessaire que ces appareils soient en fonctionnement.',
-                    style: 'clauseText'
-                },
-                { text: 'Le Souscripteur', style: 'souscripteur' }
-            ]
-        },
-
-        // CLAUSE 3 : EXTINCTEURS MOBILES
-        {
-            stack: [
-                { text: `Annexe au Contrat N° : ${codeId || '-'}/${data.service || '-'}/${data.numPolice || '-'}`, style: 'headerCenter', pageBreak: 'before' },
-                { text: 'EXTINCTEURS MOBILES', style: 'clauseTitle'},
-                { 
-                    text: 'L\'adhérent déclare que :',
-                    style: 'clauseText',
-                    bold: true
-                },
-                { 
-                    text: '1. Son établissement est pourvu d\'une installation d\'extincteurs mobiles mise en place conformément aux normes en vigueur par un installateur agréé.',
-                    style: 'clauseText'
-                },
-                { 
-                    text: '2. Il a pris connaissance de ces normes et s\'engage à s\'y conformer, notamment en ce qui concerne :',
-                    style: 'clauseText'
-                },
-                { 
-                    text: '• La qualité minimale de produits extincteurs',
-                    style: 'clauseText',
-                    margin: [10, 0, 0, 0]
-                },
-                { 
-                    text: '• Le nombre minimum d\'appareils et leur emplacement',
-                    style: 'clauseText',
-                    margin: [10, 0, 0, 0]
-                },
-                { 
-                    text: '• L\'entretien du matériel',
-                    style: 'clauseText',
-                    margin: [10, 0, 0, 0]
-                },
-                { 
-                    text: '• L\'entrainement du personnel',
-                    style: 'clauseText',
-                    margin: [10, 0, 0, 5]
-                },
-                { 
-                    text: '3. L\'installation est vérifiée au moins une fois par an par un organisme agréé ou par le fournisseur.',
-                    style: 'clauseText'
-                },
-                { 
-                    text: 'Faute par l\'adhérent de se conformer à ces déclarations, il sera fait application d\'une majoration du taux de la prime incendie de 10%.',
-                    style: 'clauseText',
-                    margin: [0, 10, 0, 0]
-                },
-                { text: 'Le Souscripteur', style: 'souscripteur' }
-            ]
-        },
-
-        // CLAUSE 4 : INTERDICTION DE FUMER
-        {
-            stack: [
-                { text: `Annexe au Contrat N° : ${codeId || '-'}/${data.service || '-'}/${data.numPolice || '-'}`, style: 'headerCenter', pageBreak: 'before' },
-                { text: 'INTERDICTION DE FUMER', style: 'clauseTitle'},
-                { 
-                    text: 'L\'adhérent déclare que :',
-                    style: 'clauseText',
-                    bold: true
-                },
-                { 
-                    text: 'II est formellement interdit de fumer dans toutes les parties de l\'établissement assuré (ou contenant des objets assurés) à la seule exception des locaux à usage d\'habitation, bureaux, réfectoires, cantines, salles des chaudières, ateliers séparés à usage d\'entretien mécanique ou des locaux exclusivement à usage de fumoirs.',
-                    style: 'clauseText'
-                },
-                { 
-                    text: 'Cette interdiction est signalée par des écriteaux judicieusement répartis à l\'intérieur et à l\'extérieur des locaux et l\'adhérent s\'engage à prendre toutes mesures en son pouvoir pour la faire respecter.',
-                    style: 'clauseText'
-                },
-                { text: 'Le Souscripteur', style: 'souscripteur' }
-            ]
-        },
-
-        // CLAUSE 5 : BALAYAGE QUOTIDIEN
-        {
-          stack: [
-    { text: `Annexe au Contrat N° : ${codeId || '-'}/${data.service || '-'}/${data.numPolice || '-'}`, style: 'headerCenter', pageBreak: 'before' },
-    { text: 'BALAYAGE QUOTIDIEN', style: 'clauseTitle' },
-    { 
-        text: 'L\'adhérent déclare que :',
-        style: 'clauseText',
-        bold: true
-    },
-    {
-        stack: [
-            {
-                text: 'Une fois au moins par journée de travail, les ateliers et magasins sont balayés et tous déchets et balayures sont transportés :',
-                style: 'clauseText'
-            },
-            {
-                ul: [
-                    'Soit au dehors à plus de 10m de ces ateliers ou magasins.',
-                    'Soit dans un local spécial contigu sans aucune communication avec les ateliers et magasins.'
-                ],
-                style: 'clauseText'
-            }
-        ]
-    },
-    { text: 'Le Souscripteur', style: 'souscripteur' }
-]
-
-        }
-    ];
-}
 
 private prepareTableauxGaranties(sections: any[]): any[] {
   if (!sections || sections.length === 0) {
@@ -1865,14 +1942,7 @@ private prepareSituationsRisque(sections: any[]): any[] {
 
 private prepareSectionsRC(rcConfigurations: any[], data: any): any[] {
   if (!rcConfigurations || rcConfigurations.length === 0) {
-    return [
-      {
-        stack: [
-          { text: 'RESPONSABILITÉ CIVILE EXPLOITATION', style: 'sectionTitle', pageBreak: 'before' },
-          { text: 'Aucune configuration de responsabilité civile disponible', style: 'paragraph', alignment: 'center' }
-        ]
-      }
-    ];
+    return []
   }
 
   // Section avec l'objet de garantie (affiché une seule fois)
@@ -2238,10 +2308,22 @@ private filtrerExclusionsSpecifiquesParGarantieParent(
     };
   }).filter(group => group.exclusionsUniques.size > 0);
 }
-
-// MÉTHODE POUR PRÉPARER LE CONTENU DES EXCLUSIONS GLOBALES (inchangée)
+ 
 private prepareExclusionsGlobalesContent(exclusionsGlobalesParGarantie: any[]): any[] {
   if (!exclusionsGlobalesParGarantie || exclusionsGlobalesParGarantie.length === 0) return [];
+
+  const ordreGaranties = ['INCENDIE', 'VOL', 'Dégâts des Eaux', 'Bris de Glaces'];
+
+  // 🔹 Fonction pour récupérer l'index selon un mapping plus permissif
+  const getIndexOrdre = (libelle: string) => {
+    const nom = libelle.toUpperCase().trim();
+    for (let i = 0; i < ordreGaranties.length; i++) {
+      if (nom.includes(ordreGaranties[i])) return i;
+    }
+    return ordreGaranties.length; // pour les garanties non définies → fin
+  };
+
+  exclusionsGlobalesParGarantie.sort((a, b) => getIndexOrdre(a.parent.libelle) - getIndexOrdre(b.parent.libelle));
 
   const content: any[] = [];
 
@@ -2504,4 +2586,31 @@ private prepareExclusionsContent(garantiesParParent: any[]): any[] {
     };
   });
 }
+private prepareExtensions(data: any) {
+  // 🔹 N'afficher les extensions que si le type de contrat est "Appel d'offre"
+  console.log(data.typeContrat)
+  if (data.typeContrat !== 'APPEL_D_OFFRE') {
+    return []; // ➜ Rien du tout
+  }
+
+  if (!data.extensions || data.extensions.length === 0) {
+    return []
+  }
+
+  const content: any[] = [
+    { text: 'EXTENSIONS', style: 'sectionTitle', margin: [0, 20, 0, 10], pageBreak: 'before' }
+  ];
+
+  data.extensions.forEach((ext: any, index: number) => {
+    content.push(
+      { text: `${index + 1}. ${ext.titre || '-'}`, style: 'subSectionTitle' },
+      { text: ext.texte || '-', style: 'paragraph', margin: [0, 5, 0, 15] }
+    );
+  });
+
+  return content;
+}
+
+
+
 }

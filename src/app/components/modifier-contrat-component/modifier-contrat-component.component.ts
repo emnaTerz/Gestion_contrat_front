@@ -83,7 +83,14 @@ interface RCExploitation {
   sectionIds?: number[]; // ← AJOUTER si nécessaire pour le mapping
   
 }
-
+interface ExtensionDTO {
+  titre: string;
+  texte: string;
+}
+export interface clausiersDTO {
+  nom: string;
+  id: number;
+}
 @Component({
   selector: 'app-modifier-contrat',
   standalone: true,
@@ -101,7 +108,9 @@ interface RCExploitation {
   styleUrls: ['./modifier-contrat-component.component.scss']
 })
 export class ModifierContratComponent implements OnInit {
-
+extensions: ExtensionDTO[] = [];
+selectedClausiersIds: number[] = [];
+clausiers: any[] = [];
 sousGarantiesWithDetails: SousGarantieWithDetails[] = [];
 rcExploitations: RCExploitation[] = [];
 currentRcExploitation: RCExploitation = this.createNewRcExploitation();
@@ -186,11 +195,12 @@ filteredExclusionsRC: any[] = [];
   steps = [
     { label: 'Informations générales' },
     { label: 'Préanbule' },
+    { label: 'Extensions' },
     { label: 'Situations de Risques' },
     { label: 'Garanties' },
     { label: 'Exclusions' },
     { label: 'Rc Exploitation' },
-
+    { label: 'Clausiers' }
   ];
     contratData: any = null;
    pdfUrl: SafeResourceUrl | null = null;
@@ -248,7 +258,14 @@ private prepareCurrentDataForPdf(): any {
 
   // 🔹 Préparation des garanties groupées par parent
   const garantiesParParent = this.prepareGarantiesParParent();
-
+const extensions = (this.extensions || [])
+    .filter(e => e.titre?.trim() || e.texte?.trim())
+    .map(e => ({
+      titre: e.titre?.trim() || '',
+      texte: e.texte?.trim() || ''
+    }));
+ const clauseIds = this.selectedClausiersIds || [];
+console.log(clauseIds);
   // ✅ Retour global des données prêtes pour le PDF
   return {
     numPolice: this.numPolice,
@@ -276,11 +293,58 @@ private prepareCurrentDataForPdf(): any {
     rcConfigurations,
 
     // 🔹 Garanties groupées par parent
-    garantiesParParent
+    garantiesParParent,
+    extensions,
+    clauseIds,
+    clausiers: this.clausiers,
+     
   };
   
 }
 
+addExtension() {
+  if (!this.extensions) this.extensions = [];
+  this.extensions.push({ titre: '', texte: '' });
+}
+
+removeExtension(index: number) {
+  this.extensions.splice(index, 1);
+}
+// navigation des steps
+prevStep() {
+  if (this.currentStep > 0) {
+    // Cas : step 2 Extensions, typeContrat n'est pas APPEL_D_OFFRE → revenir à 1
+    if (this.currentStep === 2 && this.typeContrat !== 'APPEL_D_OFFRE') {
+      this.currentStep = 1;
+    }
+    // Cas : step 3 Situations, typeContrat n'est pas APPEL_D_OFFRE → revenir à 1 (sauter 2)
+    else if (this.currentStep === 3 && this.typeContrat !== 'APPEL_D_OFFRE') {
+      this.currentStep = 1;
+    }
+    else {
+      this.currentStep--;
+    }
+  }
+}
+
+nextStep() {
+  // incrémente le step seulement si < max
+  const maxStep = this.getMaxStep();
+  if (this.currentStep < maxStep) {
+    // Si on est sur le step 1 (Préambule) et que le type de contrat n'est pas APPEL_D_OFFRE, on saute le step 2
+    if (this.currentStep === 1 && this.typeContrat !== 'APPEL_D_OFFRE') {
+      this.currentStep = 3; // passer directement aux situations
+    } else {
+      this.currentStep++;
+    }
+  }
+}
+
+// fonction pour déterminer le step max selon type de contrat
+getMaxStep(): number {
+  // Ici 6 est le dernier step RC Exploitation
+  return 7;
+}
 
 // ✅ Préparer les exclusions pour une garantie spécifique (existant + nouvelle)
 private prepareExclusionsForGarantie(garantie: GarantieComposant): any[] {
@@ -427,7 +491,7 @@ toggleModele() {
   }
 
    ngOnInit(): void {
- 
+  this.loadClausiers();
     this.loadSousGaranties().then(() => {
       this.route.params.subscribe(params => {
         this.numPolice = params['numPolice'];
@@ -435,14 +499,6 @@ toggleModele() {
           this.contratService.lockContrat(this.numPolice).subscribe({
             next: contrat => {
               this.contrat = contrat;
-             /*   const now = new Date(); // date locale
-this.startTime = now.getFullYear() + '-' +
-  String(now.getMonth()+1).padStart(2,'0') + '-' +
-  String(now.getDate()).padStart(2,'0') + 'T' +
-  String(now.getHours()).padStart(2,'0') + ':' +
-  String(now.getMinutes()).padStart(2,'0') + ':' +
-  String(now.getSeconds()).padStart(2,'0');
-console.log('Heure locale format ISO sans décalage:', this.startTime); */
 const now = new Date();
 const formatter = new Intl.DateTimeFormat('sv-SE', {
   timeZone: 'Africa/Tunis',
@@ -500,8 +556,21 @@ private checkLockStatus(): void {
       this.handleLockLost();
     }
   });
+  
 }
-
+loadClausiers() {
+  this.contratService.getAllClausiers().subscribe({
+    next: (data) => {
+      this.clausiers = data;
+      console.log('📋 Clausiers chargés:', this.clausiers);
+      console.log('🔄 Nombre de clausiers:', this.clausiers.length);
+      console.log('✅ IDs sélectionnés:', this.selectedClausiersIds);
+    },
+    error: (err) => {
+      console.error('❌ Erreur chargement clausiers', err);
+    }
+  });
+}
   // Ajouter cette méthode pour gérer la perte du verrou
   private handleLockLost(): void {
     // Arrêter le timer
@@ -645,9 +714,7 @@ ajouterExclusionRC() {
   });
 }
 
-/* getSousGarantieDetails(sousGarantieId: number): SousGarantieWithDetails | undefined {
-    return this.sousGarantiesWithDetails.find(sg => sg.id === sousGarantieId);
-  } */
+
  getSousGarantieDetails(sousGarantieId: number): SousGarantieWithDetails | undefined {
   // 🔥 CORRECTION: Convertir en number et gérer les types
   const id = Number(sousGarantieId);
@@ -696,7 +763,6 @@ loadContrat(numPolice: string) {
       this.fractionnement = contrat.fractionnement;
       this.codeRenouvellement = contrat.codeRenouvellement;
       
-      // 🔥 CORRECTION: Définir la branche AVANT de charger les sous-garanties
       this.branche = contrat.branche;
       
       this.service = contrat.service;
@@ -705,12 +771,10 @@ loadContrat(numPolice: string) {
       this.dateDebut = contrat.dateDebut;
       this.dateFin = contrat.dateFin;
       this.preambule = contrat.preambule || '';
-
-
-      // 🔥 CORRECTION: Charger les sous-garanties avec la branche du contrat
+      this.extensions = contrat.extensions || [];
+      this.selectedClausiersIds = contrat.clauseIds || [];
       this.loadSousGarantiesWithDetails().then(() => {
         
-        // Maintenant mapper les sections avec les sous-garanties disponibles
         this.situationRisques = (contrat.sections || []).map((section: SectionResponseDTO, index: number) => ({
           numPolice: this.numPolice,
           identification: section.identification,
@@ -787,9 +851,6 @@ isExclusionSelectedForGroup(garanties: GarantieComposant[], exclusionId: number)
 isExclusionSelected(garantie: GarantieComposant, exclusionId: number): boolean {
   return garantie.exclusionsIds?.includes(exclusionId) || false;
 }
-
-
-
 
 // Méthode optimisée pour charger les exclusions
 loadExclusionsForAllGarantiesOptimized() {
@@ -1216,12 +1277,6 @@ private loadExclusionsBySousGarantieFallback(garantie: GarantieComposant) {
 }
   removeGarantie(situation: SituationRisque, index: number) { situation.garanties.splice(index, 1); }
 
- 
-
-/*   getGarantieName(sousGarantieId: number): string {
-    const sg = this.sousGarantiesOptions.find(s => s.value === sousGarantieId);
-    return sg ? sg.label : '';
-  } */
 getGarantieName(sousGarantieId: number): string {
   // 🔥 CORRECTION: Convertir en number
   const id = Number(sousGarantieId);
@@ -1239,7 +1294,6 @@ getGarantieName(sousGarantieId: number): string {
 }
  
  submit() {
-
   // Déverrouiller le contrat avant soumission
   this.contratService.unlockContrat(this.numPolice, false, this.startTime).subscribe({
     next: () => {
@@ -1284,6 +1338,11 @@ getGarantieName(sousGarantieId: number): string {
         };
       });
 
+       const extensionsData = this.extensions?.map(ext => ({
+        titre: ext.titre,
+        texte: ext.texte
+      })) || []
+      const clauseIds = this.selectedClausiersIds; // ← Au lieu de this.selectedClausiers.map(...)
       // Construction du DTO complet
       const contratData: ContratDTO = {
         numPolice: this.numPolice,
@@ -1300,7 +1359,9 @@ getGarantieName(sousGarantieId: number): string {
         preambule: this.preambule,
         service: this.service,
         sections: sections,
-        rcConfigurations: rcConfigurations
+        rcConfigurations: rcConfigurations,
+        extensions: extensionsData,
+        clauseIds
       };
 
 
@@ -1835,4 +1896,14 @@ private initializeSituationSelectionForCurrentRc() {
   }
 
 }
+isClausierSelected(clausierId: number): boolean {
+  return this.selectedClausiersIds.includes(clausierId);
 }
+
+toggleClausierSelection(clausier: any) {
+  if (this.isClausierSelected(clausier.id)) {
+    this.selectedClausiersIds = this.selectedClausiersIds.filter(id => id !== clausier.id);
+  } else {
+    this.selectedClausiersIds.push(clausier.id);
+  }
+}}

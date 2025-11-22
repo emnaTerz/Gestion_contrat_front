@@ -1,5 +1,5 @@
 
-import { ContratService, Exclusion } from '@/layout/service/contrat';
+import { ContratService, ExtensionDTO } from '@/layout/service/contrat';
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { CardModule } from 'primeng/card';
@@ -11,6 +11,10 @@ import { CommonModule } from '@angular/common';
 import { MessageService } from 'primeng/api';
 import { PdfGeneratorService } from '@/layout/service/PdfGeneratorService';
 import { lastValueFrom } from 'rxjs';
+interface Exclusion {
+  id: number;
+  nom: string;
+}
 interface SousGarantieWithDetails {
   id: number;
   nom: string;
@@ -27,6 +31,7 @@ interface SousGarantieWithDetails {
   styleUrls: ['./landing.component.scss']
 })
 export class LandingComponent {
+    extensions: ExtensionDTO[] = [];
   displayModifyDialog: boolean = false;
   numPoliceInput: string = '';
   errorMessage: string = '';
@@ -38,7 +43,7 @@ export class LandingComponent {
 sousGarantiesWithDetails: SousGarantieWithDetails[] = [];
 exclusionsOptions: any[] = []; // tableau pour stocker toutes les exclusions du backend
   sections: any;
-
+clausiers: any[] = [];
 
   constructor(
     private router: Router, 
@@ -119,6 +124,7 @@ async onDownloadContrat() {
   try {
     await this.loadSousGarantiesWithDetails();
     await this.loadAllExclusions();
+    await this.loadClausiers();
 
     const exists = await lastValueFrom(this.contratService.checkContratExists(numPolice));
     if (!exists) {
@@ -189,6 +195,14 @@ private async prepareDataForPdf(contratData: any):  Promise<any>  {
   // Préparation des garanties groupées par parent
   const garantiesParParent = this.prepareGarantiesParParentForPdf(contratData.sections || []);
     const exclusionsRC = await this.prepareExclusionsRCForPdf(contratData.rcConfigurations || []);
+ const extensions = (contratData.extensions || [])
+  .filter((e: ExtensionDTO) => e.titre?.trim() || e.texte?.trim())
+  .map((e: ExtensionDTO) => ({
+    titre: e.titre?.trim() || '',
+    texte: e.texte?.trim() || ''
+  }));
+
+    console.log(extensions);
   return {
     // Informations de base
     numPolice: contratData.numPolice,
@@ -220,10 +234,24 @@ private async prepareDataForPdf(contratData: any):  Promise<any>  {
     // Structures principales
     sections: sections,
     rcConfigurations: rcConfigurations,
-    garantiesParParent: garantiesParParent
+    garantiesParParent: garantiesParParent,
+    extensions,
+    clauseIds: contratData.clauseIds || [],
+    clausiers: this.clausiers || []
   };
 } 
-
+loadClausiers() {
+  this.contratService.getAllClausiers().subscribe({
+    next: (data) => {
+      this.clausiers = data;
+      console.log('📋 Clausiers chargés:', this.clausiers);
+      console.log('🔄 Nombre de clausiers:', this.clausiers.length);
+    },
+    error: (err) => {
+      console.error('❌ Erreur chargement clausiers', err);
+    }
+  });
+}
 // 🔥 CORRECTION: Préparer les garanties pour le PDF
 private prepareGarantiesForPdf(garanties: any[]): any[] {
   if (!garanties || !Array.isArray(garanties)) return [];

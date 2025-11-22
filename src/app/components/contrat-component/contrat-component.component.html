@@ -123,9 +123,59 @@
         </div>
       </div>
     </div>
+<!-- Étape 1bis : Extensions (uniquement pour typeContrat = 'APPEL_D_OFFRE') -->
+<div *ngIf="currentStep === 2 && typeContrat === 'APPEL_D_OFFRE'" class="contrat-section">
+
+  <h3 class="section-title">📄 Extensions du contrat</h3>
+
+  <div 
+    *ngFor="let ext of extensions; let i = index"
+    class="extension-card"
+  >
+    <div class="extension-header">
+      <span class="extension-number">Extension {{ i + 1 }}</span>
+
+      <button pButton 
+              icon="pi pi-trash" 
+              class="p-button-rounded p-button-danger p-button-sm"
+              (click)="removeExtension(i)">
+      </button>
+    </div>
+
+    <div class="extension-body">
+
+      <label class="input-label">Titre :</label>
+      <input 
+        type="text" 
+        [(ngModel)]="ext.titre"
+        placeholder="Saisir le titre de l'extension"
+        class="input-text"
+      >
+
+      <label class="input-label">Texte :</label>
+      <textarea 
+        [(ngModel)]="ext.texte"
+        rows="3"
+        placeholder="Saisir le texte de l'extension"
+        class="input-textarea"
+      ></textarea>
+
+    </div>
+</div>
+ <button pButton 
+          icon="pi pi-plus" 
+          label="Ajouter une extension"
+          class="p-button-primary"
+          (click)="addExtension()">
+  </button>
+  <div style="margin-top: 10px; display: flex; gap: 1rem;">
+    <button pButton label="← Précédent" (click)="prevStep()"></button>
+    <button pButton label="Suivant →" (click)="nextStep()"></button>
+  </div>
+</div>
 
     <!-- Étape 2 : Situations -->
-    <div *ngIf="currentStep === 2">
+    <div *ngIf="currentStep === 3">
       <div class="contrat-section">
         <h3>Situations de risque</h3>
 
@@ -166,7 +216,7 @@
     </div>
 
     <!-- Étape 3 : Garanties -->
-    <div *ngIf="currentStep === 3">
+    <div *ngIf="currentStep === 4">
       <div class="contrat-section">
         <h3>Garanties par situation de risque</h3>
 
@@ -225,7 +275,7 @@
     </div>
 
     <!-- Étape 4 : Exclusions -->
-   <div *ngIf="currentStep === 4" class="contrat-section">
+   <div *ngIf="currentStep === 5" class="contrat-section">
       <h3>Exclusions par garantie</h3>
       
       <div *ngFor="let s of situationRisques; let i = index">
@@ -317,7 +367,7 @@
     </div>    
 
     <!-- Étape 5 : RC Exploitation -->
-    <div *ngIf="currentStep === 5" class="contrat-section">
+    <div *ngIf="currentStep === 6" class="contrat-section">
       <h3>RC Exploitation</h3>
 
       <!-- Objet de la garantie -->
@@ -506,16 +556,59 @@
 
       <!-- Navigation -->
       <div style="margin-top: 2rem; display: flex; gap: 1rem;">
-        <button pButton label="← Précédent" (click)="prevStep()"></button>
-        <button pButton label="Soumettre" (click)="submit()" 
-                class="p-button-success"></button>
+         <button pButton label="← Précédent" (click)="prevStep()"></button>
+        <button pButton label="Suivant →" (click)="nextStep()"></button>
       </div>
     </div>
     </div>
-  </div> <!-- Fin de contrat-container -->
+   <!-- Étape 7 : Sélection des Clausiers -->
+<div *ngIf="currentStep === 7" class="contrat-section">
+  <h3>Sélection des Clausiers</h3>
+  
+  <div class="clausier-selection">
+    <p class="section-subtitle">Choisissez les clausiers à intégrer dans votre contrat</p>
+    
+    <div *ngIf="clausiers.length > 0; else noClausiers" class="clausiers-grid">
+      <div *ngFor="let clausier of clausiers" 
+           class="clausier-card" 
+           [class.selected]="isClausierSelected(clausier.id)"
+           (click)="toggleClausierSelection(clausier)">
+        
+        <div class="clausier-checkbox">
+          <input 
+            type="checkbox" 
+            [checked]="isClausierSelected(clausier.id)"
+            (change)="toggleClausierSelection(clausier)"
+            (click)="$event.stopPropagation()">
+        </div>
+        
+        <div class="clausier-content">
+          <i class="pi pi-file" [class.has-file]="clausier.file"></i>
+          <span class="clausier-name">{{ clausier.nom }}</span>
+        </div>
+        
+        <div *ngIf="isClausierSelected(clausier.id)" class="selection-indicator">
+          <i class="pi pi-check"></i>
+        </div>
+      </div>
+    </div>
 
-  <!-- Sidebar PDF -->
-  <div class="pdf-sidebar" *ngIf="showModele">
+    <ng-template #noClausiers>
+      <div class="empty-state">
+        <i class="pi pi-inbox"></i>
+        <p>Aucun clausier disponible</p>
+      </div>
+    </ng-template>
+  </div>
+
+  <!-- Navigation -->
+  <div class="navigation-buttons">
+    <button pButton label="← Précédent" (click)="prevStep()"></button>
+    <button pButton label="Soumettre" (click)="submit()" class="p-button-success"></button>
+  </div>
+</div>
+  </div> <!-- Fin de contrat-container -->
+<div class="pdf-sidebar" *ngIf="showModele">
     <div class="pdf-container">
       <div class="pdf-header">
         <h3>Modèle de Contrat</h3>
@@ -545,5 +638,6 @@
         </div>
       </ng-template>
     </div>
+    
   </div>
 </div> <!-- Fin de contrat-main-container -->

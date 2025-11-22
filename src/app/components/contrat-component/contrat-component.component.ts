@@ -10,7 +10,7 @@ import { MultiSelectModule } from 'primeng/multiselect';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 import { CheckboxModule } from 'primeng/checkbox';
-import { Branche, CodeRenouvellement, ContratDTO, ContratService, Fractionnement, SousGarantie, TypeContrat } from '@/layout/service/contrat';
+import { Branche, CodeRenouvellement, ContratDTO, ContratService, ExtensionDTO, Fractionnement, SousGarantie, TypeContrat } from '@/layout/service/contrat';
 import { FileUploadModule } from 'primeng/fileupload';
 import { PdfGeneratorService } from '@/layout/service/PdfGeneratorService';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
@@ -117,6 +117,7 @@ interface SituationRisque {
   styleUrls: ['./contrat-component.component.scss']
 })
 export class ContratComponent implements OnInit {
+  extensions: ExtensionDTO[] = [];
   currentStep: number = 0;
   showModele = false;
   numPolice: string = '';
@@ -131,6 +132,8 @@ export class ContratComponent implements OnInit {
   dateFin: string = '';
   startTime: string = '';
   service: number = 0;
+  clausiers: any[] = [];
+selectedClausiers: any[] = [];
 preambule: string = '';
 rcExploitations: RcExploitation[] = [];
 currentRcExploitation: RcExploitation = this.createNewRcExploitation();
@@ -159,10 +162,12 @@ pdfLines: string[] = [];  // lignes extraites du PDF
   steps = [
     { label: 'Informations générales' },
     { label: 'Préambule' },
+    { label: 'Extension' },
     { label: 'Situations de Risques' },
     { label: 'Garanties' },
     { label: 'Exclusions' },
-    { label: 'RC Exploitation' }
+    { label: 'RC Exploitation' },
+    { label: 'Clausiers' }
   ];
 
   situationRisques: SituationRisque[] = [];
@@ -205,6 +210,15 @@ selectedSituationsName: string = '';
   constructor(private contratService: ContratService, private messageService: MessageService , private pdfService: PdfGeneratorService, private sanitizer: DomSanitizer, private router: Router) {}
 // In your component class
  pdfUrl: SafeResourceUrl | null = null;
+
+toggleModele() {
+  if (!this.showModele) {
+    // Préparer les données actuelles pour le PDF
+    const currentData = this.prepareCurrentDataForPdf();
+    this.generatePdf(currentData);
+  }
+  this.showModele = !this.showModele;
+}
   generatePdf(data: any) {
     this.pdfService.generateContratPDF(data).then(blob => {
       const blobUrl = URL.createObjectURL(blob);
@@ -219,19 +233,8 @@ selectedSituationsName: string = '';
       });
     });
   }
-toggleModele() {
-  if (!this.showModele) {
-    // Si contratData existe (après soumission), l'utiliser pour le PDF
-    if (this.contratData) {
-      this.generatePdf(this.contratData);
-    } else {
-      // Sinon, créer un objet temporaire avec les données actuelles
-      const currentData = this.prepareCurrentDataForPdf();
-      this.generatePdf(currentData);
-    }
-  }
-  this.showModele = !this.showModele;
-}
+
+
 
 // ✅ Méthode pour préparer les données actuelles pour le PDF (avant soumission)
 private prepareCurrentDataForPdf(): any {
@@ -271,6 +274,13 @@ private prepareCurrentDataForPdf(): any {
 
   // 🔹 Préparation des garanties groupées par parent (pour éviter les duplications)
   const garantiesParParent = this.prepareGarantiesParParent();
+ const extensions = (this.extensions || [])
+    .filter(e => e.titre?.trim() || e.texte?.trim())
+    .map(e => ({
+      titre: e.titre?.trim() || '',
+      texte: e.texte?.trim() || ''
+    }));
+     const clauseIds = this.selectedClausiers.map(clausier => clausier.id);
 
   // ✅ Retour global des données prêtes pour le PDF
   return {
@@ -298,7 +308,10 @@ private prepareCurrentDataForPdf(): any {
     rcConfigurations,
 
     // 🔹 NOUVEAU: Garanties groupées par parent (pour affichage unique des exclusions)
-    garantiesParParent
+    garantiesParParent,
+     extensions,
+     clauseIds,
+     clausiers: this.clausiers
   };
 }
 
@@ -438,6 +451,7 @@ this.startTime = now.getFullYear() + '-' +
     this.loadExclusionsRC();
     this.updateObjetDeLaGarantie();
      this.filteredExclusionsRC = [...this.exclusionsRC];
+      this.loadClausiers();
   }
 
 onPdfSelected(event: any) {
@@ -934,32 +948,7 @@ onGarantieChange(g: any) {
     return garantie.exclusionsIds?.includes(exclusionId) || false;
   }
 
-/*   toggleExclusion(garantie: GarantieSection, exclusionId: number) {
-    if (!garantie.exclusionsIds) garantie.exclusionsIds = [];
-    const index = garantie.exclusionsIds.indexOf(exclusionId);
-    if (index > -1) garantie.exclusionsIds.splice(index, 1);
-    else garantie.exclusionsIds.push(exclusionId);
-    garantie.exclusionsIds = [...garantie.exclusionsIds];
-     if (this.situationRisques.length > 0 && this.situationRisques[0].garanties.includes(garantie)) {
-    this.synchronizeExclusionsFromFirstSituation();
-  }
 
-  }
-
-synchronizeExclusionsFromFirstSituation() {
-  if (this.situationRisques.length > 1) {
-    const firstSituation = this.situationRisques[0];
-    
-    for (let i = 1; i < this.situationRisques.length; i++) {
-      const currentSituation = this.situationRisques[i];
-      
-      currentSituation.garanties.forEach((garantie, index) => {
-        const firstGarantie = firstSituation.garanties[index];
-        garantie.exclusionsIds = firstGarantie?.exclusionsIds ? [...firstGarantie.exclusionsIds] : [];
-      });
-    }
-  }
-} */
 toggleExclusion(garantie: GarantieSection, exclusionId: number) {
     if (!garantie.exclusionsIds) garantie.exclusionsIds = [];
     const index = garantie.exclusionsIds.indexOf(exclusionId);
@@ -1075,54 +1064,82 @@ synchronizeExclusionsByGarantieType(modifiedGarantie: GarantieSection) {
 getGarantieType(garantie: GarantieSection): number {
     return garantie.sousGarantieId;
 }
- nextStep() {
+
+nextStep() {
   this.sousGarantiesParParentCache.clear();
-    if (this.currentStep === 0) {
-      this.contratService.checkContratExists(this.numPolice).subscribe({
-        next: (exists) => {
-          if (exists) {
-            this.messageService.add({ 
-              severity: 'warn', 
-              summary: 'Contrat existant', 
-              detail: 'Ce contrat est déjà créé.' 
-            });
-          } else {
-            this.currentStep++; // Contrat n'existe pas → passage à l'étape 2
-          }
-        },
-        error: (err) => {
-          console.error('Erreur vérification contrat:', err);
+
+  if (this.currentStep === 0) {
+    // Vérification du contrat existant pour la première étape
+    this.contratService.checkContratExists(this.numPolice).subscribe({
+      next: (exists) => {
+        if (exists) {
           this.messageService.add({ 
-            severity: 'error', 
-            summary: 'Erreur', 
-            detail: 'Impossible de vérifier le contrat.' 
+            severity: 'warn', 
+            summary: 'Contrat existant', 
+            detail: 'Ce contrat est déjà créé.' 
           });
+        } else {
+          this.currentStep++; // Contrat n'existe pas → passage à l'étape suivante
         }
-      });
-    } else if (this.currentStep < this.steps.length - 1) {
+      },
+      error: (err) => {
+        console.error('Erreur vérification contrat:', err);
+        this.messageService.add({ 
+          severity: 'error', 
+          summary: 'Erreur', 
+          detail: 'Impossible de vérifier le contrat.' 
+        });
+      }
+    });
+    return;
+  }
+
+  // Gestion des autres steps
+  if (this.currentStep === 1) { // Préambule
+    if (this.typeContrat === 'APPEL_D_OFFRE') {
+      // Si c'est un appel d'offre → Step suivant (Step 2 = Situations)
       this.currentStep++;
+    } else {
+      // Sinon on saute Step Extensions → passer directement à Step 3
+      this.currentStep += 2;
+    }
+    return;
+  }
+
+  // Incrémentation normale pour les autres steps
+  if (this.currentStep < this.steps.length - 1) {
+    this.currentStep++;
+  }
+}
+
+
+
+    prevStep() {
+  this.sousGarantiesParParentCache.clear();
+
+  if (this.currentStep === 3) { // On est dans Situations de risque
+    if (this.typeContrat !== 'APPEL_D_OFFRE') {
+      // Si ce n'est pas un appel d'offre, on revient directement au Préambule (Step 1 → Step 0)
+      this.currentStep -= 2;
+      return;
     }
   }
 
-  prevStep() {
-    this.sousGarantiesParParentCache.clear();
-    if (this.currentStep > 0) this.currentStep--;
+  // Incrémentation normale pour les autres steps
+  if (this.currentStep > 0) {
+    this.currentStep--;
   }
+}
+
 get selectedSituationsNames(): string {
   if (!this.selectedSituations || this.selectedSituations.length === 0) return '';
   return this.selectedSituations.map(s => s.identification).join(', ');
 }
 
+
+
 submit() {
-  // VÉRIFICATION CRITIQUE: Avez-vous configuré des RC ?
-  if (this.rcExploitations.length === 0) {
-    this.messageService.add({
-      severity: 'error',
-      summary: 'Configuration manquante',
-      detail: 'Veuillez configurer au moins une RC Exploitation avant de soumettre le contrat.'
-    });
-    return;
-  }
+
 
   // Construction des sections AVEC garanties
   const sections = this.situationRisques.map((situation, index) => {
@@ -1197,7 +1214,24 @@ submit() {
   });
 
   const formattedStartTime = this.formatStartTimeForBackend(this.startTime);
+const extensionsPayload = (this.extensions || [])
+  .filter(e => e.titre?.trim() || e.texte?.trim())
+  .map(e => ({
+    titre: e.titre?.trim() || '',
+    texte: e.texte?.trim() || ''
+  }));
+console.log('Payload envoyé:', {
+  ...this.contratData,
+  extensions: extensionsPayload
+});
+ // Récupérer les IDs des clausiers sélectionnés
+  const clauseIds = this.selectedClausiers.map(clausier => clausier.id);
 
+  console.log('Payload envoyé:', {
+    ...this.contratData,
+    extensions: extensionsPayload,
+    clauseIds: clauseIds // ← Ajout des IDs des clausiers
+  });
   // Construction du contrat final - STOCKER dans contratData
   this.contratData = {
     numPolice: this.numPolice,
@@ -1214,7 +1248,9 @@ submit() {
     preambule: this.preambule,
     service:this.service,
     sections: sections,
-    rcConfigurations: rcConfigurations
+    rcConfigurations: rcConfigurations,
+    extensions: extensionsPayload,
+    clauseIds: clauseIds 
   };
 
   // Envoyer au backend
@@ -1648,5 +1684,42 @@ getUncoveredSituations(): SituationRisque[] {
     !this.isSituationCoveredByRc(situation)
   );
 }
+// Ajouter une extension
+addExtension() {
+  this.extensions.push({ titre: '', texte: '' });
 }
- 
+
+// Supprimer une extension
+removeExtension(index: number) {
+  this.extensions.splice(index, 1);
+}
+
+// Exemple de validation ou récupération des données pour l'API
+getContratPayload() {
+  const payload = {
+    // ... tes autres données
+    extensions: this.extensions.filter(e => e.titre || e.texte) // ✅ utilise `this.`
+  };
+  return payload;
+}
+loadClausiers() {
+  this.contratService.getAllClausiers().subscribe({
+    next: (data) => this.clausiers = data,
+    error: (err) => console.error('Erreur chargement clausiers', err)
+  });
+  
+}
+
+isClausierSelected(clausierId: number): boolean {
+  return this.selectedClausiers.some(c => c.id === clausierId);
+}
+
+toggleClausierSelection(clausier: any) {
+  if (this.isClausierSelected(clausier.id)) {
+    this.selectedClausiers = this.selectedClausiers.filter(c => c.id !== clausier.id);
+  } else {
+    this.selectedClausiers.push(clausier);
+  }
+
+}
+}

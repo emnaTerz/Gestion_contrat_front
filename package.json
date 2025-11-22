@@ -23,6 +23,7 @@
         "@primeuix/themes": "^1.2.1",
         "@tailwindcss/postcss": "^4.1.11",
         "chart.js": "4.4.2",
+        "pdf-lib": "^1.17.1",
         "pdfmake": "^0.2.20",
         "primeclt": "^0.1.5",
         "primeflex": "^4.0.0",

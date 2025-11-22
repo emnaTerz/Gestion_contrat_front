@@ -1,7 +1,8 @@
 
  @use "sass:color"; 
- $green-mae: #008037;
-$color: #008037; 
+$green-mae: #78ad83;
+$color: #78ad83; 
+
 .garantie-container {
   padding: 20px;
   font-family: Arial, sans-serif;
@@ -14,6 +15,58 @@ h2 {
 .empty {
   font-style: italic;
   color: gray;
+}
+
+// Slider Navigation
+.slider-nav {
+  display: flex;
+  border-bottom: 2px solid #e0e0e0;
+  margin-bottom: 1.5rem;
+  background: #f8f9fa;
+  border-radius: 8px 8px 0 0;
+  overflow: hidden;
+}
+
+.slider-nav button {
+  flex: 1;
+  padding: 1rem 1.5rem;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 500;
+  color: #6c757d;
+  position: relative;
+}
+
+.slider-nav button.active {
+  background: $green-mae;
+  color: white;
+}
+
+.slider-nav button.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: color.adjust($green-mae, $lightness: -15%);
+}
+
+.slider-nav button:not(.active):hover {
+  background: #e9ecef;
+  color: #495057;
+}
+
+.tab-content {
+  animation: fadeIn 0.3s ease;
+  min-height: 400px;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .add-garantie {
@@ -41,7 +94,7 @@ h2 {
     gap: 5px;
 
     &:hover {
-    background-color: color.adjust($green-mae, $lightness: -10%);
+      background-color: color.adjust($green-mae, $lightness: -10%);
     }
 
     i {
@@ -51,14 +104,13 @@ h2 {
 }
 
 .garantie-list {
-display: flex;
+  display: flex;
   flex-wrap: wrap;
   gap: 15px;
 }
 
 .garantie-card {
- /*  flex: 1 1 200px; */
-   flex: 1 1 calc(25% - 15px);
+  flex: 1 1 calc(25% - 15px);
   border: 1px solid $green-mae;
   border-radius: 8px;
   background-color: #d9f0e5;
@@ -67,22 +119,16 @@ display: flex;
   transition: transform 0.2s;
   display: flex;
   align-items: center;
- justify-content: space-between;
+  justify-content: space-between;
+
   &:hover {
     transform: translateY(-2px);
   }
 }
-.garantie-card span {
-  flex: 1;  /* prend tout l’espace entre l’icône et la poubelle */
-  color: $green-mae;
-  font-weight: bold;
-  font-size: 16px;
-}
-
 
 .garantie-item {
   display: flex;
-  justify-content: space-between;  // ajoute ça
+  justify-content: space-between;
   align-items: center;
   width: 100%;
 
@@ -93,7 +139,6 @@ display: flex;
   }
 }
 
-
 .delete-icon {
   color: #d32f2f;
   font-size: 1.3rem;
@@ -103,24 +148,154 @@ display: flex;
   &:hover {
     color: #ff0000;
     transform: scale(1.2);
-  }}
-/* Popup overlay */
-.popup-overlay {
-  position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  background: rgba(0,0,0,0.5);
+  }
+}
+
+// Clausier Section - Styles adaptés avec la couleur MAE
+.clausier-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.clausier-card {
+  border: 1px solid $green-mae;
+  border-radius: 8px;
+  padding: 1rem;
+  background: white;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+  }
+}
+
+.clausier-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #eee;
+
+  h4 {
+    margin: 0;
+    color: $green-mae;
+    font-weight: bold;
+  }
+}
+
+.files-section {
+  h5 {
+    margin: 0 0 0.5rem 0;
+    color: $green-mae;
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+}
+
+.files-list {
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid #e9ecef;
+  border-radius: 4px;
+  padding: 0.5rem;
+}
+
+.file-item {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem;
+  margin-bottom: 0.25rem;
+  background: #f8f9fa;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+
+  &:hover {
+    background: #e9ecef;
+  }
+}
+
+.file-item i.pi-file {
+  margin-right: 0.5rem;
+  color: $green-mae;
+}
+
+.file-name {
+  flex: 1;
+  font-size: 0.85rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #333;
+}
+
+.file-actions {
+  display: flex;
+  gap: 0.5rem;
+
+  i {
+    cursor: pointer;
+    color: #6c757d;
+    transition: color 0.3s;
+    padding: 0.25rem;
+    border-radius: 3px;
+
+    &:hover {
+      color: $green-mae;
+      background: rgba(0, 128, 55, 0.1);
+    }
+  }
+}
+
+.no-files {
+  text-align: center;
+  color: #999;
+  font-style: italic;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 4px;
+}
+
+.add-file-section {
+  margin-top: 1rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid #eee;
+}
+
+.add-file-btn {
+  width: 100%;
+  padding: 0.75rem;
+  background: #f8f9fa;
+  border: 2px dashed #dee2e6;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s;
+  color: #6c757d;
+  font-weight: 500;
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  gap: 5px;
+
+  &:hover {
+    background: #e9ecef;
+    border-color: $green-mae;
+    color: $green-mae;
+  }
 }
-/* Popup overlay */
+
+// Popup overlay
 .popup-overlay {
   position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  background: rgba(0,0,0,0.6); // un peu plus sombre
+  top: 0; 
+  left: 0;
+  width: 100%; 
+  height: 100%;
+  background: rgba(0,0,0,0.6);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -128,7 +303,7 @@ display: flex;
   padding: 10px;
 }
 
-/* Popup content */
+// Popup content
 .popup-content {
   background: #fff;
   padding: 30px 40px;
@@ -165,7 +340,7 @@ display: flex;
   }
 }
 
-/* Footer des boutons */
+// Footer des boutons
 .popup-actions {
   display: flex;
   justify-content: center;
@@ -196,38 +371,6 @@ display: flex;
       &:hover {
         background-color: #bdbdbd;
       }
-    }
-  }
-}
-
-/* Animation */
-@keyframes popupFade {
-  0% { transform: scale(0.8); opacity: 0; }
-  100% { transform: scale(1); opacity: 1; }
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  .popup-content {
-    min-width: 90%;
-    padding: 20px;
-  }
-}
-:host ::ng-deep .p-dialog {
-  .field {
-    margin-bottom: 1rem;
-    
-    label {
-      display: block;
-      margin-bottom: 0.5rem;
-      font-weight: 500;
-    }
-    
-    input, select {
-      width: 100%;
-      padding: 0.5rem;
-      border: 1px solid #ccc;
-      border-radius: 4px;
     }
   }
 }

@@ -1,4 +1,4 @@
-import { ContratService, Garantie } from '@/layout/service/contrat';
+ import { ContratService, Garantie } from '@/layout/service/contrat';
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -25,34 +25,175 @@ import { ToastModule } from 'primeng/toast';
   styleUrl: './garantie-management.component.scss',
    providers: [ConfirmationService, MessageService]
 })
-
 export class GarantieManagementComponent implements OnInit {
   Branche = [
-  { label: 'M', value: 'M' },
-  { label: 'R', value: 'R' },
-  { label: 'I', value: 'I' },
-];
-displayBrancheDialog = false;
-selectedGarantieId: number | null = null;
-selectedBranche: string | null = null;
-    garanties: Garantie[] = [];
-
+    { label: 'M', value: 'M' },
+    { label: 'R', value: 'R' },
+    { label: 'I', value: 'I' },
+  ];
+  displayBrancheDialog = false;
+  selectedGarantieId: number | null = null;
+  selectedBranche: string | null = null;
+  garanties: Garantie[] = [];
+  activeTab: 'garanties' | 'clausiers' = 'garanties';
+  newClausierLibelle: string = '';
+  clausiers: any[] = [];
+  newGarantieLibelle: string = '';
     constructor(private contratService: ContratService, private confirmationService: ConfirmationService,private messageService: MessageService, private router: Router) {}
 
-ngOnInit(): void {
+  ngOnInit(): void {
     this.loadGaranties();
+    this.loadClausiers();
   }
+
+
+
+  onFileSelected(event: any) {
+    const files: FileList = event.target.files;
+    if (files.length > 0) {
+      const file = files[0];
+      
+      if (file.type !== 'application/pdf') {
+        this.messageService.add({ severity: 'warn', summary: 'Attention', detail: 'Veuillez sélectionner un fichier PDF' });
+        return;
+      }
+
+      if (!this.newClausierLibelle.trim()) {
+        this.messageService.add({ severity: 'warn', summary: 'Attention', detail: 'Veuillez saisir un nom pour le clausier' });
+        return;
+      }
+
+      this.contratService.createClausierWithPdf(file, this.newClausierLibelle.trim()).subscribe({
+        next: (response) => {
+          this.loadClausiers();
+          event.target.value = '';
+          this.newClausierLibelle = '';
+          this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Clausier créé avec succès !' });
+        },
+        error: (err) => {
+          console.error('Erreur lors de la création du clausier:', err);
+          this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Erreur lors de la création du clausier' });
+        }
+      });
+    }
+  }
+
+  loadClausiers() {
+    this.contratService.getAllClausiers().subscribe({
+      next: (data) => this.clausiers = data,
+      error: (err) => {
+        console.error('Erreur chargement clausiers', err);
+        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Erreur lors du chargement des clausiers' });
+      }
+    });
+  }
+
+  confirmDeleteClausier(id: number, nom: string) {
+    this.confirmationService.confirm({
+      message: `Voulez-vous vraiment supprimer le clausier "<strong>${nom}</strong>" ?`,
+      header: 'Confirmation de suppression',
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Oui',
+      rejectLabel: 'Non',
+      acceptButtonStyleClass: 'p-button-danger',
+      rejectButtonStyleClass: 'p-button-secondary',
+      accept: () => {
+        this.contratService.deleteClausier(id).subscribe({
+          next: () => {
+            this.loadClausiers();
+            this.messageService.add({ severity: 'info', summary: 'Supprimé', detail: 'Clausier supprimé avec succès' });
+          },
+          error: (err) => {
+            console.error('Erreur suppression clausier', err);
+            this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Erreur lors de la suppression du clausier' });
+          }
+        });
+      }
+    });
+  }
+
+downloadPdf(clausier: any) {
+  if (!clausier?.file) {
+    this.messageService.add({
+      severity: 'error',
+      summary: 'Erreur',
+      detail: 'Aucun fichier PDF dans ce clausier.'
+    });
+    return;
+  }
+
+  try {
+    // 🔹 Supprimer le header éventuel "data:application/pdf;base64,"
+    const base64 = clausier.file.includes(',')
+      ? clausier.file.split(',')[1]
+      : clausier.file;
+
+    // 🔹 Convertir base64 → Uint8Array
+    const byteCharacters = atob(base64);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+
+    // 🔹 Création du Blob PDF
+    const blob = new Blob([byteArray], { type: 'application/pdf' });
+
+    // 🔹 Création d'un lien de téléchargement
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+
+    // Nom du fichier
+    link.download = clausier.nom || 'clausier.pdf';
+
+    // 🔹 Télécharger
+    link.click();
+
+    // 🔹 Nettoyer
+    URL.revokeObjectURL(url);
+
+    this.messageService.add({
+      severity: 'success',
+      summary: 'Téléchargé',
+      detail: 'PDF téléchargé avec succès'
+    });
+
+  } catch (error) {
+    console.error("Erreur téléchargement PDF:", error);
+    this.messageService.add({
+      severity: 'error',
+      summary: 'Erreur',
+      detail: 'Impossible de télécharger le fichier'
+    });
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   loadGaranties() {
     this.contratService.getAllGaranties().subscribe(res => {
       this.garanties = res;
-      console.log('Garanties:', this.garanties);
     });
+  }
 
-}
-
-newGarantieLibelle: string = '';
-
+  
  addGarantie() {
   if (!this.newGarantieLibelle.trim()) {
     alert('Veuillez saisir le nom de la garantie');
@@ -80,7 +221,8 @@ newGarantieLibelle: string = '';
   });
 }
 
- confirmDelete(id: number, libelle: string) {
+
+  confirmDelete(id: number, libelle: string) {
     this.confirmationService.confirm({
       message: `Voulez-vous vraiment supprimer la garantie "<strong>${libelle}</strong>" ?`,
       header: 'Confirmation de suppression',
@@ -101,11 +243,11 @@ newGarantieLibelle: string = '';
       this.messageService.add({ severity: 'info', summary: 'Supprimée', detail: 'Garantie supprimée avec succès' });
     });
   }
-  openBrancheDialog(garantieId: number) {
-  this.selectedGarantieId = garantieId;
-  this.displayBrancheDialog = true;
-}
 
+  openBrancheDialog(garantieId: number) {
+    this.selectedGarantieId = garantieId;
+    this.displayBrancheDialog = true;
+  }
 onBrancheSelected() {
   if (this.selectedGarantieId && this.selectedBranche) {
     this.displayBrancheDialog = false;
@@ -117,4 +259,6 @@ onBrancheSelected() {
       }
     });
   }
-}}
+}
+}
+
