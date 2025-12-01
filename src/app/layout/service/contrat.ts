@@ -89,7 +89,13 @@ export interface Contrat {
   dateFin: string;
   status: string;
   clauseIds?: number[];
+
+  // 🌟 Nouveaux champs
+  nature: string;
+  creationDate: string; // LocalDateTime → string (ISO)
+  dateOffre: string;    // LocalDate → string
 }
+
 
 // Dans votre service/contrat.ts
 export interface RcConfigurationDTO {
@@ -110,20 +116,23 @@ export interface ContratDTO {
   fractionnement: Fractionnement;
   codeRenouvellement: CodeRenouvellement;
   branche: Branche;
-  nom_assure: string ;
+  nom_assure: string;
   codeAgence: string;
   typeContrat: TypeContrat;
   service: number;
   primeTTC?: number;
   dateDebut: string;
   dateFin: string;
+  nature?: string;     // 🔹 Ajouté
+  dateOffre?: string;  // 🔹 Ajouté
   sections: SectionDTO[];
   startTime: string;
-  preambule:string;
+  preambule: string;
   rcConfigurations: RcConfigurationDTO[];
-   extensions?: ExtensionDTO[]; 
-   clauseIds?: number[];
+  extensions?: ExtensionDTO[];
+  clauseIds?: number[];
 }
+
 export enum Fractionnement {
   ZERO = 'ZERO',
   UN = 'UN',
@@ -225,6 +234,8 @@ export interface ContratResponseDTO {
   rcConfigurations: RcConfigurationDTO[];
   extensions?: ExtensionDTO[];
   clauseIds?: number[];
+    nature: string;
+  dateOffre: string; 
 
 }
 export interface Tarif {

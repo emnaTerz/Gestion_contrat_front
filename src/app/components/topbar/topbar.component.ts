@@ -34,6 +34,10 @@ export class TopbarComponent {
       }
     });
   }
+navigateToContrat() {
+  // Ici on redirige vers la route Contrat
+  this.router.navigate(['/Contrat']);
+}
 
   updateRoleAndVisibility() {
     const role = localStorage.getItem('userRole');

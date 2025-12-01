@@ -28,6 +28,14 @@
           (click)="openDialog()" 
           title="tarif">
   </button>
+<!-- Nouveau bouton Ajouter / Modifier Contrat -->
+<button *ngIf="isAdmin"
+        pButton 
+        icon="pi pi-pencil"  
+        class="p-button-text"
+        (click)="navigateToContrat()"
+        title="Ajouter Contrat">
+</button>
 
   <!-- Nouveau bouton Garanties -->
   <button *ngIf="isAdmin" 

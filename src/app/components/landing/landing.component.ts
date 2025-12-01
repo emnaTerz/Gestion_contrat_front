@@ -201,8 +201,11 @@ private async prepareDataForPdf(contratData: any):  Promise<any>  {
     titre: e.titre?.trim() || '',
     texte: e.texte?.trim() || ''
   }));
-
-    console.log(extensions);
+  // 🔹 Ajout du console.log
+  console.log("===== Préparation PDF =====");
+  console.log("Extensions:", extensions);
+  console.log("ClauseIds:", contratData.clauseIds || []);
+  console.log("Clausiers:", this.clausiers || []);
   return {
     // Informations de base
     numPolice: contratData.numPolice,
@@ -225,7 +228,7 @@ private async prepareDataForPdf(contratData: any):  Promise<any>  {
     dateFin: contratData.dateFin,
     preambule: contratData.preambule || '',
     service: contratData.service || 0,
-
+    nature: contratData.nature,
     // Objet de la garantie RC
     objetDeLaGarantie: this.getDefaultObjetGarantie(contratData.adherent.nomRaison) ,
 

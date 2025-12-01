@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import pdfMake from 'pdfmake/build/pdfmake';
 import pdfFonts from 'pdfmake/build/vfs_fonts';
-import { TDocumentDefinitions } from 'pdfmake/interfaces';
 import { lastValueFrom } from 'rxjs';
 import { ContratService } from './contrat';
 
@@ -14,12 +13,6 @@ export class PdfGeneratorService {
   constructor( private contratService: ContratService) {
     
     (pdfMake as any).vfs = (pdfMake as any).vfs || (pdfFonts as any).vfs;
-  }
- private loadClausiers() {
-    this.contratService.getAllClausiers().subscribe({
-      next: (data) => this.clausiers = data,
-      error: (err) => console.error('Erreur chargement clausiers', err)
-    });
   }
   async generateContratPDF(data: any): Promise<Blob> {
 
@@ -39,15 +32,7 @@ export class PdfGeneratorService {
           margin: [0, 20, 0, 0] // Espace réservé pour le header
         };
       },
-      footer: function(currentPage: number, pageCount: number) {
-        return {
-       text: `Page ${currentPage.toString()} sur ${pageCount.toString()}`,
-       alignment: 'center',
-          fontSize: 9,
-          color: '#666666',
-          margin: [0, 0, 0, 25] // Espace réservé pour le footer
-        };
-      },
+    
       content: [
         // Première page (contenu existant)
         {
@@ -63,7 +48,7 @@ export class PdfGeneratorService {
                   [
                     {
                       stack: [
-                        { text: `Annexe au Contrat N° :${data.adherent.codeId || '-'}/${data.service|| '-'}/ ${data.numPolice || '-'}`, style: 'headerCenter' },
+                        { text: `Annexe au ${data.nature} N° :${data.adherent.codeId || '-'}/${data.service|| '-'}/ ${data.numPolice || '-'}`, style: 'headerCenter' },
                         { text: 'CLAUSES ET CONDITIONS', style: 'headerCenter' }
                       ],
                       border: [true, true, true, true],
@@ -119,7 +104,11 @@ export class PdfGeneratorService {
                     {
                       stack: [
                         { text: `• Date d'effet : ${this.formatDate(data.dateDebut)}`, style: 'infoText' },
-                        { text: `• Fin d'effet : ${this.formatDate(data.dateFin)}`, style: 'infoText' },
+                        /* { text: `• Fin d'effet : ${this.formatDate(data.dateFin)}`, style: 'infoText' }, */
+                          { 
+              text: `• ${data.codeRenouvellement?.toUpperCase() === 'T' ? 'Prochaine échéance' : 'Fin d\'effet'} : ${this.formatDate(data.dateFin)}`, 
+              style: 'infoText' 
+            },
                         { text: `• Nature du contrat : ${this.getNatureContrat(data.codeRenouvellement)}`, style: 'infoText' },
                         { text: `• Fractionnement : ${this.getFractionnement(data.fractionnement)}`, style: 'infoText' },
                       ],
@@ -217,7 +206,7 @@ export class PdfGeneratorService {
       {
         stack: [
           {
-            text: `Annexe au Contrat N° : ${data.adherent.codeId || '-'}/${data.service || '-'}/${data.numPolice || '-'}`,
+            text: `Annexe au ${data.nature} N° : ${data.adherent.codeId || '-'}/${data.service || '-'}/${data.numPolice || '-'}`,
             style: 'headerCenter',
             pageBreak: 'before'
           },
@@ -258,7 +247,7 @@ export class PdfGeneratorService {
             margin: [0, 10, 0, 10]
           },
             {
-            text: `Annexe au Contrat N° : ${data.adherent.codeId || '-'}/${data.service || '-'}/${data.numPolice || '-'}`,
+            text: `Annexe au ${data.nature} N° : ${data.adherent.codeId || '-'}/${data.service || '-'}/${data.numPolice || '-'}`,
             style: 'headerCenter',
             pageBreak: 'before'
           },
@@ -347,7 +336,7 @@ margin: [0, 5, 0, 5]
       {
         stack: [
           {
-            text: `Annexe au Contrat N° : ${data.adherent.codeId || '-'}/${data.service || '-'}/${data.numPolice || '-'}`,
+            text: `Annexe au ${data.nature} N° : ${data.adherent.codeId || '-'}/${data.service || '-'}/${data.numPolice || '-'}`,
             style: 'headerCenter',
             pageBreak: 'before'
           },
@@ -418,7 +407,7 @@ margin: [0, 5, 0, 5]
     }))
   },
   {
-    text: `Annexe au Contrat N° : ${data.adherent.codeId || '-'}/${data.service || '-'}/${data.numPolice || '-'}`,
+    text: `Annexe au ${data.nature} N° : ${data.adherent.codeId || '-'}/${data.service || '-'}/${data.numPolice || '-'}`,
     style: 'headerCenter',
     pageBreak: 'before'
   },
@@ -478,7 +467,7 @@ margin: [0, 5, 0, 5]
                 style: 'paragraph',}))
           },
                {
-            text: `Annexe au Contrat N° : ${data.adherent.codeId || '-'}/${data.service || '-'}/${data.numPolice || '-'}`,
+            text: `Annexe au ${data.nature} N° : ${data.adherent.codeId || '-'}/${data.service || '-'}/${data.numPolice || '-'}`,
             style: 'headerCenter',
             pageBreak: 'before'
           },
@@ -564,7 +553,7 @@ margin: [0, 5, 0, 5]
       )
         ? [
             {
-              text: `Annexe au Contrat N° : ${data.adherent.codeId || '-'}/${data.service || '-'}/${data.numPolice || '-'}`,
+              text: `Annexe au ${data.nature} N° : ${data.adherent.codeId || '-'}/${data.service || '-'}/${data.numPolice || '-'}`,
               style: 'headerCenter',
               pageBreak: 'before'
             },
@@ -615,7 +604,7 @@ Il faut entendre par inondation toute situation temporaire et générale pendant
                 style: 'paragraph', }))
             },
              {
-              text: `Annexe au Contrat N° : ${data.adherent.codeId || '-'}/${data.service || '-'}/${data.numPolice || '-'}`,
+              text: `Annexe au ${data.nature} N° : ${data.adherent.codeId || '-'}/${data.service || '-'}/${data.numPolice || '-'}`,
               style: 'headerCenter',
               pageBreak: 'before'
             },
@@ -662,7 +651,7 @@ Il faut entendre par inondation toute situation temporaire et générale pendant
       )
         ? [
             {
-              text: `Annexe au Contrat N° : ${data.adherent.codeId || '-'}/${data.service || '-'}/${data.numPolice || '-'}`,
+              text: `Annexe au ${data.nature} N° : ${data.adherent.codeId || '-'}/${data.service || '-'}/${data.numPolice || '-'}`,
               style: 'headerCenter',
               pageBreak: 'before'
             },
@@ -739,7 +728,7 @@ Les Conditions Générales et Particulières qui régissent la garantie « Incen
       )
         ? [
             {
-              text: `Annexe au Contrat N° : ${data.adherent.codeId || '-'}/${data.service || '-'}/${data.numPolice || '-'}`,
+              text: `Annexe au ${data.nature} N° : ${data.adherent.codeId || '-'}/${data.service || '-'}/${data.numPolice || '-'}`,
               style: 'headerCenter',
               pageBreak: 'before'
             },
@@ -817,7 +806,7 @@ Si l’Assureur allègue qu’en raison du présent avenant, une perte, un domma
 {
   stack: [
     {
-      text: `Annexe au Contrat N° : ${data.adherent.codeId || '-'}/${data.service || '-'}/${data.numPolice || '-'}`,
+      text: `Annexe au ${data.nature} N° : ${data.adherent.codeId || '-'}/${data.service || '-'}/${data.numPolice || '-'}`,
       style: 'headerCenter',
       pageBreak: 'before'
     },
@@ -858,7 +847,7 @@ La résiliation prendra effet sept jours après réception par l’assuré ou l�
             },
             { stack: [
     {
-      text: `Annexe au Contrat N° : ${data.adherent.codeId || '-'}/${data.service || '-'}/${data.numPolice || '-'}`,
+      text: `Annexe au ${data.nature} N° : ${data.adherent.codeId || '-'}/${data.service || '-'}/${data.numPolice || '-'}`,
       style: 'headerCenter',
       pageBreak: 'before'
     },
@@ -904,7 +893,7 @@ La résiliation prendra effet sept jours après réception par l’assuré ou l�
       )
         ? [
             {
-              text: `Annexe au Contrat N° : ${data.adherent.codeId || '-'}/${data.service || '-'}/${data.numPolice || '-'}`,
+              text: `Annexe au ${data.nature} N° : ${data.adherent.codeId || '-'}/${data.service || '-'}/${data.numPolice || '-'}`,
               style: 'headerCenter',
               pageBreak: 'before'
             },
@@ -962,7 +951,7 @@ La résiliation prendra effet sept jours après réception par l’assuré ou l�
       )
         ? [
             {
-              text: `Annexe au Contrat N° : ${data.adherent.codeId || '-'}/${data.service || '-'}/${data.numPolice || '-'}`,
+              text: `Annexe au ${data.nature} N° : ${data.adherent.codeId || '-'}/${data.service || '-'}/${data.numPolice || '-'}`,
               style: 'headerCenter',
               pageBreak: 'before'
             },
@@ -996,7 +985,7 @@ La présente extension s’applique exclusivement aux sinistres dépassant 10.00
       )
         ? [
             {
-              text: `Annexe au Contrat N° : ${data.adherent.codeId || '-'}/${data.service || '-'}/${data.numPolice || '-'}`,
+              text: `Annexe au ${data.nature} N° : ${data.adherent.codeId || '-'}/${data.service || '-'}/${data.numPolice || '-'}`,
               style: 'headerCenter',
               pageBreak: 'before'
             },
@@ -1023,7 +1012,7 @@ La présente extension s’applique exclusivement aux sinistres dépassant 10.00
         {
           stack: [
              { 
-            text: `Annexe au Contrat N° : ${data.adherent.codeId || '-'}/${data.service || '-'}/${data.numPolice || '-'}`,
+            text: `Annexe au ${data.nature} N° : ${data.adherent.codeId || '-'}/${data.service || '-'}/${data.numPolice || '-'}`,
             style: 'headerCenter',pageBreak: 'before'
           },
             { text: 'EXCLUSIONS COMMUNES', style: 'sectionTitle', margin: [0, 10, 0, 10] },
@@ -1357,12 +1346,42 @@ La présente extension s’applique exclusivement aux sinistres dépassant 10.00
 
   // 3. Fusionner avec les clausiers sélectionnés
   const mergedPdfBytes = await this.mergeContractWithClausiers(mainPdfBytes, data);
+   // 3. Ajouter la numérotation à TOUTES les pages du PDF fusionné
+    const finalPdfBytes = await this.addPageNumbers(mergedPdfBytes);
 
   // 4. Retourner le Blob fusionné - CORRECTION
-  return new Blob([new Uint8Array(mergedPdfBytes)], { type: 'application/pdf' });
+  return new Blob([new Uint8Array(finalPdfBytes)], { type: 'application/pdf' });
 }
 
+private async addPageNumbers(pdfBytes: Uint8Array): Promise<Uint8Array> {
+    const { PDFDocument, StandardFonts, rgb } = await import('pdf-lib');
+    
+    const pdfDoc = await PDFDocument.load(pdfBytes);
+    const pages = pdfDoc.getPages();
+    const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+    const totalPages = pages.length;
 
+    pages.forEach((page, index) => {
+        const { width, height } = page.getSize();
+        const pageNumber = (index + 1).toString();
+        const text = `Page ${pageNumber} sur ${totalPages}`;
+        const textWidth = font.widthOfTextAtSize(text, 9);
+        
+        // Positionner le texte plus haut pour créer l'espace visuel
+        // Augmenter la valeur Y pour monter le texte
+        const yPosition = 95; // Au lieu de 25, on monte à 60px du bas
+        
+        page.drawText(text, {
+            x: (width - textWidth) / 2, // Centré horizontalement
+            y: yPosition, // Position plus haute
+            size: 9,
+            font: font,
+            color: rgb(0.4, 0.4, 0.4),
+        });
+    });
+
+    return await pdfDoc.save();
+}
 private async mergeContractWithClausiers(mainPdfBytes: Uint8Array, data: any): Promise<Uint8Array> {
   try {
     const selectedClauseIds = data.clauseIds || [];
@@ -1507,7 +1526,7 @@ const primeAvecTaxes = (primeNetteTotale + frais) * (taxes);
                 {
                   stack: [
                     { 
-                      text: `Annexe au Contrat N° :${data.adherent.codeId || '-'}/${data.service|| '-'}/ ${data.numPolice || '-'}`, 
+                      text: `Annexe au ${data.nature} N° :${data.adherent.codeId || '-'}/${data.service|| '-'}/ ${data.numPolice || '-'}`, 
                       style: 'headerCenter',
                       alignment: 'center'
                     },
@@ -2610,7 +2629,4 @@ private prepareExtensions(data: any) {
 
   return content;
 }
-
-
-
 }

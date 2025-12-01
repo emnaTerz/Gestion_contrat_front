@@ -13,6 +13,7 @@ import { CheckboxModule } from 'primeng/checkbox';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { PdfGeneratorService } from '@/layout/service/PdfGeneratorService';
+import { AuthService } from '@/layout/service/auth';
 
 interface Exclusion {
   id: number;
@@ -130,7 +131,8 @@ currentRcExploitation: RCExploitation = this.createNewRcExploitation();
   dateDebut = '';
   dateFin = '';
   startTime = '';
-
+  nature: string = '';
+  dateOffre: string = '';
 
 
 // CORRIGER cette initialisation :
@@ -210,6 +212,7 @@ filteredExclusionsRC: any[] = [];
   private isLockedByCurrentUser = true;
   constructor(
     private contratService: ContratService,
+    private authService: AuthService,
     private messageService: MessageService,
     private route: ActivatedRoute,
     private cd: ChangeDetectorRef,
@@ -228,7 +231,6 @@ private prepareCurrentDataForPdf(): any {
     contiguite: situation.contiguite?.trim() || "Non spécifié",
     avoisinage: situation.avoisinage?.trim() || "Non spécifié",
     numPolice: this.numPolice,
-  
     garanties: this.prepareGarantiesForPdf(situation.garanties)
   }));
 
@@ -281,7 +283,7 @@ console.log(clauseIds);
     dateFin: this.dateFin,
     preambule: this.preambule,
     service: this.service,
-
+    nature: this.nature,
     // ✅ L'objet de la garantie est global
     objetDeLaGarantie: this.objetGarantieRc,
 
@@ -757,14 +759,16 @@ loadContrat(numPolice: string) {
   this.contratService.getContrat(numPolice).subscribe({
     next: (contrat: ContratResponseDTO) => {
       this.numPolice = contrat.numPolice;
-      this.nom_assure = contrat.adherent.nomRaison;
+      this.nom_assure = contrat.nom_assure;
       this.codeAgence = contrat.codeAgence;
       this.adherent = contrat.adherent;
       this.fractionnement = contrat.fractionnement;
       this.codeRenouvellement = contrat.codeRenouvellement;
       
       this.branche = contrat.branche;
-      
+      this.nature = contrat.nature;
+      this.dateOffre = contrat.dateOffre;
+
       this.service = contrat.service;
       this.primeTTC = contrat.primeTTC;
       this.typeContrat = contrat.typeContrat;
@@ -1355,6 +1359,8 @@ getGarantieName(sousGarantieId: number): string {
         typeContrat: this.typeContrat as TypeContrat,
         dateDebut: this.dateDebut,
         dateFin: this.dateFin,
+         nature: this.nature,      // 🟣 AJOUT
+        dateOffre: this.dateOffre,
         startTime: this.startTime,
         preambule: this.preambule,
         service: this.service,
@@ -1364,19 +1370,21 @@ getGarantieName(sousGarantieId: number): string {
         clauseIds
       };
 
+console.log('Contrat à envoyer:', contratData);
 
 
       // Appel du service pour modifier le contrat
       this.contratService.modifierContrat(contratData).subscribe({
+        
         next: (response) => {
       
-          this.router.navigate(['/Landing']);
+          this.navigateAccordingToRole();
         },
         error: (err) => {
           let errorMessage = 'Impossible de mettre à jour le contrat';
           if (err.error?.message) {
             errorMessage += ': ' + err.error.message;
-          }
+          } 
           this.messageService.add({
             severity: 'error',
             summary: 'Erreur',
@@ -1396,12 +1404,24 @@ getGarantieName(sousGarantieId: number): string {
   });
 }
  
-  cancel() {
-    this.contratService.unlockContrat(this.numPolice, true, this.startTime).subscribe({
-      next: () => this.router.navigate(['/Landing']),
-      error: () => this.router.navigate(['/Landing'])
-    });
+cancel() {
+  this.contratService.unlockContrat(this.numPolice, true, this.startTime).subscribe({
+    next: () => this.navigateAccordingToRole(),
+    error: () => this.navigateAccordingToRole()
+  });
+}
+
+private navigateAccordingToRole() {
+  // Exemple avec un service AuthService qui fournit le rôle
+  const role = this.authService.getRole(); // 'ADMIN' ou 'USER'
+
+  if (role === 'ADMIN') {
+    this.router.navigate(['/contrat-list']);
+  } else {
+    this.router.navigate(['/Landing']);
   }
+}
+
 
 
  isExclusionRCSelected(exclusionId: number): boolean {

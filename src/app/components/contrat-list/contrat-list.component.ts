@@ -1,5 +1,5 @@
 
-import { Contrat, ContratService } from '@/layout/service/contrat';
+import { Contrat, ContratService, ExtensionDTO } from '@/layout/service/contrat';
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -40,6 +40,8 @@ interface SousGarantieWithDetails {
   styleUrls: ['./contrat-list.component.scss']
 })
 export class ContratListComponent implements OnInit {
+    extensions: ExtensionDTO[] = [];
+clausiers: any[] = [];
 
   contrats: Contrat[] = [];
   filteredContrats: Contrat[] = [];
@@ -180,26 +182,14 @@ onGlobalFilter(event: any) {
   editContrat(contrat: Contrat) {
     this.router.navigate(['Modif_Contrat', contrat.numPolice]);
   }
-
-
-
-  // Fonction utilitaire pour sauvegarder le PDF
-  private downloadAndSavePdf(blob: Blob, numPolice: string) {
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `Contrat_${numPolice}.pdf`;
-    a.click();
-    window.URL.revokeObjectURL(url);
-  }
-  
   async downloadPdf(numPolice: string) {
    
   
     try {
       await this.loadSousGarantiesWithDetails();
       await this.loadAllExclusions();
-  
+      await this.loadClausiers();
+
       const exists = await lastValueFrom(this.contratService.checkContratExists(numPolice));
       if (!exists) {
         this.isDownloading = false;
@@ -269,6 +259,17 @@ onGlobalFilter(event: any) {
     // Préparation des garanties groupées par parent
     const garantiesParParent = this.prepareGarantiesParParentForPdf(contratData.sections || []);
       const exclusionsRC = await this.prepareExclusionsRCForPdf(contratData.rcConfigurations || []);
+      const extensions = (contratData.extensions || [])
+        .filter((e: ExtensionDTO) => e.titre?.trim() || e.texte?.trim())
+        .map((e: ExtensionDTO) => ({
+          titre: e.titre?.trim() || '',
+          texte: e.texte?.trim() || ''
+        }));
+        // 🔹 Ajout du console.log
+  console.log("===== Préparation PDF =====");
+  console.log("Extensions:", extensions);
+  console.log("ClauseIds:", contratData.clauseIds || []);
+  console.log("Clausiers:", this.clausiers || []);
     return {
       // Informations de base
       numPolice: contratData.numPolice,
@@ -291,7 +292,7 @@ onGlobalFilter(event: any) {
       dateFin: contratData.dateFin,
       preambule: contratData.preambule || '',
       service: contratData.service || 0,
-  
+      nature: contratData.nature,
       // Objet de la garantie RC
       objetDeLaGarantie: this.getDefaultObjetGarantie(contratData.adherent.nomRaison) ,
   
@@ -300,10 +301,24 @@ onGlobalFilter(event: any) {
       // Structures principales
       sections: sections,
       rcConfigurations: rcConfigurations,
-      garantiesParParent: garantiesParParent
+      garantiesParParent: garantiesParParent,
+         extensions,
+    clauseIds: contratData.clauseIds || [],
+    clausiers: this.clausiers || []
     };
   } 
-  
+  loadClausiers() {
+  this.contratService.getAllClausiers().subscribe({
+    next: (data) => {
+      this.clausiers = data;
+      console.log('📋 Clausiers chargés:', this.clausiers);
+      console.log('🔄 Nombre de clausiers:', this.clausiers.length);
+    },
+    error: (err) => {
+      console.error('❌ Erreur chargement clausiers', err);
+    }
+  });
+}
   // 🔥 CORRECTION: Préparer les garanties pour le PDF
   private prepareGarantiesForPdf(garanties: any[]): any[] {
     if (!garanties || !Array.isArray(garanties)) return [];

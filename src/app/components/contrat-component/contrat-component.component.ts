@@ -117,6 +117,8 @@ interface SituationRisque {
   styleUrls: ['./contrat-component.component.scss']
 })
 export class ContratComponent implements OnInit {
+  nature: string = '';
+  dateOffre: string = '';
   extensions: ExtensionDTO[] = [];
   currentStep: number = 0;
   showModele = false;
@@ -296,7 +298,7 @@ private prepareCurrentDataForPdf(): any {
     dateFin: this.dateFin,
     preambule: this.preambule,
     service: this.service,
-
+nature: this.nature,
     // ✅ L'objet de la garantie est global
     objetDeLaGarantie: this.objetGarantieRc,
 
@@ -1242,6 +1244,8 @@ console.log('Payload envoyé:', {
     codeRenouvellement: this.codeRenouvellement as CodeRenouvellement,
     branche: this.branche as Branche,
     typeContrat: this.typeContrat as TypeContrat,
+    nature: this.nature,
+  dateOffre: this.dateOffre,
     dateDebut: this.dateDebut,
     dateFin: this.dateFin,
     startTime: formattedStartTime,

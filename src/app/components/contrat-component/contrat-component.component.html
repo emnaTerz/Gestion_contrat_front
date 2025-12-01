@@ -30,10 +30,20 @@
           <small>Choisissez un fichier PDF pour remplir automatiquement les informations générales.</small>
         </div>
       </div>
+          
 
       <!-- Section Adhérent -->
       <div class="contrat-section">
         <h3>Informations générales</h3>
+        <!-- Nature du contrat -->
+          <div class="contrat-section">
+            <label for="nature">Nature du contrat :</label>
+            <select id="nature" [(ngModel)]="nature">
+              <option value="contrat">Contrat</option>
+              <option value="Offre">Offre</option>
+              <option value="Projet de contrat">Projet de contrat</option>
+            </select>
+          </div>
         <h4>Adhérent</h4>
         <label>Code Adhérent:</label>
         <input type="text" [(ngModel)]="adherent.codeId">
@@ -98,6 +108,8 @@
         <input type="date" [(ngModel)]="dateDebut">
         <label>Date de fin:</label>
         <input type="date" [(ngModel)]="dateFin">
+        <label>Date de l'offre:</label>
+        <input type="date" [(ngModel)]="dateOffre">
       </div>
 
       <!-- Bouton Suivant -->

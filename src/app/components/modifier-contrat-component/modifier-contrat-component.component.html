@@ -18,7 +18,12 @@
   <!-- Étape 0 -->
   <div *ngIf="currentStep === 0" class="contrat-section">
     <h3>Informations générales</h3>
-
+<label>Nature :</label>
+<select [(ngModel)]="nature">
+  <option value="Contrat">Contrat</option>
+  <option value="Offre">Offre</option>
+  <option value="Projet de contrat">Projet de contrat</option>
+</select>
     <h4>Adhérent</h4>
     <label>Code Adhérent:</label>
     <input type="text" [(ngModel)]="adherent.codeId">
@@ -66,6 +71,8 @@
     <input type="date" [(ngModel)]="dateDebut">
     <label>Date fin:</label>
     <input type="date" [(ngModel)]="dateFin">
+     <label>Date d'offre:</label>
+  <input type="date" [(ngModel)]="dateOffre">
 
     <div style="margin-top: 10px; display: flex; gap: 1rem;">
 <button pButton label="Suivant →" (click)="nextStep()"></button>

@@ -28,9 +28,9 @@ export const appRoutes: Routes = [
             { path: 'garanties', component: GarantieManagementComponent, canActivate: [AuthGuard], data: { expectedRole: 'ADMIN' } }, 
             { path: 'sous-garanties', component: SousGarantiesComponent, canActivate: [AuthGuard], data: { expectedRole: 'ADMIN' } }, 
             { path: 'users', component: UsersComponent, canActivate: [AuthGuard], data: { expectedRole: 'ADMIN' } },
-            { path: 'Contrat', component: ContratComponent, canActivate: [AuthGuard], data: { expectedRole: 'USER' } },
+            { path: 'Contrat', component: ContratComponent, canActivate: [AuthGuard], data: { expectedRole: ['USER', 'ADMIN'] } },
             {  path: 'contrat-list',   component: ContratListComponent, canActivate: [AuthGuard],  data: { expectedRole: ['USER', 'ADMIN'] } },
-            { path: 'Modif_Contrat/:numPolice', component: ModifierContratComponent, canActivate: [AuthGuard], data: { expectedRole: 'USER' } },
+            { path: 'Modif_Contrat/:numPolice', component: ModifierContratComponent, canActivate: [AuthGuard],  data: { expectedRole: ['USER', 'ADMIN'] } },
             { path: 'Landing', component: LandingComponent, canActivate: [AuthGuard], data: { expectedRole: 'USER' } },
             { path: 'force-reset-password', component: ForceResetPasswordComponent, canActivate: [AuthGuard], data: { expectedRole: ['USER', 'ADMIN'] }  },
 
