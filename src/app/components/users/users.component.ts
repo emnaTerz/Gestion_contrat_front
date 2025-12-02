@@ -12,6 +12,7 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { MessageService, ConfirmationService } from 'primeng/api';
 import { Router } from '@angular/router';
 import { ResetPasswordDTO, User, UserService } from '@/layout/service/UserService';
+import { MultiSelectModule } from 'primeng/multiselect';
 
 @Component({
   selector: 'app-users',
@@ -26,7 +27,8 @@ import { ResetPasswordDTO, User, UserService } from '@/layout/service/UserServic
     TagModule,
     ToastModule,
     ConfirmDialogModule,
-    DialogModule
+    DialogModule,
+    MultiSelectModule,
   ],
   templateUrl: './users.component.html',
   styleUrls: ['./users.component.scss'],
@@ -40,6 +42,12 @@ export class UsersComponent implements OnInit {
   selectedUser: User | null = null;   
   users: User[] = [];
   filteredUsers: User[] = [];
+  branchOptions = [
+  { label: 'MRP', value: 'M' },
+  { label: 'Incendie', value: 'I' },
+  { label: 'Risque Technique', value: 'Q' },
+  { label: 'MRH', value: 'B' },
+];
   globalFilter: string = '';
   loading: boolean = true;
   constructor(
@@ -56,6 +64,7 @@ export class UsersComponent implements OnInit {
     lastName: ['', Validators.required],
     email: ['', [Validators.required]],
     role: ['', Validators.required],
+    branches: [[]]
 
   });
  this.createForm = this.fb.group({
@@ -63,10 +72,17 @@ export class UsersComponent implements OnInit {
       lastName: ['', Validators.required],
       email: ['', [Validators.required]],
       role: ['', Validators.required],
+      branches: [[]]
     });
   this.loadUsers();
 }
-
+getBranchLabels(codes: string[]): string {
+  if (!codes || codes.length === 0) return 'N/A';
+  return codes
+    .map(code => this.branchOptions.find(option => option.value === code)?.label)
+    .filter(label => !!label)
+    .join(', ');
+}
 
 loadUsers() {
   const token = localStorage.getItem('token');

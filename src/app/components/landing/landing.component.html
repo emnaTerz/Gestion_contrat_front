@@ -12,7 +12,7 @@
   <!-- Actions avec cartes -->
  
   <div class="actions-grid">
-    <div class="action-card p-shadow-3" (click)="showModifyDialog()">
+    <div class="action-card p-shadow-3" (click)="showBranchDialogForModify()">
       <i class="pi pi-pencil pi-3x"></i>
       <h3>Mettre à jour Contrat</h3>
       <p>Modifiez les informations de vos contrats existants.</p>
@@ -31,6 +31,12 @@
     <h3>Liste des Contrats</h3>
     <p>Consultez la liste complète de vos contrats enregistrés.</p>
   </div>
+  <div class="action-card p-shadow-3" (click)="goToAttestation()">
+  <i class="pi pi-file-pdf pi-3x"></i>
+  <h3>Générer Attestation</h3>
+  <p>Créez et téléchargez une attestation.</p>
+</div>
+
   </div>
 
 <p-dialog  [(visible)]="displayModifyDialog" 
@@ -75,4 +81,81 @@
       </div>
     </form>
   </p-dialog>
+  <!-- Modale pour choisir la branche avant création de contrat -->
+<p-dialog header="Choisir une branche" [(visible)]="displayBranchDialog" 
+          [modal]="true" [closable]="true" [style]="{width: '400px'}">
+  <div class="field">
+    <label for="branche">Sélectionnez la branche :</label>
+    <select [(ngModel)]="selectedBranch" name="selectedBranch">
+      <option *ngFor="let b of getBranchesForDropdown()" [value]="b.value">
+        {{ b.label }}
+      </option>
+    </select>
+  </div>
+
+  <div class="flex justify-end mt-3">
+    <button pButton type="button" label="Annuler" class="p-button-text" (click)="displayBranchDialog=false"></button>
+    <button pButton type="button" label="Valider" class="p-button-success ml-2" [disabled]="!selectedBranch" (click)="goToSelectedBranch()"></button>
+  </div>
+</p-dialog>
+<p-dialog header="Choisir le code produit" [(visible)]="displayProductCodeDialog"
+          [modal]="true" [closable]="true" [style]="{width: '400px'}">
+  <div class="field">
+    <label for="productCode">Sélectionnez le code produit :</label>
+    <select [(ngModel)]="selectedProductCode" name="productCode">
+      <option *ngFor="let p of productCodeOptions" [value]="p.value">
+        {{ p.label }}
+      </option>
+    </select>
+  </div>
+
+  <div class="flex justify-end mt-3">
+    <button pButton type="button" label="Annuler" class="p-button-text" (click)="displayProductCodeDialog=false"></button>
+    <button pButton type="button" label="Valider" class="p-button-success ml-2"
+            [disabled]="!selectedProductCode" (click)="goToCreateContratWithProductCode()"></button>
+  </div>
+</p-dialog>
+
+<!-- Modale : choisir la branche avant modification -->
+<p-dialog header="Choisir une branche" 
+          [(visible)]="displayBranchDialogModify"
+          [modal]="true" [closable]="true" [style]="{width: '400px'}">
+  <div class="field">
+    <label for="selectedBranchForModify">Sélectionnez la branche :</label>
+    <select [(ngModel)]="selectedBranchForModify" name="selectedBranchForModify">
+      <option *ngFor="let b of getBranchesForDropdown()" [value]="b.value">
+        {{ b.label }}
+      </option>
+    </select>
+  </div>
+
+  <div class="flex justify-end mt-3">
+    <button pButton type="button" label="Annuler" class="p-button-text"
+            (click)="displayBranchDialogModify=false"></button>
+
+    <button pButton type="button" label="Suivant" class="p-button-success ml-2"
+            [disabled]="!selectedBranchForModify"
+            (click)="openModifyDialogAfterBranch()"></button>
+  </div>
+</p-dialog>
+<p-dialog header="Choisir le code produit" 
+          [(visible)]="displayProductDialogModify"
+          [modal]="true" [closable]="true" [style]="{width: '400px'}">
+  <div class="field">
+    <label for="productCode">Sélectionnez le code produit :</label>
+    <select [(ngModel)]="selectedProductCode" name="productCode">
+      <option *ngFor="let p of productCodeOptions" [value]="p.value">
+        {{ p.label }}
+      </option>
+    </select>
+  </div>
+
+  <div class="flex justify-end mt-3">
+    <button pButton type="button" label="Annuler" class="p-button-text" (click)="displayProductDialogModify=false"></button>
+    <button pButton type="button" label="Valider" class="p-button-success ml-2"
+            [disabled]="!selectedProductCode" (click)="onSubmitProductCodeModify()"></button>
+  </div>
+</p-dialog>
+
+
 </div>

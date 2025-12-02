@@ -30,12 +30,13 @@
   </button>
 <!-- Nouveau bouton Ajouter / Modifier Contrat -->
 <button *ngIf="isAdmin"
-        pButton 
-        icon="pi pi-pencil"  
+        pButton
+        icon="pi pi-pencil"
         class="p-button-text"
-        (click)="navigateToContrat()"
-        title="Ajouter Contrat">
+        (click)="openBranchDialogForAdmin()"
+        title="Créer Contrat">
 </button>
+
 
   <!-- Nouveau bouton Garanties -->
   <button *ngIf="isAdmin" 
@@ -138,4 +139,42 @@
       (click)="save()">
     </button>
   </ng-template>
+</p-dialog>
+
+<p-dialog header="Choisir la branche" [(visible)]="displayBranchDialog"
+          [modal]="true" [closable]="true" [style]="{width: '400px'}">
+  <div class="field">
+    <label for="branche">Sélectionnez la branche :</label>
+    <select [(ngModel)]="selectedBranch" name="selectedBranch">
+      <option *ngFor="let b of branchOptionsForDialog" [value]="b.value">
+        {{ b.label }}
+      </option>
+    </select>
+  </div>
+
+  <div class="flex justify-end mt-3">
+    <button pButton type="button" label="Annuler" class="p-button-text" (click)="displayBranchDialog=false"></button>
+    <button pButton type="button" label="Valider" class="p-button-success ml-2"
+            [disabled]="!selectedBranch" (click)="goToSelectedBranch()"></button>
+  </div>
+</p-dialog>
+<!-- Modale pour choisir le code produit (branche Q) -->
+<p-dialog header="Choisir le code produit" [(visible)]="displayProductCodeDialog"
+          [modal]="true" [closable]="true" [style]="{width: '400px'}">
+  <div class="field">
+    <label for="productCode">Sélectionnez le code produit :</label>
+    <select [(ngModel)]="selectedProductCode" name="productCode">
+      <option *ngFor="let p of productCodeOptions" [value]="p.value">
+        {{ p.label }}
+      </option>
+    </select>
+  </div>
+
+  <div class="flex justify-end mt-3">
+    <button pButton type="button" label="Annuler" class="p-button-text" 
+            (click)="displayProductCodeDialog=false"></button>
+    <button pButton type="button" label="Valider" class="p-button-success ml-2"
+            [disabled]="!selectedProductCode"
+            (click)="goToCreateContratWithProductCode()"></button>
+  </div>
 </p-dialog>

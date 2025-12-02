@@ -21,6 +21,13 @@ export class TopbarComponent {
   displayDialog: boolean = false; 
   branches = Object.values(Branche); // ['M','R','I']
   selectedBranche: Branche | null = null;
+branchOptionsForDialog: { label: string; value: string }[] = [];
+displayProductCodeDialog: boolean = false;
+productCodeOptions: { label: string; value: string }[] = [];
+selectedProductCode: string | null = null;
+selectedBranch: string | null = null;
+displayBranchDialog: boolean = false;
+
  tarif: any;
   constructor(private router: Router, private messageService: MessageService, private contratService: ContratService) {}
 
@@ -37,6 +44,47 @@ export class TopbarComponent {
 navigateToContrat() {
   // Ici on redirige vers la route Contrat
   this.router.navigate(['/Contrat']);
+}
+allBranchOptions = [
+  { label: 'MRP', value: 'M' },
+  { label: 'Incendie', value: 'I' },
+  { label: 'Risque Technique', value: 'Q' },
+  { label: 'MRH', value: 'B' }
+];
+
+openBranchDialogForAdmin(): void {
+  // Pour un admin, on affiche toutes les branches
+  this.branchOptionsForDialog = this.allBranchOptions;
+  this.displayBranchDialog = true;
+}
+goToSelectedBranch(): void {
+  if (!this.selectedBranch) return;
+
+  if (this.selectedBranch === 'Q') {
+    // Branche Q → ouvrir la modale pour choisir le code produit
+    this.productCodeOptions = [
+      { label: 'Bris de machine', value: '260' },
+      { label: 'Engins de chantiers', value: '268' }
+    ];
+    this.displayBranchDialog = false;       // fermer la modale branche
+    this.displayProductCodeDialog = true;   // ouvrir la modale code produit
+  } else {
+    // Autres branches → navigation directe
+    const path = `/contrat/creation/${this.selectedBranch}`;
+    console.log('Redirection vers :', path); 
+    this.displayBranchDialog = false;
+    this.router.navigate([path]);
+  }
+}
+
+// Après sélection du code produit
+goToCreateContratWithProductCode(): void {
+  if (this.selectedBranch && this.selectedProductCode) {
+    const path = `/contrat/creation/${this.selectedProductCode}`;
+    console.log('Redirection vers :', path);
+    this.displayProductCodeDialog = false;
+    this.router.navigate([path]);
+  }
 }
 
   updateRoleAndVisibility() {

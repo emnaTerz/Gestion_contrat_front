@@ -9,24 +9,30 @@ export interface User {
   lastName: string;
   email: string;
   role: string;
-  codeAgence?: string; 
+  codeAgence?: string;
   password?: string;
+  branches?: string[];   // 🔥 ajouté
 }
+
 export interface CurrentUser {
   id: number;
   firstName: string;
   lastName: string;
   email: string;
   role: string;
+  branches?: string[];   // 🔥 ajouté
 }
+
 export interface SignUpRequest {
   firstName: string;
   lastName: string;
   email: string;
   role: string;
-  codeAgence: string; 
+  codeAgence: string;
   password: string;
+  branches: string[];    // 🔥 ajouté (obligatoire car signup doit l’envoyer)
 }
+
 export interface Agence {
   code: string;
   name: string;

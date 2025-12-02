@@ -24,6 +24,18 @@
     <option value="USER">Utilisateur</option>
   </select>
 </div>
+<div class="field">
+  <label for="branchesCreate">Branches</label>
+  <p-multiSelect 
+    [options]="branchOptions" 
+    formControlName="branches" 
+    placeholder="Sélectionnez les branches"
+    display="chip"
+    appendTo="body"
+    >
+  </p-multiSelect>
+</div>
+
 
     <div class="flex justify-end mt-3">
       <button pButton type="button" label="Annuler" class="p-button-text" (click)="displayEditDialog=false"></button>
@@ -32,7 +44,7 @@
   </form>
 </p-dialog>
 
-<p-dialog header="Créer un utilisateur" [(visible)]="displayCreateDialog" [modal]="true" [closable]="true" [style]="{width: '400px'}">
+<p-dialog header="Créer un utilisateur" [(visible)]="displayCreateDialog" [modal]="true" [closable]="true" [style]="{width: '600px', height: '500px'}">
   <form [formGroup]="createForm" (ngSubmit)="submitCreate()">
     <div class="field">
       <label for="firstNameCreate">Prénom</label>
@@ -53,8 +65,16 @@
         <option value="USER">Utilisateur</option>
       </select>
     </div>
-
-
+<div class="field">
+  <label for="branchesCreate">Branches</label>
+  <p-multiSelect 
+    [options]="branchOptions" 
+    formControlName="branches" 
+    placeholder="Sélectionnez les branches"
+    display="chip"
+    appendTo="body">
+  </p-multiSelect>
+</div>
     <div class="flex justify-end mt-3">
       <button pButton type="button" label="Annuler" class="p-button-text" (click)="displayCreateDialog=false"></button>
       <button type="submit" pButton class="p-button-success ml-2">Enregistrer</button>
@@ -80,6 +100,8 @@
           <th pSortableColumn="lastName">Nom <p-sortIcon field="lastName"></p-sortIcon></th>
           <th pSortableColumn="email">Non d'utilisateur <p-sortIcon field="email"></p-sortIcon></th>
           <th pSortableColumn="role">Rôle <p-sortIcon field="role"></p-sortIcon></th>
+          <th pSortableColumn="branches">Branche <p-sortIcon field="branches"></p-sortIcon></th>
+
           <th>Actions</th>
         </tr>
       </ng-template>
@@ -90,6 +112,7 @@
           <td>{{ user.lastName || 'N/A' }}</td>
           <td>{{ user.email || 'N/A' }}</td>
           <td>{{ getRoleLabel(user.role) }}</td>
+          <td>{{ getBranchLabels(user.branches) }}</td>
           <td class="actions" style="display:flex; justify-content:center; gap:0.5rem;">
             <button pButton type="button" icon="pi pi-pencil" class="p-button-text p-button-sm"
         (click)="openEditDialog(user)">

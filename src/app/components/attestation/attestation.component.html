@@ -1,0 +1,63 @@
+<div class="attestation-container">
+  <h2>Générer Attestation</h2>
+
+  <form (ngSubmit)="onSubmit()" #attestationForm="ngForm">
+
+    <!-- Infos de l'adhérent -->
+    <div class="section">
+      <h3>Informations générales</h3>
+        <div class="field">
+        <label for="numPolice">Numéro de police</label>
+        <input type="text" pInputText [(ngModel)]="attestation.numPolice" name="numPolice" required />
+      </div>
+       <div class="field">
+        <label for="nomAdherent">Numéro de l’Adhérent</label>
+        <input type="text" pInputText [(ngModel)]="attestation.numAdherent" name="numAdherent" required />
+      </div>
+      <div class="field">
+        <label for="nomAdherent">Nom de l’Adhérent</label>
+        <input type="text" pInputText [(ngModel)]="attestation.nomAdherent" name="nomAdherent" required />
+      </div>
+      <div class="field-dates">
+        <div class="field">
+          <label for="debutEffet">Début d’effet</label>
+          <input type="date" pInputText [(ngModel)]="attestation.debutEffet" name="debutEffet" required />
+        </div>
+        <div class="field">
+          <label for="finEffet">Fin d’effet</label>
+          <input type="date" pInputText [(ngModel)]="attestation.finEffet" name="finEffet" required />
+        </div>
+      </div>
+      <div class="field">
+        <label for="typeContrat">Type de contrat</label>
+        <select [(ngModel)]="attestation.typeContrat" name="typeContrat" required>
+          <option value="renouvelable">D'une Année Renouvelable avec Tacite Reconduction</option>
+          <option value="ferme">Ferme</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Situation de risque -->
+    <div class="section">
+      <h3>Situation de risque</h3>
+      <div *ngFor="let situation of attestation.situations; let i = index" class="situation">
+        <div class="field">
+          <label>Descriptif de l’activité / des biens assurés</label>
+          <input type="text" pInputText [(ngModel)]="situation.descriptif" name="descriptif{{i}}" required />
+        </div>
+        <div class="field">
+          <label>Lieu / Site</label>
+          <input type="text" pInputText [(ngModel)]="situation.lieu" name="lieu{{i}}" required />
+        </div>
+        <button pButton type="button" class="remove-btn" icon="pi pi-times" (click)="removeSituation(i)"></button>
+      </div>
+      <button pButton type="button" label="Ajouter une situation" icon="pi pi-plus" class="add-btn" (click)="addSituation()"></button>
+    </div>
+
+    <!-- Bouton de soumission -->
+    <div class="form-actions">
+      <button pButton type="submit" label="Générer Attestation" class="p-button-success"></button>
+    </div>
+
+  </form>
+</div>

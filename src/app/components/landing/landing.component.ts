@@ -11,6 +11,8 @@ import { CommonModule } from '@angular/common';
 import { MessageService } from 'primeng/api';
 import { PdfGeneratorService } from '@/layout/service/PdfGeneratorService';
 import { lastValueFrom } from 'rxjs';
+import { CurrentUser, UserService } from '@/layout/service/UserService';
+
 interface Exclusion {
   id: number;
   nom: string;
@@ -26,7 +28,7 @@ interface SousGarantieWithDetails {
 @Component({
   selector: 'app-landing',
   standalone: true,
-  imports: [CardModule, ButtonModule, DialogModule, InputTextModule, FormsModule, CommonModule],
+  imports: [CardModule, ButtonModule, DialogModule, InputTextModule, FormsModule, CommonModule ],
   templateUrl: './landing.component.html',
   styleUrls: ['./landing.component.scss']
 })
@@ -44,20 +46,180 @@ sousGarantiesWithDetails: SousGarantieWithDetails[] = [];
 exclusionsOptions: any[] = []; // tableau pour stocker toutes les exclusions du backend
   sections: any;
 clausiers: any[] = [];
+branchOptions = [
+  { label: 'MRP', value: 'M' },
+  { label: 'Incendie', value: 'I' },
+  { label: 'Risque Technique', value: 'Q' },
+  { label: 'MRH', value: 'B' },
+];
+displayProductCodeDialog: boolean = false;
+selectedBranchForModify: string | null = null;
+productCodeOptions: { label: string; value: string }[] = [];
+selectedProductCode: string | null = null;
+  currentUser!: CurrentUser;
+  branches?: string[];
+  displayBranchDialog: boolean = false;
+  selectedBranch: string = '';
+displayProductDialogModify: boolean = false;
+errorMessageProduct: string = '';
+displayBranchDialogModify: boolean = false;   // modale choisir la branche avant modifier
+// si tu veux debug
+consoleLogEnabled: boolean = true;
 
   constructor(
     private router: Router, 
     private contratService: ContratService,
     private messageService: MessageService,
-    private pdfService: PdfGeneratorService
+    private pdfService: PdfGeneratorService,
+    private userService: UserService
   ) {}
 
-  showModifyDialog() {
-    this.numPoliceInput = '';
-    this.errorMessage = '';
-    this.displayModifyDialog = true;
+ngOnInit(): void {
+  this.userService.getCurrentUser().subscribe({
+    next: (user: CurrentUser) => {
+      this.currentUser = user;
+      console.log('CurrentUser récupéré :', this.currentUser); // 🔥 log ajouté
+    },
+    error: (err) => {
+      console.error('Erreur récupération utilisateur', err);
+    }
+  });
+}
+
+ // appelé par le bouton "Mettre à jour Contrat"
+showBranchDialogForModify(): void {
+  const branches = this.currentUser.branches ?? [];
+
+  // 🟦 Cas 1 : une seule branche
+  if (branches.length === 1) {
+    this.selectedBranchForModify = branches[0];
+
+    // 👉 Branche Q → aller vers code produit
+    if (this.selectedBranchForModify === 'Q') {
+      this.openProductCodeDialogModify(); 
+    } 
+    // 👉 Sinon → aller vers numéro de police
+    else {
+      this.openModifyPoliceDialog();
+    }
+    return;
   }
-  onSubmitNumPolice() {
+
+  // 🟧 Cas 2 : plusieurs branches → afficher modale choix branche
+  this.selectedBranchForModify = null;
+  this.displayBranchDialogModify = true;
+}
+
+openModifyPoliceDialog() {
+  this.numPoliceInput = '';
+  this.errorMessage = '';
+  this.displayModifyDialog = true;
+}
+
+
+openModifyDialogAfterBranch(): void {
+  if (!this.selectedBranchForModify) return;
+
+  this.displayBranchDialogModify = false;
+
+  if (this.selectedBranchForModify === 'Q') {
+    this.openProductCodeDialogModify();
+  } else {
+    this.openModifyPoliceDialog();
+  }
+}
+
+openProductCodeDialogModify(): void {
+  this.productCodeOptions = [
+    { label: 'Bris de machine', value: '260' },
+    { label: 'Engins de chantiers', value: '268' }
+  ];
+
+  this.selectedProductCode = null;
+  this.errorMessageProduct = '';
+  this.displayProductDialogModify = true;
+
+  if (this.consoleLogEnabled) console.log("Ouverture modale code produit pour Q");
+}
+
+
+onSubmitProductCodeModify(): void {
+  if (!this.selectedProductCode) {
+    this.errorMessageProduct = "Veuillez sélectionner un code produit";
+    return;
+  }
+
+  this.displayProductDialogModify = false;
+  this.openModifyPoliceDialog();
+}
+goToAttestation(): void {
+  this.router.navigate(['/attestation']);
+}
+
+
+/* 
+onSubmitNumPolice() {
+  const numPolice = this.numPoliceInput.trim();
+
+  if (!numPolice) {
+    this.errorMessage = "Veuillez saisir un numéro de police";
+    return;
+  }
+
+  if (!this.selectedBranchForModify) {
+    this.errorMessage = "Veuillez d'abord sélectionner une branche";
+    return;
+  }
+
+  this.contratService.getContratStatus(numPolice).subscribe(
+    (status: string) => {
+      console.log('Statut brut reçu:', status);
+      
+      // Nettoyer et normaliser
+      const cleanedStatus = status.trim().toLowerCase();
+      console.log('Statut nettoyé:', cleanedStatus);
+      
+      // Gestion des cas
+      if (cleanedStatus === 'contrat non trouvé' || cleanedStatus === 'non trouvé') {
+        this.errorMessage = "Aucun contrat trouvé avec ce numéro";
+        this.displayModifyDialog = true;
+      } 
+      else if (cleanedStatus === 'figé' || cleanedStatus === 'fige') {
+        this.errorMessage = "Le contrat est figé, vous ne pouvez pas le modifier";
+        this.displayModifyDialog = true;
+      } 
+      else {
+        // Contrat existe et modifiable
+        this.errorMessage = "";
+        this.displayModifyDialog = false;
+
+        // Branch = M / Q / I / B...
+        const branch = this.selectedBranchForModify;
+
+        // Redirection vers la bonne route
+        const path = `/Modif_Contrat${branch}/${numPolice}`;
+        console.log("Redirection vers :", path);
+
+        this.router.navigate([path]);
+      }
+    },
+    err => {
+      console.error('Erreur API:', err);
+
+      if (err.status === 404) {
+        this.errorMessage = "Aucun contrat trouvé avec ce numéro";
+      } else if (err.status === 500) {
+        this.errorMessage = "Erreur serveur, veuillez réessayer plus tard";
+      } else {
+        this.errorMessage = "Erreur lors de la récupération du statut du contrat";
+      }
+
+      this.displayModifyDialog = true;
+    }
+  );
+}
+ */
+onSubmitNumPolice() {
   const numPolice = this.numPoliceInput.trim();
 
   if (!numPolice) {
@@ -67,47 +229,101 @@ clausiers: any[] = [];
 
   this.contratService.getContratStatus(numPolice).subscribe(
     (status: string) => {
-      console.log('Statut brut reçu:', status);
-      
-      // Nettoyer et normaliser le statut
-      const cleanedStatus = status.trim().toLowerCase();
-      console.log('Statut nettoyé:', cleanedStatus);
-      
-      // Gestion des différents cas de status
-      if (cleanedStatus === 'contrat non trouvé' || cleanedStatus === 'non trouvé') {
+      const cleaned = status.trim().toLowerCase();
+
+      if (cleaned.includes("non trouvé")) {
         this.errorMessage = "Aucun contrat trouvé avec ce numéro";
-        this.displayModifyDialog = true;
-      } else if (cleanedStatus === 'figé' || cleanedStatus === 'fige') {
-        this.errorMessage = "Le contrat est figé, vous ne pouvez pas le modifier";
-        this.displayModifyDialog = true;
-      } else {
-        // Contrat existe et modifiable
-        this.errorMessage = "";
-        this.displayModifyDialog = false;
-        this.router.navigate([`/Modif_Contrat/${numPolice}`]);
+        return;
       }
+      if (cleaned.includes("fig")) {
+        this.errorMessage = "Le contrat est figé, vous ne pouvez pas le modifier";
+        return;
+      }
+
+      // 🟢 Contrat modifiable
+      this.displayModifyDialog = false;
+
+      let route = '';
+
+      // 🔹 Branche Q → route = code produit
+      if (this.selectedBranchForModify === 'Q' && this.selectedProductCode) {
+        route = `/Modif_Contrat${this.selectedProductCode}/${numPolice}`;
+      } 
+      // 🔹 Sinon route = la branche
+      else {
+        route = `/Modif_Contrat${this.selectedBranchForModify}/${numPolice}`;
+      }
+
+      console.log("Redirection :", route);
+      this.router.navigate([route]);
     },
     err => {
-      console.error('Erreur API:', err);
-      
-      // Gestion spécifique des erreurs HTTP
-      if (err.status === 404) {
-        this.errorMessage = "Aucun contrat trouvé avec ce numéro";
-      } else if (err.status === 500) {
-        this.errorMessage = "Erreur serveur, veuillez réessayer plus tard";
-      } else {
-        this.errorMessage = "Erreur lors de la récupération du statut du contrat";
-      }
-      
-      this.displayModifyDialog = true;
+      this.errorMessage = "Erreur API";
     }
   );
 }
 
-  goToCreateContrat() {
-    this.router.navigate(['/Contrat']);
+
+goToCreateContrat(): void {
+  const branches = this.currentUser.branches ?? [];
+
+  if (this.currentUser.role === 'ADMIN') {
+    // Admin → afficher modale pour toutes les branches
+    this.displayBranchDialog = true;
+  } else if (branches.length === 1) {
+    this.handleBranchSelection(branches[0]);
+  } else if (branches.length > 1) {
+    // Plusieurs branches → afficher modale pour choisir la branche
+    this.displayBranchDialog = true;
+  } else {
+    alert("Vous n'êtes responsable d’aucune branche.");
+  }
+}
+
+handleBranchSelection(branch: string): void {
+  if (branch === 'Q') {
+    // Branche Q → ouvrir modale pour choisir le code produit
+    this.selectedBranch = branch;
+    this.productCodeOptions = [
+      { label: 'Bris de machine', value: '260' },
+      { label: 'Engins de chantiers', value: '268' }
+    ];
+    this.displayProductCodeDialog = true;
+  } else {
+    // Autres branches → redirection directe vers le formulaire
+    this.router.navigate([`/contrat/creation/${branch.toLowerCase()}`]);
+  }
+}
+goToCreateContratWithProductCode(): void {
+  if (this.selectedBranch && this.selectedProductCode) {
+    const path = `/contrat/creation/${this.selectedProductCode}`;
+    console.log('Redirection vers :', path);
+    this.displayProductCodeDialog = false;
+    this.router.navigate([path]);
+  }
+}
+getBranchesForDropdown() {
+  if (!this.currentUser) {
+    // Si currentUser n'est pas encore défini, retourner un tableau vide
+    return [];
   }
 
+  if (this.currentUser.role === 'ADMIN') {
+    return this.branchOptions;
+  } else {
+    // Utiliser ?? [] pour branches potentiellement undefined
+    const branches = this.currentUser.branches ?? [];
+    return this.branchOptions.filter(b => branches.includes(b.value));
+  }
+}
+goToSelectedBranch(): void {
+  if (this.selectedBranch) {
+    const path = `/contrat/creation/${this.selectedBranch}`;
+    console.log('Redirection vers :', path); // 🔥 log ajouté
+    this.displayBranchDialog = false;
+   this.router.navigate([path]);
+  }
+  }
   showDownloadDialog() {
     this.displayDownloadDialog = true;
     this.downloadNumPoliceInput = '';

@@ -12,6 +12,10 @@ import { ContratListComponent } from '@/components/contrat-list/contrat-list.com
 import { NotfoundComponent } from '@/components/notfound/notfound.component';
 import { GarantieManagementComponent } from '@/components/garantie-management/garantie-management.component';
 import { SousGarantiesComponent } from '@/components/sous-garanties/sous-garanties.component';
+import { ContratIComponent } from '@/components/contrat-i/contrat-i.component';
+import { Contrat260Component } from '@/components/contrat260/contrat260.component';
+import { Contrat268Component } from '@/components/contrat268/contrat268.component';
+import { AttestationComponent } from '@/components/attestation/attestation.component';
 
 
 export const appRoutes: Routes = [
@@ -19,7 +23,6 @@ export const appRoutes: Routes = [
     { path: 'notfound', component: NotfoundComponent },
     { path: 'login', component: LoginComponent },
 
-    // Pages Admin/User avec EmptyLayout (pas de menu Sakai)
     {
         path: '',
         component: EmptyLayoutComponent,
@@ -28,10 +31,15 @@ export const appRoutes: Routes = [
             { path: 'garanties', component: GarantieManagementComponent, canActivate: [AuthGuard], data: { expectedRole: 'ADMIN' } }, 
             { path: 'sous-garanties', component: SousGarantiesComponent, canActivate: [AuthGuard], data: { expectedRole: 'ADMIN' } }, 
             { path: 'users', component: UsersComponent, canActivate: [AuthGuard], data: { expectedRole: 'ADMIN' } },
-            { path: 'Contrat', component: ContratComponent, canActivate: [AuthGuard], data: { expectedRole: ['USER', 'ADMIN'] } },
+            {  path: 'contrat/creation/260',component: Contrat260Component, canActivate: [AuthGuard], data: { expectedRole: ['USER', 'ADMIN'] }  },
+            {  path: 'contrat/creation/268',component: Contrat268Component, canActivate: [AuthGuard], data: { expectedRole: ['USER', 'ADMIN'] }  },
+            { path: 'contrat/creation/M', component: ContratComponent, canActivate: [AuthGuard], data: { expectedRole: ['USER', 'ADMIN'] } },
+            { path: 'contrat/creation/I', component: ContratIComponent, canActivate: [AuthGuard], data: { expectedRole: ['USER', 'ADMIN'] } },
             {  path: 'contrat-list',   component: ContratListComponent, canActivate: [AuthGuard],  data: { expectedRole: ['USER', 'ADMIN'] } },
-            { path: 'Modif_Contrat/:numPolice', component: ModifierContratComponent, canActivate: [AuthGuard],  data: { expectedRole: ['USER', 'ADMIN'] } },
+            { path: 'Modif_ContratM/:numPolice', component: ModifierContratComponent, canActivate: [AuthGuard],  data: { expectedRole: ['USER', 'ADMIN'] } },
+            { path: 'attestation', component: AttestationComponent, canActivate: [AuthGuard], data: { expectedRole: 'USER' } },
             { path: 'Landing', component: LandingComponent, canActivate: [AuthGuard], data: { expectedRole: 'USER' } },
+
             { path: 'force-reset-password', component: ForceResetPasswordComponent, canActivate: [AuthGuard], data: { expectedRole: ['USER', 'ADMIN'] }  },
 
     { path: '**', redirectTo: '/notfound' }

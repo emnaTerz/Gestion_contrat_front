@@ -53,6 +53,38 @@ p-table {
   gap: 0; 
   background-color: var(--surface-card);
 }
+/* MultiSelect PrimeNG pour le formulaire dialog */
+::ng-deep .p-dialog .field .p-multiselect {
+  width: 100% !important;          /* prend toute la largeur du champ */
+  max-width: 100%;
+  border: 1px solid #4CAF50;
+  border-radius: 0.375rem;
+  background-color: #e8f5e9;
+}
+::ng-deep .p-multiselect-panel {
+  transform-origin: bottom center !important; /* pivot pour animation */
+}
+
+::ng-deep .p-multiselect-panel.p-connected-overlay-open-above {
+  top: auto !important;
+  bottom: 100% !important; /* s’ouvre au-dessus du champ */
+}
+
+::ng-deep .p-dialog .field .p-multiselect:hover {
+  border-color: #388E3C;
+}
+
+::ng-deep .p-dialog .field .p-multiselect .p-multiselect-label {
+  color: #333;
+}
+
+::ng-deep .p-dialog .field .p-multiselect .p-multiselect-token {
+  background-color: #A5D6A7; /* chips vert clair */
+  color: #1B5E20;             /* texte chips vert foncé */
+  border-radius: 0.25rem;
+  padding: 0.15rem 0.4rem;
+  margin-right: 0.2rem;
+}
 
 /* Chaque champ du formulaire */
 ::ng-deep .p-dialog .field {
