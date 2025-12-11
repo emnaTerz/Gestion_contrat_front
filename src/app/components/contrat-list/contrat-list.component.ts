@@ -178,10 +178,13 @@ onGlobalFilter(event: any) {
     this.filteredContrats = this.contrats;
   }
 
-  // Redirection vers la page de modification
-  editContrat(contrat: Contrat) {
-    this.router.navigate(['Modif_Contrat', contrat.numPolice]);
+editContrat(contrat: Contrat) {
+  if (contrat.branche === 'M') {
+    this.router.navigate(['Modif_ContratM', contrat.numPolice]);
   }
+}
+
+
   async downloadPdf(numPolice: string) {
    
   

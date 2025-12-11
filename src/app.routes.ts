@@ -16,6 +16,7 @@ import { ContratIComponent } from '@/components/contrat-i/contrat-i.component';
 import { Contrat260Component } from '@/components/contrat260/contrat260.component';
 import { Contrat268Component } from '@/components/contrat268/contrat268.component';
 import { AttestationComponent } from '@/components/attestation/attestation.component';
+import { AttestationQComponent } from '@/components/attestation-q/attestation-q.component';
 
 
 export const appRoutes: Routes = [
@@ -36,8 +37,10 @@ export const appRoutes: Routes = [
             { path: 'contrat/creation/M', component: ContratComponent, canActivate: [AuthGuard], data: { expectedRole: ['USER', 'ADMIN'] } },
             { path: 'contrat/creation/I', component: ContratIComponent, canActivate: [AuthGuard], data: { expectedRole: ['USER', 'ADMIN'] } },
             {  path: 'contrat-list',   component: ContratListComponent, canActivate: [AuthGuard],  data: { expectedRole: ['USER', 'ADMIN'] } },
-            { path: 'Modif_ContratM/:numPolice', component: ModifierContratComponent, canActivate: [AuthGuard],  data: { expectedRole: ['USER', 'ADMIN'] } },
+            { path: 'Modif_ContratM/:numPolice', component: ModifierContratComponent, canActivate: [AuthGuard], data: { expectedRole: ['USER', 'ADMIN'] } },
             { path: 'attestation', component: AttestationComponent, canActivate: [AuthGuard], data: { expectedRole: 'USER' } },
+            { path: 'attestationQ', component: AttestationQComponent, canActivate: [AuthGuard], data: { expectedRole: 'USER' } },
+
             { path: 'Landing', component: LandingComponent, canActivate: [AuthGuard], data: { expectedRole: 'USER' } },
 
             { path: 'force-reset-password', component: ForceResetPasswordComponent, canActivate: [AuthGuard], data: { expectedRole: ['USER', 'ADMIN'] }  },

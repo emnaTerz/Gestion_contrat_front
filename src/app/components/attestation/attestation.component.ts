@@ -21,6 +21,7 @@ interface Attestation {
   debutEffet: string;
   finEffet: string;
   typeContrat: string;
+   branche: string;
   situations: SituationRisque[];
 }
 @Component({
@@ -37,10 +38,14 @@ export class AttestationComponent {
     nomAdherent: '',
     debutEffet: '',
     finEffet: '',
+     branche: '', 
     typeContrat: 'renouvelable',
     situations: []
   };
-
+branchOptions = [
+  { label: 'MRP', value: 'M' },
+  { label: 'Incendie', value: 'I' }
+];
   addSituation() {
     this.attestation.situations.push({ descriptif: '', lieu: '' });
   }
@@ -54,8 +59,21 @@ export class AttestationComponent {
   }
 generatePDFs() {
   const vertMAE = '#028844';
-
   const body: any[] = [];
+
+  const branche = this.attestation.branche;
+
+  // Texte selon branche
+  const texteCouverture =
+    branche === 'I'
+      ? "un contrat d'assurance Incendie en couverture "
+      : "un contrat d'assurance Multirisque professionnelle en couverture ";
+
+  // Numéro de contrat selon branche
+  const numeroContrat =
+    branche === 'I'
+      ? `${this.attestation.numAdherent}/300/${this.attestation.numPolice}`
+      : `${this.attestation.numAdherent}/280/${this.attestation.numPolice}`;
 
   this.attestation.situations.forEach((situation, index) => {
     if (index > 0) {
@@ -88,41 +106,42 @@ generatePDFs() {
     // --- 3. Corps du texte ---
     const typeContratText =
       this.attestation.typeContrat === 'renouvelable'
-        ? 'd\'une Année Renouvelable avec Tacite Reconduction'
-        : 'Ferme';
+        ? "d'une Année Renouvelable avec Tacite Reconduction"
+        : "Ferme";
 
     // Paragraphe 1
     body.push({
       text: [
-          { text: "Nous soussignés ", }, // normal
-          { text: "Mutuelle Assurance de l'Enseignement M.A.E", bold: true }, // gras
-          { text: " et dont le siège social est à ", }, // normal
-          { text: "Complexe EL MECHTEL AVENUE OULED HAFFOUZ, TUNIS 1075", bold: true }, // gras
-          { text: ", attestons par la présente que ", },        { text: this.attestation.nomAdherent, bold: true },
-          { text: ' a souscrit auprès de notre Mutuelle un contrat d\'assurance Multirisque professionnelle en couverture ' },
-          { text: situation.descriptif, bold: true },
-          { text: '  sis à ' },
-          { text: situation.lieu, bold: true },
-          { text: '.' },
+        { text: "Nous soussignés " },
+        { text: "Mutuelle Assurance de l'Enseignement M.A.E", bold: true },
+        { text: " et dont le siège social est à " },
+        { text: "Complexe EL MECHTEL AVENUE OULED HAFFOUZ, TUNIS 1075", bold: true },
+        { text: ", attestons par la présente que " },
+        { text: this.attestation.nomAdherent, bold: true },
+        { text: ` a souscrit auprès de notre Mutuelle ${texteCouverture}` },
+        { text: situation.descriptif, bold: true },
+        { text: ' sis à ' },
+        { text: situation.lieu, bold: true },
+        { text: '.' },
       ],
       fontSize: 12,
-      margin: [20, 10, 0, 10], // 20 = indentation du paragraphe
-      lineHeight: 1.6,         // interligne plus grand
-      alignment: 'justify',     // texte justifié
+      margin: [20, 10, 0, 10],
+      lineHeight: 1.6,
+      alignment: 'justify',
     });
 
     // Paragraphe 2
     body.push({
       text: [
-        { text: '     Le dit contrat portant le N° : ', },
-        { text: `${this.attestation.numAdherent}/280/${this.attestation.numPolice}`, bold: true },
+        { text: '     Le dit contrat portant le N° : ' },
+        { text: numeroContrat, bold: true },
         { text: ' prend effet à partir du ' },
         { text: this.formatDate(this.attestation.debutEffet), bold: true },
-        { text: ` pour une période ${typeContratText}`, bold: true  },
+        { text: ` pour une période ${typeContratText}`, bold: true },
         { text: '.' },
       ],
       fontSize: 12,
-      margin: [20, 10, 0, 10], // indent + interligne
+      margin: [20, 10, 0, 10],
       lineHeight: 1.6,
       alignment: 'justify',
     });
@@ -139,7 +158,7 @@ generatePDFs() {
 
     // --- 4. Signature ---
     body.push({
-      text: 'POUR LA MAE ASSURANCE',
+      text: 'POUR LA MAE ASSURANCES',
       fontSize: 12,
       bold: true,
       alignment: 'right',
@@ -150,12 +169,11 @@ generatePDFs() {
   const docDefinition: any = {
     content: body,
     defaultStyle: { font: 'Roboto' },
-    pageMargins: [40, 40, 40, 40],
+    pageMargins: [40, 113, 40, 40],
   };
 
-const fileName = `attestations_${this.attestation.numPolice}.pdf`;
-(pdfMake as any).createPdf(docDefinition).download(fileName);
-
+  const fileName = `attestations_${this.attestation.numPolice}.pdf`;
+  (pdfMake as any).createPdf(docDefinition).download(fileName);
 }
 
 // Méthode pour formater une date

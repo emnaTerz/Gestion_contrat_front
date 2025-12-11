@@ -28,6 +28,14 @@
           <input type="date" pInputText [(ngModel)]="attestation.finEffet" name="finEffet" required />
         </div>
       </div>
+          <div class="field">
+      <label for="branche">Branche</label>
+      <select [(ngModel)]="attestation.branche" name="branche" required>
+        <option *ngFor="let option of branchOptions" [value]="option.value">
+          {{ option.label }}
+        </option>
+      </select>
+</div>
       <div class="field">
         <label for="typeContrat">Type de contrat</label>
         <select [(ngModel)]="attestation.typeContrat" name="typeContrat" required>

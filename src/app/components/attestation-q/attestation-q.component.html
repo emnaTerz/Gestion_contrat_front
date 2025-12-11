@@ -1,0 +1,57 @@
+<div class="attestation-container">
+  <h2>Générer Attestation Engins / Bris de Machines</h2>
+
+  <form (ngSubmit)="onSubmit()" #attestationForm="ngForm">
+
+    <!-- Informations générales -->
+    <div class="section">
+      <h3>Informations générales</h3>
+
+      <div class="field">
+        <label for="nomAssure">Nom de l’assuré / Société assurée</label>
+        <input type="text" pInputText [(ngModel)]="attestation.nomAssure" name="nomAssure" required />
+      </div>
+
+      <div class="field-dates">
+        <div class="field">
+          <label for="dateDebut">Date début</label>
+          <input type="date" pInputText [(ngModel)]="attestation.dateDebut" name="dateDebut" required />
+        </div>
+
+        <div class="field">
+          <label for="dateFin">Date fin</label>
+          <input type="date" pInputText [(ngModel)]="attestation.dateFin" name="dateFin" required />
+        </div>
+      </div>
+
+
+
+      <div class="field">
+        <label>Code produit</label>
+        <select [(ngModel)]="attestation.typeAssurance" name="typeAssurance" required>
+          <option value="Engin de chantier">Engin de chantier</option>
+          <option value="Bris de machines">Bris de machines</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="numPolice">Numéro de police</label>
+        <input type="text" pInputText [(ngModel)]="attestation.numPolice" name="numPolice" required />
+      </div>
+
+      <div class="field">
+        <label for="typeContrat">Type de contrat</label>
+        <select [(ngModel)]="attestation.typeContrat" name="typeContrat" required>
+          <option value="d'une année renouvelable par tacite reconduction">D'une année renouvelable par tacite reconduction</option>
+          <option value="ferme">Ferme</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Bouton -->
+   <div class="form-actions">
+      <button pButton type="submit" label="Générer Attestation" class="p-button-success"></button>
+    </div>
+
+  </form>
+</div>

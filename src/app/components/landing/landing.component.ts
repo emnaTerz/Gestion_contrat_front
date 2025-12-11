@@ -152,73 +152,32 @@ onSubmitProductCodeModify(): void {
   this.displayProductDialogModify = false;
   this.openModifyPoliceDialog();
 }
+
 goToAttestation(): void {
-  this.router.navigate(['/attestation']);
-}
 
-
-/* 
-onSubmitNumPolice() {
-  const numPolice = this.numPoliceInput.trim();
-
-  if (!numPolice) {
-    this.errorMessage = "Veuillez saisir un numéro de police";
+  if (!this.currentUser.branches) {
+    console.warn("⚠️ branches est NULL ou UNDEFINED → arrêt de la fonction !");
     return;
   }
 
-  if (!this.selectedBranchForModify) {
-    this.errorMessage = "Veuillez d'abord sélectionner une branche";
-    return;
+  console.log("Branches trouvées :", this.branches);
+
+  if (this.currentUser.branches.includes('Q')) {
+    console.log("🔵 Branche 'Q' détectée → redirection vers /attestationQ");
+    this.router.navigate(['/attestationQ']);
   }
-
-  this.contratService.getContratStatus(numPolice).subscribe(
-    (status: string) => {
-      console.log('Statut brut reçu:', status);
-      
-      // Nettoyer et normaliser
-      const cleanedStatus = status.trim().toLowerCase();
-      console.log('Statut nettoyé:', cleanedStatus);
-      
-      // Gestion des cas
-      if (cleanedStatus === 'contrat non trouvé' || cleanedStatus === 'non trouvé') {
-        this.errorMessage = "Aucun contrat trouvé avec ce numéro";
-        this.displayModifyDialog = true;
-      } 
-      else if (cleanedStatus === 'figé' || cleanedStatus === 'fige') {
-        this.errorMessage = "Le contrat est figé, vous ne pouvez pas le modifier";
-        this.displayModifyDialog = true;
-      } 
-      else {
-        // Contrat existe et modifiable
-        this.errorMessage = "";
-        this.displayModifyDialog = false;
-
-        // Branch = M / Q / I / B...
-        const branch = this.selectedBranchForModify;
-
-        // Redirection vers la bonne route
-        const path = `/Modif_Contrat${branch}/${numPolice}`;
-        console.log("Redirection vers :", path);
-
-        this.router.navigate([path]);
-      }
-    },
-    err => {
-      console.error('Erreur API:', err);
-
-      if (err.status === 404) {
-        this.errorMessage = "Aucun contrat trouvé avec ce numéro";
-      } else if (err.status === 500) {
-        this.errorMessage = "Erreur serveur, veuillez réessayer plus tard";
-      } else {
-        this.errorMessage = "Erreur lors de la récupération du statut du contrat";
-      }
-
-      this.displayModifyDialog = true;
-    }
-  );
+  else if (this.currentUser.branches.includes('M') || this.currentUser.branches.includes('I')) {
+    console.log("🟢 Branche 'M' ou 'I' détectée → redirection vers /attestation");
+    this.router.navigate(['/attestation']);
+  }
+  else {
+    console.warn("⚠️ Aucune branche valide trouvée pour cette utilisateur");
+  }
 }
- */
+
+
+
+
 onSubmitNumPolice() {
   const numPolice = this.numPoliceInput.trim();
 
@@ -417,11 +376,7 @@ private async prepareDataForPdf(contratData: any):  Promise<any>  {
     titre: e.titre?.trim() || '',
     texte: e.texte?.trim() || ''
   }));
-  // 🔹 Ajout du console.log
-  console.log("===== Préparation PDF =====");
-  console.log("Extensions:", extensions);
-  console.log("ClauseIds:", contratData.clauseIds || []);
-  console.log("Clausiers:", this.clausiers || []);
+ 
   return {
     // Informations de base
     numPolice: contratData.numPolice,
