@@ -1291,10 +1291,7 @@ console.log('Payload envoyé:', {
   });
 }
 redirectToLanding() {
-  // Méthode 1: Redirection simple (si vous utilisez le router Angular)
-  // Importez Router et injectez-le dans le constructor
   this.router.navigate(['/landing']);}
-// 🔥 AJOUT: Formater startTime pour le backend
 private formatStartTimeForBackend(startTime: string): string {
   if (!startTime) {
     const now = new Date();

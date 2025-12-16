@@ -1416,7 +1416,7 @@ private navigateAccordingToRole() {
   const role = this.authService.getRole(); // 'ADMIN' ou 'USER'
 
   if (role === 'ADMIN') {
-    this.router.navigate(['/contrat-list']);
+    this.router.navigate(['/Landing']);
   } else {
     this.router.navigate(['/Landing']);
   }
