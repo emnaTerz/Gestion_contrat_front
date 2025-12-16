@@ -32,7 +32,6 @@ export class LoginComponent {
 
   constructor(private router: Router, private authService: AuthService, private userService: UserService) {}
  ngOnInit(): void {
-    // Supprimer le token et le rôle dès que la page login est chargée
     this.authService.logout();
   }
  
@@ -77,7 +76,7 @@ export class LoginComponent {
       const role = response.role;
 
       if (role === 'ADMIN') {
-        this.router.navigate(['/users']);
+        this.router.navigate(['/Landing']);
       } else if (role === 'USER') {
         this.router.navigate(['/Landing']);
       } else {

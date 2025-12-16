@@ -25,6 +25,11 @@ interface SousGarantieWithDetails {
     libelle: string;
   };
 }
+interface BranchOption {
+  label: string;
+  value: string;
+}
+
 @Component({
   selector: 'app-landing',
   standalone: true,
@@ -52,6 +57,7 @@ branchOptions = [
   { label: 'Risque Technique', value: 'Q' },
   { label: 'MRH', value: 'B' },
 ];
+
 displayProductCodeDialog: boolean = false;
 selectedBranchForModify: string | null = null;
 productCodeOptions: { label: string; value: string }[] = [];
@@ -59,7 +65,7 @@ selectedProductCode: string | null = null;
   currentUser!: CurrentUser;
   branches?: string[];
   displayBranchDialog: boolean = false;
-  selectedBranch: string = '';
+selectedBranch: string | null = null;
 displayProductDialogModify: boolean = false;
 errorMessageProduct: string = '';
 displayBranchDialogModify: boolean = false;   // modale choisir la branche avant modifier
@@ -153,7 +159,7 @@ onSubmitProductCodeModify(): void {
   this.openModifyPoliceDialog();
 }
 
-goToAttestation(): void {
+/* goToAttestation(): void {
 
   if (!this.currentUser.branches) {
     console.warn("⚠️ branches est NULL ou UNDEFINED → arrêt de la fonction !");
@@ -173,9 +179,101 @@ goToAttestation(): void {
   else {
     console.warn("⚠️ Aucune branche valide trouvée pour cette utilisateur");
   }
+} */
+prepareBranchOptionsForAttestation(branches?: string[]): void {
+  const hasM = branches?.includes('M') || branches?.includes('I');
+  const hasQ = branches?.includes('Q');
+  const hasB = branches?.includes('B');
+
+  const options: BranchOption[] = [];
+
+  if (hasM) {
+    options.push({ label: 'MRP, Incendie', value: 'M' });
+  }
+  if (hasQ) {
+    options.push({ label: 'Risque Technique', value: 'Q' });
+  }
+  if (hasB) {
+    options.push({ label: 'MRH', value: 'B' });
+  }
+
+  this.branchOptionsForDialog = options;
 }
 
 
+attestationMode = false;
+goToAttestation(): void {
+  const branches = this.currentUser?.branches ?? [];
+
+  this.attestationMode = true;
+
+  // 👑 ADMIN → toujours modale
+  if (this.currentUser.role === 'ADMIN') {
+    this.branchOptionsForDialog = this.allBranchOptions;
+    this.displayBranchDialog = true;
+    return;
+  }
+
+  // 👤 USER
+  if (branches.length === 0) {
+    alert("Vous n'êtes responsable d’aucune branche.");
+    return;
+  }
+
+  const hasQ = branches.includes('Q');
+  const hasM = branches.includes('M') || branches.includes('I');
+  const hasB = branches.includes('B');
+
+  // Q uniquement
+  if (hasQ && !hasM && !hasB) {
+    this.router.navigate(['/attestationQ']);
+    return;
+  }
+
+  // M / I / B uniquement
+  if (!hasQ && (hasM || hasB)) {
+    this.router.navigate(['/attestation']);
+    return;
+  }
+
+  // Q + autre(s) → modale
+  this.branchOptionsForDialog = this.allBranchOptions.filter(opt => {
+    if (opt.value === 'M') return hasM;
+    if (opt.value === 'Q') return hasQ;
+    if (opt.value === 'B') return hasB;
+    return false;
+  });
+
+  this.displayBranchDialog = true;
+}
+
+handleAttestationBranch(branch: string): void {
+  if (branch === 'Q') {
+    this.router.navigate(['/attestationQ']);
+  } else if (branch === 'M' || branch === 'I') {
+    this.router.navigate(['/attestation']);
+  } else {
+    console.warn("⚠️ Branche non supportée pour l’attestation :", branch);
+  }
+
+  this.displayBranchDialog = false;
+}
+
+onBranchValidate(): void {
+  if (!this.selectedBranch) return;
+
+  this.navigateByAttestationBranch(this.selectedBranch);
+
+  this.displayBranchDialog = false;
+  this.attestationMode = false;
+}
+navigateByAttestationBranch(branch: string): void {
+  if (branch === 'Q') {
+    this.router.navigate(['/attestationQ']);
+  } else {
+    this.router.navigate(['/attestation']);
+  }
+}
 
 
 onSubmitNumPolice() {
@@ -222,20 +320,64 @@ onSubmitNumPolice() {
   );
 }
 
-
 goToCreateContrat(): void {
-  const branches = this.currentUser.branches ?? [];
-
+  // ADMIN → logique spécifique
   if (this.currentUser.role === 'ADMIN') {
-    // Admin → afficher modale pour toutes les branches
-    this.displayBranchDialog = true;
-  } else if (branches.length === 1) {
-    this.handleBranchSelection(branches[0]);
+    this.openBranchDialogForAdmin();
+    return;
+  }
+
+  // USER → garder EXACTEMENT la même logique existante
+  const branches = this.currentUser?.branches ?? [];
+
+  if (branches.length === 1) {
+    this.goToUserBranch(branches[0]);
   } else if (branches.length > 1) {
-    // Plusieurs branches → afficher modale pour choisir la branche
     this.displayBranchDialog = true;
   } else {
     alert("Vous n'êtes responsable d’aucune branche.");
+  }
+}
+goToUserBranch(branch: string): void {
+  if (branch === 'Q') {
+    this.productCodeOptions = [
+      { label: 'Bris de machine', value: '260' },
+      { label: 'Engins de chantiers', value: '268' }
+    ];
+    this.displayProductCodeDialog = true;
+  } else {
+    this.router.navigate([`/contrat/creation/${branch}`]);
+  }
+}
+allBranchOptions: BranchOption[] = [
+  { label: 'MRP', value: 'M' },
+  { label: 'Incendie', value: 'I' },
+  { label: 'Risque Technique', value: 'Q' },
+  { label: 'MRH', value: 'B' }
+];
+
+branchOptionsForDialog: BranchOption[] = [];
+
+openBranchDialogForAdmin(): void {
+  this.selectedBranch = null;
+  this.branchOptionsForDialog = this.allBranchOptions;
+  this.displayBranchDialog = true;
+}
+goToSelectedBranch(): void {
+  if (!this.selectedBranch) return;
+
+  if (this.selectedBranch === 'Q') {
+    this.productCodeOptions = [
+      { label: 'Bris de machine', value: '260' },
+      { label: 'Engins de chantiers', value: '268' }
+    ];
+
+    this.displayBranchDialog = false;
+    this.displayProductCodeDialog = true;
+  } else {
+    const path = `/contrat/creation/${this.selectedBranch}`;
+    this.displayBranchDialog = false;
+    this.router.navigate([path]);
   }
 }
 
@@ -275,20 +417,13 @@ getBranchesForDropdown() {
     return this.branchOptions.filter(b => branches.includes(b.value));
   }
 }
-goToSelectedBranch(): void {
-  if (this.selectedBranch) {
-    const path = `/contrat/creation/${this.selectedBranch}`;
-    console.log('Redirection vers :', path); // 🔥 log ajouté
-    this.displayBranchDialog = false;
-   this.router.navigate([path]);
-  }
-  }
+
   showDownloadDialog() {
     this.displayDownloadDialog = true;
     this.downloadNumPoliceInput = '';
     this.downloadErrorMessage = '';
     this.isDownloading = false;
-  }
+  } 
 
 async onDownloadContrat() {
   if (!this.downloadNumPoliceInput?.trim()) return;

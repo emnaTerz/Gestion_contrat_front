@@ -121,7 +121,9 @@ export class ActionHistoryComponent implements OnInit, AfterViewInit, OnDestroy 
         }
       });
   }
+  
 loadHistory() {
+  
   if (this.mode === 'user') {
     const token = localStorage.getItem('token');
     if (!token) {
@@ -149,29 +151,37 @@ loadHistory() {
 
         this.history$.pipe(takeUntil(this.destroy$)).subscribe(data => {
           this.historyData = data || [];
-          setTimeout(() => this.cdRef.detectChanges());
         });
       },
-      error: () => {
-        localStorage.removeItem('token');
-        this.router.navigate(['/login']);
-      }
     });
   } else if (this.mode === 'contrat') {
-    this.history$ = this.contratService.getHistoriqueContrat();
-    this.history$.pipe(takeUntil(this.destroy$)).subscribe(data => {
-      this.historyData = data || [];
-      setTimeout(() => this.cdRef.detectChanges());
-    });
+  this.userService.getCurrentUser().subscribe({
+    next: (currentUser) => {
+      console.log('Current User (contrat mode):', currentUser);
+
+      // Vérifier le username correct
+      const isPole = ( currentUser.email || '').toLowerCase() === 'pole.si';
+
+      this.history$ = this.contratService.getHistoriqueContrat().pipe(
+        map((contrats: any[]) => {
+          if (isPole) return contrats; // Pole.si voit tout
+          return contrats.filter(c => (c.username || '').toLowerCase() !== 'pole.si');
+        })
+      );
+
+      this.history$.pipe(takeUntil(this.destroy$)).subscribe(data => {
+        this.historyData = data || [];
+      });
+    },
+  });
   } else if (this.mode === 'locked') {
+    // Inchangé
     this.history$ = this.contratService.getLockedContrats();
     this.history$.pipe(takeUntil(this.destroy$)).subscribe(data => {
       this.historyData = data || [];
-      setTimeout(() => this.cdRef.detectChanges());
     });
   }
 }
-
 
 
   // Basculer entre les modes

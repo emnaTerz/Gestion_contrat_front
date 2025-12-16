@@ -95,7 +95,7 @@
 
   <div class="flex justify-end mt-3">
     <button pButton type="button" label="Annuler" class="p-button-text" (click)="displayBranchDialog=false"></button>
-    <button pButton type="button" label="Valider" class="p-button-success ml-2" [disabled]="!selectedBranch" (click)="goToSelectedBranch()"></button>
+    <button pButton type="button" label="Valider" class="p-button-success ml-2" [disabled]="!selectedBranch" (click)="onBranchValidate()"></button>
   </div>
 </p-dialog>
 <p-dialog header="Choisir le code produit" [(visible)]="displayProductCodeDialog"
