@@ -11,6 +11,10 @@
         <label for="nomAssure">Nom de l’assuré / Société assurée</label>
         <input type="text" pInputText [(ngModel)]="attestation.nomAssure" name="nomAssure" required />
       </div>
+      <div class="field">
+        <label for="numadher">Numéro adhérent</label>
+        <input type="text" pInputText [(ngModel)]="attestation.numadher" name="numadher" required />
+      </div>
 
       <div class="field-dates">
         <div class="field">
@@ -31,8 +35,46 @@
         <select [(ngModel)]="attestation.typeAssurance" name="typeAssurance" required>
           <option value="Engin de chantier">Engin de chantier</option>
           <option value="Bris de machines">Bris de machines</option>
+          <option value="Tous Risques Informatiques">Tous Risques Informatiques</option>
+          <option value="RC Decennale">RC Decennale</option>
+          <option value="Tous Risques chantier">Tous Risques chantier</option>
+          <option value="Tous Risques Electroniques">Tous Risques Electroniques</option>
+
+
         </select>
       </div>
+                <!-- Adresse de l’assuré : TRI + RC Décennale -->
+                <div
+                  class="field"
+                  *ngIf="
+                    attestation.typeAssurance === 'Tous Risques Informatiques' ||
+                    attestation.typeAssurance === 'RC Decennale' || 
+                    attestation.typeAssurance === 'Tous Risques chantier'|| 
+                    attestation.typeAssurance === 'Tous Risques Electroniques'
+                  "
+                >
+                  <label for="adresseAssure">Adresse de l’assuré</label>
+                  <input
+                    type="text"
+                    pInputText
+                    [(ngModel)]="attestation.adresseAssure"
+                    name="adresseAssure"
+                  />
+                </div>
+
+                <!-- RC Décennale uniquement : Adresse du chantier -->
+                <div *ngIf="attestation.typeAssurance === 'RC Decennale' || attestation.typeAssurance === 'Tous Risques chantier'">
+                  <div class="field">
+                    <label for="nattrav">Nature des travaux</label>
+                    <input
+                      type="text"
+                      pInputText
+                      [(ngModel)]="attestation.nattrav"
+                      name="nattrav"
+                    />
+                  </div>
+                </div>
+
 
       <div class="field">
         <label for="numPolice">Numéro de police</label>

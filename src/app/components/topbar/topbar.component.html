@@ -38,7 +38,7 @@
           (click)="navigateToGaranties()" 
           title="Gestion des Garanties">
   </button>
-  
+ 
   <!-- Nouveau bouton Contrats -->
   <button *ngIf="isAdmin" 
           pButton icon="pi pi-file" 
@@ -46,7 +46,13 @@
           (click)="navigateToContrats()" 
           title="Liste des Contrats">
   </button>
-
+ <button *ngIf="isAdmin" 
+        pButton 
+        icon="pi pi-home" 
+        class="p-button-text" 
+        (click)="navigateToLanding()" 
+        title="Landing Page">
+</button>
   <button pButton icon="pi pi-sign-out" 
           class="p-button-text p-button-danger"
           (click)="logout()" 

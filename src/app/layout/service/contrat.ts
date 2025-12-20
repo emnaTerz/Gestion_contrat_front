@@ -143,6 +143,11 @@ export enum CodeRenouvellement {
   T = 'T',
   R = 'R'
 }
+export interface HistoriqueContratDTO {
+  action: string;
+  startDate: string; 
+}
+
 
 export enum Branche {
   M = 'M',
@@ -253,9 +258,9 @@ export interface Tarif {
 })
 export class ContratService {
 
-private readonly BASE_URL = 'https://localhost:8082/contrat';
+private readonly BASE_URL = 'https://172.23.0.12:8082/contrat';
 private readonly CATALOGUE_URL = `${this.BASE_URL}/catalogue`;
-private readonly EXTRACT_API_URL = 'https://localhost:5000/extract';
+private readonly EXTRACT_API_URL = 'https://172.23.0.12:5001/extract';
 
 // URLs spécifiques
 private readonly garantieApiUrl = `${this.CATALOGUE_URL}/garantie`;
@@ -264,6 +269,26 @@ private readonly exclusionApiUrl = `${this.CATALOGUE_URL}/exclusion`;
 private readonly tarifApiUrl = `${this.BASE_URL}/tarifs`;
 private readonly CLAUSIER_URL = `${this.CATALOGUE_URL}/clausier`;
 constructor(private http: HttpClient) { }
+enregistrerHistorique(dto: HistoriqueContratDTO): Observable<void> {
+  const token = localStorage.getItem('token');
+
+  const headers = new HttpHeaders({
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json'
+  });
+
+  return this.http.post<void>(
+    `${this.BASE_URL}/enregistrer`,
+    dto,
+    { headers }
+  ).pipe(
+    catchError(err => {
+      console.error('❌ Erreur enregistrement historique', err);
+      return throwError(() => err);
+    })
+  );
+}
+
 createClausierWithPdf(file: File, nom: string): Observable<any> {
   const token = localStorage.getItem('token');
   const headers = new HttpHeaders({ 

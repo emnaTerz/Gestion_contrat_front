@@ -6,6 +6,7 @@ import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
 import pdfMake from 'pdfmake/build/pdfmake';
 import pdfFonts from 'pdfmake/build/vfs_fonts';
+import { ContratService } from '@/layout/service/contrat';
     (pdfMake as any).vfs = (pdfMake as any).vfs || (pdfFonts as any).vfs;
 
 // Initialisation des polices virtuelles
@@ -46,6 +47,17 @@ branchOptions = [
   { label: 'MRP', value: 'M' },
   { label: 'Incendie', value: 'I' }
 ];
+  startTime: string = '';
+ ngOnInit(): void {
+   const now = new Date(); // date locale
+this.startTime = now.getFullYear() + '-' +
+  String(now.getMonth()+1).padStart(2,'0') + '-' +
+  String(now.getDate()).padStart(2,'0') + 'T' +
+  String(now.getHours()).padStart(2,'0') + ':' +
+  String(now.getMinutes()).padStart(2,'0') + ':' +
+  String(now.getSeconds()).padStart(2,'0');}
+
+constructor(private contratService: ContratService){}
   addSituation() {
     this.attestation.situations.push({ descriptif: '', lieu: '' });
   }
@@ -54,9 +66,34 @@ branchOptions = [
     this.attestation.situations.splice(index, 1);
   }
 
-  onSubmit() {
+/*   onSubmit() {
     this.generatePDFs();
-  }
+  } */
+ onSubmit() {
+
+  this.generatePDFs();
+
+
+ let action = '';
+
+switch (this.attestation.branche) {
+  case 'I':
+    action = 'Ajout_Attestation_Incendie';
+    break;
+
+  case 'M':
+    action = 'Ajout_Attestation_MRP';
+    break;
+
+}
+  this.contratService.enregistrerHistorique({
+    action,
+    startDate :this.startTime
+  }).subscribe({
+    next: () => console.log('✅ Historique enregistré'),
+    error: err => console.error('❌ Erreur historique', err)
+  });
+}
 generatePDFs() {
   const vertMAE = '#028844';
   const body: any[] = [];

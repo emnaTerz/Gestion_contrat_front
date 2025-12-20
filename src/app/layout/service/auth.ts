@@ -17,7 +17,7 @@ export interface SigninResponse {
   providedIn: 'root'
 })
 export class AuthService {
-private apiUrl = 'https://localhost:8082/api';
+private apiUrl = 'https://172.23.0.12:8082/api';
  private jwtHelper = new JwtHelperService();
   constructor(private http: HttpClient) {}
 

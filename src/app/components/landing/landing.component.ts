@@ -57,6 +57,10 @@ branchOptions = [
   { label: 'Risque Technique', value: 'Q' },
   { label: 'MRH', value: 'B' },
 ];
+displayBranchDialogCreate: boolean = false;
+displayProductCodeDialogCreate: boolean = false;
+selectedBranchCreate: string | null = null;
+selectedProductCodeCreate: string | null = null;
 
 displayProductCodeDialog: boolean = false;
 selectedBranchForModify: string | null = null;
@@ -159,27 +163,7 @@ onSubmitProductCodeModify(): void {
   this.openModifyPoliceDialog();
 }
 
-/* goToAttestation(): void {
 
-  if (!this.currentUser.branches) {
-    console.warn("⚠️ branches est NULL ou UNDEFINED → arrêt de la fonction !");
-    return;
-  }
-
-  console.log("Branches trouvées :", this.branches);
-
-  if (this.currentUser.branches.includes('Q')) {
-    console.log("🔵 Branche 'Q' détectée → redirection vers /attestationQ");
-    this.router.navigate(['/attestationQ']);
-  }
-  else if (this.currentUser.branches.includes('M') || this.currentUser.branches.includes('I')) {
-    console.log("🟢 Branche 'M' ou 'I' détectée → redirection vers /attestation");
-    this.router.navigate(['/attestation']);
-  }
-  else {
-    console.warn("⚠️ Aucune branche valide trouvée pour cette utilisateur");
-  }
-} */
 prepareBranchOptionsForAttestation(branches?: string[]): void {
   const hasM = branches?.includes('M') || branches?.includes('I');
   const hasQ = branches?.includes('Q');
@@ -259,7 +243,7 @@ handleAttestationBranch(branch: string): void {
   this.displayBranchDialog = false;
 }
 
-onBranchValidate(): void {
+onBranchValidateAttestation(): void {
   if (!this.selectedBranch) return;
 
   this.navigateByAttestationBranch(this.selectedBranch);
@@ -319,36 +303,46 @@ onSubmitNumPolice() {
     }
   );
 }
-
 goToCreateContrat(): void {
-  // ADMIN → logique spécifique
+  const branches = this.currentUser?.branches ?? [];
+
   if (this.currentUser.role === 'ADMIN') {
-    this.openBranchDialogForAdmin();
+    this.selectedBranchCreate = null;
+    this.branchOptionsForDialog = this.allBranchOptions;
+    this.displayBranchDialogCreate = true;
     return;
   }
 
-  // USER → garder EXACTEMENT la même logique existante
-  const branches = this.currentUser?.branches ?? [];
-
   if (branches.length === 1) {
-    this.goToUserBranch(branches[0]);
+    this.goToUserBranchCreate(branches[0]);
   } else if (branches.length > 1) {
-    this.displayBranchDialog = true;
+    this.displayBranchDialogCreate = true;
   } else {
     alert("Vous n'êtes responsable d’aucune branche.");
   }
 }
-goToUserBranch(branch: string): void {
+
+goToUserBranchCreate(branch: string): void {
   if (branch === 'Q') {
     this.productCodeOptions = [
       { label: 'Bris de machine', value: '260' },
       { label: 'Engins de chantiers', value: '268' }
     ];
-    this.displayProductCodeDialog = true;
+    this.displayProductCodeDialogCreate = true;
   } else {
     this.router.navigate([`/contrat/creation/${branch}`]);
   }
 }
+
+goToCreateContratWithProductCode(): void {
+  if (this.selectedBranchCreate && this.selectedProductCodeCreate) {
+    const path = `/contrat/creation/${this.selectedProductCodeCreate}`;
+    console.log('Redirection vers :', path);
+    this.displayProductCodeDialogCreate = false;
+    this.router.navigate([path]);
+  }
+}
+
 allBranchOptions: BranchOption[] = [
   { label: 'MRP', value: 'M' },
   { label: 'Incendie', value: 'I' },
@@ -380,6 +374,24 @@ goToSelectedBranch(): void {
     this.router.navigate([path]);
   }
 }
+goToSelectedBranchCreate(): void {
+  if (!this.selectedBranchCreate) return;
+
+  if (this.selectedBranchCreate === 'Q') {
+    // Branche Q → afficher modale code produit
+    this.productCodeOptions = [
+      { label: 'Bris de machine', value: '260' },
+      { label: 'Engins de chantiers', value: '268' }
+    ];
+    this.displayBranchDialogCreate = false;
+    this.displayProductCodeDialogCreate = true;
+  } else {
+    // Autres branches → redirection directe
+    const path = `/contrat/creation/${this.selectedBranchCreate}`;
+    this.displayBranchDialogCreate = false;
+    this.router.navigate([path]);
+  }
+}
 
 handleBranchSelection(branch: string): void {
   if (branch === 'Q') {
@@ -395,14 +407,7 @@ handleBranchSelection(branch: string): void {
     this.router.navigate([`/contrat/creation/${branch.toLowerCase()}`]);
   }
 }
-goToCreateContratWithProductCode(): void {
-  if (this.selectedBranch && this.selectedProductCode) {
-    const path = `/contrat/creation/${this.selectedProductCode}`;
-    console.log('Redirection vers :', path);
-    this.displayProductCodeDialog = false;
-    this.router.navigate([path]);
-  }
-}
+
 getBranchesForDropdown() {
   if (!this.currentUser) {
     // Si currentUser n'est pas encore défini, retourner un tableau vide

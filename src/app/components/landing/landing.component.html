@@ -95,7 +95,7 @@
 
   <div class="flex justify-end mt-3">
     <button pButton type="button" label="Annuler" class="p-button-text" (click)="displayBranchDialog=false"></button>
-    <button pButton type="button" label="Valider" class="p-button-success ml-2" [disabled]="!selectedBranch" (click)="onBranchValidate()"></button>
+    <button pButton type="button" label="Valider" class="p-button-success ml-2" [disabled]="!selectedBranch" (click)="onBranchValidateAttestation()"></button>
   </div>
 </p-dialog>
 <p-dialog header="Choisir le code produit" [(visible)]="displayProductCodeDialog"
@@ -113,6 +113,43 @@
     <button pButton type="button" label="Annuler" class="p-button-text" (click)="displayProductCodeDialog=false"></button>
     <button pButton type="button" label="Valider" class="p-button-success ml-2"
             [disabled]="!selectedProductCode" (click)="goToCreateContratWithProductCode()"></button>
+  </div>
+</p-dialog>
+<!-- Modale pour choisir la branche avant création de contrat -->
+<p-dialog header="Choisir une branche" [(visible)]="displayBranchDialogCreate" 
+          [modal]="true" [closable]="true" [style]="{width: '400px'}">
+  <div class="field">
+    <label for="branche">Sélectionnez la branche :</label>
+    <select [(ngModel)]="selectedBranchCreate" name="selectedBranchCreate">
+      <option *ngFor="let b of getBranchesForDropdown()" [value]="b.value">
+        {{ b.label }}
+      </option>
+    </select>
+  </div>
+
+  <div class="flex justify-end mt-3">
+    <button pButton type="button" label="Annuler" class="p-button-text" (click)="displayBranchDialogCreate=false"></button>
+    <button pButton type="button" label="Valider" class="p-button-success ml-2"
+            [disabled]="!selectedBranchCreate" (click)="goToSelectedBranchCreate()"></button>
+  </div>
+</p-dialog>
+
+<!-- Modale pour choisir le code produit pour création -->
+<p-dialog header="Choisir le code produit" [(visible)]="displayProductCodeDialogCreate"
+          [modal]="true" [closable]="true" [style]="{width: '400px'}">
+  <div class="field">
+    <label for="productCode">Sélectionnez le code produit :</label>
+    <select [(ngModel)]="selectedProductCodeCreate" name="productCodeCreate">
+      <option *ngFor="let p of productCodeOptions" [value]="p.value">
+        {{ p.label }}
+      </option>
+    </select>
+  </div>
+
+  <div class="flex justify-end mt-3">
+    <button pButton type="button" label="Annuler" class="p-button-text" (click)="displayProductCodeDialogCreate=false"></button>
+    <button pButton type="button" label="Valider" class="p-button-success ml-2"
+            [disabled]="!selectedProductCodeCreate" (click)="goToCreateContratWithProductCode()"></button>
   </div>
 </p-dialog>
 

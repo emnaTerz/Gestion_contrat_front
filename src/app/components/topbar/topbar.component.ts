@@ -45,6 +45,10 @@ navigateToContrat() {
   // Ici on redirige vers la route Contrat
   this.router.navigate(['/Contrat']);
 }
+navigateToLanding() {
+  this.router.navigate(['/Landing']); // Assure-toi que '/landing' est bien la route de ta landing page
+}
+
 allBranchOptions = [
   { label: 'MRP', value: 'M' },
   { label: 'Incendie', value: 'I' },
