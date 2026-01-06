@@ -24,8 +24,11 @@ interface RcConfiguration {
   id: number;
   limiteAnnuelleDomCorporels: number;
   limiteAnnuelleDomMateriels: number;
-  limiteParSinistre: number;
+  limiteParSinistreCorporels: number;
+  limiteParSinistreMateriels: number;
   franchise: number;
+  minimum : number;
+  maximum : number;
   primeNET: number;
   situations: SituationRisque[];
   exclusionsIds: number[];
@@ -81,8 +84,11 @@ interface RcExploitation {
   id: number;
   limiteAnnuelleDomCorporels: number;
   limiteAnnuelleDomMateriels: number;
-  limiteParSinistre: number;
-  franchise: number;
+   limiteParSinistreCorporels:  number,
+    limiteParSinistreMateriels: number,
+    minimum:number,
+    maximum:  number,
+     franchise: number;
   primeNET: number;
   situations: SituationRisque[]; // Situations sélectionnées pour cette RC
   exclusionsIds: number[];
@@ -199,7 +205,10 @@ filteredExclusionsRC: any[] = [];
   rcExploitation = {
     limiteAnnuelleDomCorporels: 0,
     limiteAnnuelleDomMateriels: 0,
-    limiteParSinistre: 0,
+    limiteParSinistreCorporels:  0,
+    limiteParSinistreMateriels: 0,
+    minimum:0,
+    maximum:  0,
     franchise: 0,
     primeNET:0,
     objetDeLaGarantie : ''
@@ -266,7 +275,10 @@ private prepareCurrentDataForPdf(): any {
       id: rcExploitation.id,
       limiteAnnuelleDomCorporels: rcExploitation.limiteAnnuelleDomCorporels ?? 0,
       limiteAnnuelleDomMateriels: rcExploitation.limiteAnnuelleDomMateriels ?? 0,
-      limiteParSinistre: rcExploitation.limiteParSinistre ?? 0,
+      limiteParSinistreCorporels: rcExploitation.limiteParSinistreCorporels ?? 0,
+      limiteParSinistreMateriels: rcExploitation.limiteParSinistreMateriels ?? 0,
+      minimum: rcExploitation.minimum ?? 0,
+      maximum: rcExploitation.maximum ?? 0,
       franchise: rcExploitation.franchise ?? 0,
       primeNET: rcExploitation.primeNET ?? 0,
       exclusionsRcIds: rcExploitation.exclusionsIds || [],
@@ -1204,7 +1216,10 @@ submit() {
       id: rcExploitation.id,
       limiteAnnuelleDomCorporels: rcExploitation.limiteAnnuelleDomCorporels ?? 0,
       limiteAnnuelleDomMateriels: rcExploitation.limiteAnnuelleDomMateriels ?? 0,
-      limiteParSinistre: rcExploitation.limiteParSinistre ?? 0,
+      limiteParSinistreCorporels:rcExploitation.limiteAnnuelleDomCorporels ?? 0,
+      limiteParSinistreMateriels:rcExploitation.limiteAnnuelleDomMateriels ?? 0,
+      minimum: rcExploitation.minimum ?? 0,
+      maximum: rcExploitation.maximum ?? 0,
       franchise: rcExploitation.franchise ?? 0,
       primeNET: rcExploitation.primeNET ?? 0,
       objetDeLaGarantie: this.objetGarantieRc,
@@ -1291,7 +1306,7 @@ console.log('Payload envoyé:', {
   });
 }
 redirectToLanding() {
-  this.router.navigate(['/landing']);}
+  this.router.navigate(['/Landing']);}
 private formatStartTimeForBackend(startTime: string): string {
   if (!startTime) {
     const now = new Date();
@@ -1329,7 +1344,10 @@ createNewRcConfig(): RcConfiguration {
     id: Date.now(),
     limiteAnnuelleDomCorporels: 0,
     limiteAnnuelleDomMateriels: 0,
-    limiteParSinistre: 0,
+    limiteParSinistreCorporels: 0,
+    limiteParSinistreMateriels: 0,
+    minimum : 0,
+    maximum : 0,
     franchise: 0,
     primeNET: 0,
     situations: [],
@@ -1565,7 +1583,10 @@ createNewRcExploitation(): RcExploitation {
     id: Date.now(), // ID temporaire
     limiteAnnuelleDomCorporels: 0,
     limiteAnnuelleDomMateriels: 0,
-    limiteParSinistre: 0,
+    limiteParSinistreCorporels:  0,
+    limiteParSinistreMateriels: 0,
+    minimum:0,
+    maximum:  0,
     franchise: 0,
     primeNET: 0,
     situations: [],

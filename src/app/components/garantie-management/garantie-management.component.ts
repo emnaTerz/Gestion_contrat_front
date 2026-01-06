@@ -1,4 +1,4 @@
- import { ContratService, Garantie } from '@/layout/service/contrat';
+ import { Branche, ContratService, Garantie } from '@/layout/service/contrat';
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -26,18 +26,25 @@ import { ToastModule } from 'primeng/toast';
    providers: [ConfirmationService, MessageService]
 })
 export class GarantieManagementComponent implements OnInit {
-  Branche = [
-    { label: 'M', value: 'M' },
-    { label: 'R', value: 'R' },
-    { label: 'I', value: 'I' },
-  ];
+selectedExclusionBranche: Branche | null = null;
+
+Branche = [
+  { label: 'MRP', value: Branche.M },
+  { label: 'RC', value: Branche.R },
+  { label: 'Incendie', value: Branche.I },
+  { label: 'Risque technique', value: Branche.Q },
+];
   displayBrancheDialog = false;
   selectedGarantieId: number | null = null;
   selectedBranche: string | null = null;
   garanties: Garantie[] = [];
-  activeTab: 'garanties' | 'clausiers' = 'garanties';
+activeTab: 'garanties' | 'clausiers' | 'exclusions' = 'garanties';
   newClausierLibelle: string = '';
   clausiers: any[] = [];
+displayExclusionDialog = false;
+exclusionsGlobales: any[] = [];
+newExclusionLibelle: string = '';
+
   newGarantieLibelle: string = '';
     constructor(private contratService: ContratService, private confirmationService: ConfirmationService,private messageService: MessageService, private router: Router) {}
 
@@ -47,6 +54,18 @@ export class GarantieManagementComponent implements OnInit {
   }
 
 
+openExclusionDialog() {
+  this.displayExclusionDialog = true;
+  this.selectedExclusionBranche = null;
+}
+confirmExclusionBranche() {
+  if (!this.selectedExclusionBranche) return;
+
+  this.displayExclusionDialog = false;
+  this.activeTab = 'exclusions';
+
+  this.loadExclusionsGlobales();
+}
 
   onFileSelected(event: any) {
     const files: FileList = event.target.files;
@@ -168,26 +187,7 @@ downloadPdf(clausier: any) {
     });
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  loadGaranties() {
+ loadGaranties() {
     this.contratService.getAllGaranties().subscribe(res => {
       this.garanties = res;
     });
@@ -260,5 +260,74 @@ onBrancheSelected() {
     });
   }
 }
+loadExclusionsGlobales() {
+  if (!this.selectedExclusionBranche) return;
+
+  // 🔹 Récupérer l'objet Branche correspondant à la valeur sélectionnée
+
+  this.contratService.getExclusionsGlobalesByBranche(  this.selectedExclusionBranche as Branche
+).subscribe({
+    next: (data) => this.exclusionsGlobales = data,
+    error: (err) => {
+      console.error('Erreur chargement exclusions globales', err);
+      this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Erreur lors du chargement des exclusions globales' });
+    }
+  });
+}
+
+addExclusionGlobal() {
+  if (!this.newExclusionLibelle.trim() || !this.selectedExclusionBranche) return;
+
+  const payload = {
+    libelle: this.newExclusionLibelle.trim(),
+    branche: this.selectedExclusionBranche,
+    service: null   // ✅ OBLIGATOIRE
+  };
+
+  this.contratService.addExclusionGlobale(payload).subscribe({
+    next: (res) => {
+      this.exclusionsGlobales.push(res);
+      this.newExclusionLibelle = '';
+      this.messageService.add({
+        severity: 'success',
+        summary: 'Ajouté',
+        detail: 'Exclusion globale ajoutée'
+      });
+    },
+    error: (err) => {
+      console.error(err);
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Erreur',
+        detail: 'Erreur lors de l\'ajout'
+      });
+    }
+  });
+}
+
+
+deleteExclusionGlobal(id: number) {
+  this.contratService.deleteExclusionGlobale(id).subscribe({
+    next: () => {
+      this.exclusionsGlobales = this.exclusionsGlobales.filter(e => e.id !== id);
+      this.messageService.add({ severity: 'info', summary: 'Supprimé', detail: 'Exclusion globale supprimée' });
+    },
+    error: (err) => {
+      console.error(err);
+      this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Erreur lors de la suppression' });
+    }
+  });
+}
+confirmDeleteExclusion(id: number) {
+  this.confirmationService.confirm({
+    message: 'Voulez-vous vraiment supprimer cette exclusion globale ?',
+    header: 'Confirmation',
+    icon: 'pi pi-exclamation-triangle',
+    accept: () => {
+      this.deleteExclusionGlobal(id);
+    }
+  });
+}
+
 }
 

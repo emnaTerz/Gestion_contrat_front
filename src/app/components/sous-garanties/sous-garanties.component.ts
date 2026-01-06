@@ -36,6 +36,8 @@ export class SousGarantiesComponent {
 selectedItem: any = null;
   searchTerm: string = '';
     garantieLabel: string = '';
+    exclusionLabel: string = '';
+
      sousGarantieToDelete!: SousGarantie;
   displayConfirm: boolean = false;
   nouvelleSousGarantieNom: string = '';
@@ -48,21 +50,34 @@ mode: 'Garanties' | 'Exclusions' = 'Garanties';
   
   ) { }
 
-  ngOnInit(): void {
-    // Récupération des query params : garantieId et branche
-    this.route.queryParams.subscribe(params => {
-      this.garantieId = +params['garantieId'];
-      this.branche = params['branche'];
+ ngOnInit(): void {
+  this.route.queryParams.subscribe(params => {
+    this.garantieId = +params['garantieId'];
+    this.branche = params['branche'];
 
+    // ✅ CAS BRANCHE Q → Exclusions uniquement
+    if (this.branche === Branche.Q) {
+      this.mode = 'Exclusions';
+      this.loadExclusions();
+    } else {
+      // autres branches → comportement normal
+      this.mode = 'Garanties';
       this.loadSousGaranties();
-    });
+    }
+  });
+}
+ switchMode(newMode: 'Garanties' | 'Exclusions') {
+  // 🔒 Interdiction Garanties si branche Q
+  if (this.branche === Branche.Q && newMode === 'Garanties') {
+    return;
   }
-  switchMode(newMode: 'Garanties' | 'Exclusions') {
-    this.mode = newMode;
-    this.searchTerm = '';
-    this.nouvelItemNom = '';
-    this.loadData();
-  }
+
+  this.mode = newMode;
+  this.searchTerm = '';
+  this.nouvelItemNom = '';
+  this.loadData();
+}
+
  loadData() {
     if (this.mode === 'Garanties') {
       this.loadSousGaranties();
@@ -71,17 +86,37 @@ mode: 'Garanties' | 'Exclusions' = 'Garanties';
     }
   }
 loadExclusions() {
-  // Convertir le string en enum Branche
   const brancheEnum = this.branche as Branche;
-  
+
   this.sousGarantieService.getExclusionsByBrancheAndGarantie(brancheEnum, this.garantieId).subscribe({
     next: (data) => {
+      console.log('Exclusions reçues :', data);
+
       this.exclusions = data;
       this.filteredExclusions = [...data];
+
+      if (data.length > 0 && data[0].garantie) {
+        let libelle = data[0].garantie.libelle.trim();
+
+        // Mapping pour les garanties spécifiques de la branche Q
+        const brancheQMap: { [key: string]: string } = {
+          'Incendie': 'Incendie d’origine interne, explosion chimique d’origine interne et action directe de la foudre',
+          'Vol': 'Vol et tentative de vol'
+          // Ajouter d’autres garanties si besoin
+        };
+
+        // Si c’est la branche Q et que le libelle est dans le mapping
+        if (this.branche === 'Q' && brancheQMap[libelle]) {
+          this.garantieLabel = brancheQMap[libelle];
+        } else {
+          this.garantieLabel = libelle; // Sinon afficher le libelle normal
+        }
+      }
     },
     error: (error) => console.error('Erreur chargement exclusions', error)
   });
 }
+
 
   // Filtrer les éléments selon le mode
   filterItems() {
@@ -112,6 +147,7 @@ loadExclusions() {
     }
   }
   ajouterExclusion() {
+    console.log(this.branche)
   const nouvelleExclusion = {
     nom: this.nouvelItemNom,
     branche: this.branche,

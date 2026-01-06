@@ -75,8 +75,11 @@ interface RCExploitation {
   id?: number;
   limiteAnnuelleDomCorporels: number;
   limiteAnnuelleDomMateriels: number;
-  limiteParSinistre: number;
+  limiteParSinistreCorporels: number;
+  limiteParSinistreMateriels: number;
   franchise: number;
+  minimum : number;
+  maximum : number;
   primeNET: number;
   situations: SituationRisque[];
   exclusionsIds: number[]; // ← CORRIGER: exclusionsIds (pas exclusionsRcIds)
@@ -139,7 +142,10 @@ currentRcExploitation: RCExploitation = this.createNewRcExploitation();
 rcExploitation: RCExploitation = {
   limiteAnnuelleDomCorporels: 0,
   limiteAnnuelleDomMateriels: 0,
-  limiteParSinistre: 0,
+  limiteParSinistreCorporels:  0,
+  limiteParSinistreMateriels: 0,
+  minimum:0,
+  maximum:  0,
   franchise: 0,
   primeNET: 0,
   objetDeLaGarantie: '',
@@ -250,7 +256,10 @@ private prepareCurrentDataForPdf(): any {
       id: rcExploitation.id,
       limiteAnnuelleDomCorporels: rcExploitation.limiteAnnuelleDomCorporels ?? 0,
       limiteAnnuelleDomMateriels: rcExploitation.limiteAnnuelleDomMateriels ?? 0,
-      limiteParSinistre: rcExploitation.limiteParSinistre ?? 0,
+      limiteParSinistreCorporels: rcExploitation.limiteAnnuelleDomCorporels ?? 0,
+      limiteParSinistreMateriels: rcExploitation.limiteAnnuelleDomMateriels ?? 0,
+      minimum: rcExploitation.minimum ?? 0,
+      maximum: rcExploitation.maximum ?? 0,
       franchise: rcExploitation.franchise ?? 0,
       primeNET: rcExploitation.primeNET ?? 0,
       exclusionsRcIds: rcExploitation.exclusionsIds || [],
@@ -1113,7 +1122,10 @@ initializeFilterProperties(garantie: GarantieComposant ) {
         id: rcConfig.id,
         limiteAnnuelleDomCorporels: rcConfig.limiteAnnuelleDomCorporels || 0,
         limiteAnnuelleDomMateriels: rcConfig.limiteAnnuelleDomMateriels || 0,
-        limiteParSinistre: rcConfig.limiteParSinistre || 0,
+        limiteParSinistreCorporels:  rcConfig.limiteParSinistreCorporels || 0,
+        limiteParSinistreMateriels:  rcConfig.limiteParSinistreMateriels || 0,
+        minimum: rcConfig.minimum || 0,
+        maximum: rcConfig.maximum || 0,
         franchise: rcConfig.franchise || 0,
         primeNET: rcConfig.primeNET || 0,
         situations: situations,
@@ -1332,7 +1344,10 @@ getGarantieName(sousGarantieId: number): string {
           id: rcExploitation.id,
           limiteAnnuelleDomCorporels: rcExploitation.limiteAnnuelleDomCorporels,
           limiteAnnuelleDomMateriels: rcExploitation.limiteAnnuelleDomMateriels,
-          limiteParSinistre: rcExploitation.limiteParSinistre,
+          limiteParSinistreCorporels: rcExploitation.limiteParSinistreCorporels,
+          limiteParSinistreMateriels: rcExploitation.limiteParSinistreMateriels,
+          maximum: rcExploitation.maximum,
+          minimum: rcExploitation.minimum,
           franchise: rcExploitation.franchise,
           primeNET: rcExploitation.primeNET,
           objetDeLaGarantie: rcExploitation.objetDeLaGarantie,
@@ -1755,7 +1770,10 @@ createNewRcExploitation(): RCExploitation {
     id: Date.now(),
     limiteAnnuelleDomCorporels: 0,
     limiteAnnuelleDomMateriels: 0,
-    limiteParSinistre: 0,
+    limiteParSinistreCorporels:  0,
+    limiteParSinistreMateriels: 0,
+    minimum:0,
+    maximum:  0,
     franchise: 0,
     primeNET: 0,
     situations: [],

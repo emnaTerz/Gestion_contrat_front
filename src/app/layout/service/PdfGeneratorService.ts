@@ -68,31 +68,39 @@ export class PdfGeneratorService {
             { text: `${data.preambule || '-'}`, style: 'paragraph' },
 
             // Informations de l'assuré
-            { text: '\nINFORMATIONS DE L\'ASSURÉ', style: 'sectionTitle' },
-            {
-              table: {
-                widths: ['*'],
-                body: [
-                  [
-                    {
-                      stack: [
-                        { text: `Nom / Raison sociale : ${data.adherent.nomRaison || '-'}`, style: 'infoText' },
-                        { text: `Adresse : ${data.adherent.adresse || '-'}`, style: 'infoText' },
-                        { text: `Profession : ${data.adherent.activite || '-'}`, style: 'infoText' },
-                        { text: `Activité professionnelle  de l'Assuré : ${data.nom_assure || '-'}`, style: 'infoText' },
-                        { 
-                          text: 'Aucune autre activité professionnelle n\'est couverte à moins d\'être expressément déclarée et acceptée par l\'Assureur', 
-                          style: 'noteText',
-                          margin: [0, 10, 0, 0]
-                        },
-                      ],
-                      border: [false, false, false, false]
-                    }
-                  ]
-                ]
-              },
-              margin: [0, 0, 0, 20]
-            },
+{ text: '\nINFORMATIONS DE L\'ASSURÉ', style: 'sectionTitle' },
+{
+  table: {
+    widths: ['*'],
+    body: [
+      [
+        {
+          stack: (() => {
+            const infoStack = [
+              { text: `Nom / Raison sociale : ${data.adherent.nomRaison || '-'}`, style: 'infoText' },
+              { text: `Adresse : ${data.adherent.adresse || '-'}`, style: 'infoText' },
+              { text: `Profession : ${data.adherent.activite || '-'}`, style: 'infoText' },
+            ];
+
+            // Si data.nom_assure existe, on ajoute l'activité et la note
+            if (data.nom_assure) {
+              infoStack.push({ text: `Activité professionnelle de l'Assuré : ${data.nom_assure}`, style: 'infoText' });
+              infoStack.push({ 
+                text: 'Aucune autre activité professionnelle n\'est couverte à moins d\'être expressément déclarée et acceptée par l\'Assureur',
+                style: 'noteText',
+                margin: [0, 10, 0, 0]
+              }as any);
+            }
+
+            return infoStack;
+          })(),
+          border: [false, false, false, false]
+        }
+      ]
+    ]
+  },
+  margin: [0, 0, 0, 20]
+},
 
             // Période d'assurance
             { text: 'PÉRIODE D\'ASSURANCE', style: 'sectionTitle' },
@@ -1369,7 +1377,7 @@ private async addPageNumbers(pdfBytes: Uint8Array): Promise<Uint8Array> {
         
         // Positionner le texte plus haut pour créer l'espace visuel
         // Augmenter la valeur Y pour monter le texte
-        const yPosition = 95; // Au lieu de 25, on monte à 60px du bas
+        const yPosition = 80; // Au lieu de 25, on monte à 60px du bas
         
         page.drawText(text, {
             x: (width - textWidth) / 2, // Centré horizontalement
@@ -2005,30 +2013,46 @@ private prepareSectionsRC(rcConfigurations: any[], data: any): any[] {
 
         // Tableau RC
         {
-          table: {
-            headerRows: 1,
-            widths: ['*', 'auto', 'auto', 'auto'],
-            body: [
-              [
-                { text: 'Couvertures', style: 'rcTableHeader' },
-                { text: 'Limite annuelle (DT)', style: 'rcTableHeader' },
-                { text: 'Limite par sinistre (DT)', style: 'rcTableHeader' },
-                { text: 'Franchise (%)', style: 'rcTableHeader' }
-              ],
-              [
-                { text: 'Dommages corporels', style: 'rcTableCell', border: [true, true, true, false] },
-                { text: this.formatMontant(rcConfig.limiteAnnuelleDomCorporels), style: 'rcTableCellRight', border: [true, true, true, false] },
-                { text: '\n' + this.formatMontant(rcConfig.limiteParSinistre) + '\n', style: 'rcTableCellRight', rowSpan: 2, border: [true, true, true, true] },
-                { text: '\n' + this.formatFranchise(rcConfig.franchise,true) + '\n', style: 'rcTableCellRight', rowSpan: 2, border: [true, true, true, true] }
-              ],
-              [
-                { text: 'Dommages matériels', style: 'rcTableCell', border: [true, false, true, true] },
-                { text: this.formatMontant(rcConfig.limiteAnnuelleDomMateriels), style: 'rcTableCellRight', border: [true, false, true, true] },
-                { text: '', border: [false, false, false, false] },
-                { text: '', border: [false, false, false, false] }
-              ]
-            ]
-          },
+  table: {
+    headerRows: 2, // 2 lignes de header pour gérer la sous-colonne de Franchise
+    widths: ['*', 'auto', 'auto', 'auto', 'auto', 'auto'], // 6 colonnes : Couverture, Limite annuelle, Limite par sinistre, Franchise taux, min, max
+    body: [
+      // Ligne 1 header
+      [
+        { text: 'Couvertures', style: 'rcTableHeader', rowSpan: 2 },
+        { text: 'Limite annuelle (DT)', style: 'rcTableHeader', rowSpan: 2 },
+        { text: 'Limite par sinistre (DT)', style: 'rcTableHeader', rowSpan: 2 },
+        { text: 'Franchise', style: 'rcTableHeader', colSpan: 3, alignment: 'center' }, {}, {}, // colspan = 3
+      ],
+      // Ligne 2 header (sous-colonnes de Franchise)
+      [
+        {}, {}, {}, 
+        { text: 'Taux (%)', style: 'rcTableHeader' },
+        { text: 'Minimum (DT)', style: 'rcTableHeader' },
+        { text: 'Maximum (DT)', style: 'rcTableHeader' },
+      ],
+      // Ligne Dommages corporels
+      [
+        { text: 'Dommages corporels', style: 'rcTableCell' },
+        { text: this.formatMontant(rcConfig.limiteAnnuelleDomCorporels), style: 'rcTableCellRight' },
+        { text: this.formatMontant(rcConfig.limiteParSinistreCorporels), style: 'rcTableCellRight' },
+        { text: this.formatFranchise(rcConfig.franchises, true), style: 'rcTableCellRight' },
+        { text: this.formatMontant(rcConfig.minimu), style: 'rcTableCellRight' },
+        { text: this.formatMontant(rcConfig.maximu), style: 'rcTableCellRight' },
+      ],
+      // Ligne Dommages matériels
+      [
+        { text: 'Dommages matériels', style: 'rcTableCell' },
+        { text: this.formatMontant(rcConfig.limiteAnnuelleDomMateriels), style: 'rcTableCellRight' },
+        { text: this.formatMontant(rcConfig.limiteParSinistreMateriels), style: 'rcTableCellRight' },
+        { text: this.formatFranchise(rcConfig.franchise, true), style: 'rcTableCellRight' },
+        { text: this.formatMontant(rcConfig.minimum), style: 'rcTableCellRight' },
+        { text: this.formatMontant(rcConfig.maximum), style: 'rcTableCellRight' },
+      ]
+    ]
+  },
+
+
           layout: {
             hLineWidth: (i: number) => (i === 1 ? 0.5 : 1),
             vLineWidth: () => 1,
@@ -2559,7 +2583,7 @@ private prepareExclusionsContent(garantiesParParent: any[]): any[] {
             ', attestons par la présente que ',
             { text: `${data.adherent.nomRaison || 'Nom de l\'Adhérent'}`, style: 'paragraphBold' },
             ' a souscrit auprès de notre Mutuelle un contrat d\'assurance Multirisque Artisans et Professions libérales en couverture ',
-            { text: `${data.nom_assure || 'Descriptif'}`, style: 'paragraphBold' },
+            { text: `${section.identification || 'Descriptif'}`, style: 'paragraphBold' },
             ' sis à ',
             { text: `${section.adresse || 'Lieu/Site'}`, style: 'paragraphBold' },
             '.'

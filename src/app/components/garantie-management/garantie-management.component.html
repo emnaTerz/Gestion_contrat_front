@@ -1,7 +1,6 @@
-<div class="garantie-container">
+<!-- <div class="garantie-container">
   <h2>Gestion des Garanties et Clausiers</h2>
 
-  <!-- Slider de navigation -->
   <div class="slider-nav">
     <button 
       [class.active]="activeTab === 'garanties'" 
@@ -13,11 +12,14 @@
       (click)="activeTab = 'clausiers'">
       Clausiers
     </button>
+    <button
+    [class.active]="activeTab === 'exclusions'"
+    (click)="openExclusionDialog()">
+    Exclusions globales
+  </button>
   </div>
 
-  <!-- Section Garanties -->
   <div *ngIf="activeTab === 'garanties'" class="tab-content">
-    <!-- Ajout d'une nouvelle garantie -->
     <div class="add-garantie">
       <input 
         type="text" 
@@ -28,12 +30,9 @@
       </button>
     </div>
 
-    <!-- Message si aucune garantie -->
     <div *ngIf="garanties.length === 0" class="empty">
       Aucune garantie disponible.
     </div>
-
-    <!-- Liste des garanties -->
     <div *ngIf="garanties.length > 0" class="garantie-list">
       <div *ngFor="let g of garanties" class="garantie-card" (click)="openBrancheDialog(g.id)">
         <div class="garantie-item">
@@ -48,9 +47,7 @@
     </div>
   </div>
 
-  <!-- Section Clausiers -->
   <div *ngIf="activeTab === 'clausiers'" class="tab-content">
-    <!-- Upload de PDF avec nom -->
     <div class="add-garantie">
       <input 
         type="text" 
@@ -68,13 +65,9 @@
         <i class="pi pi-upload"></i> Choisir PDF
       </button>
     </div>
-
-    <!-- Message si aucun clausier -->
     <div *ngIf="clausiers.length === 0" class="empty">
       Aucun clausier disponible.
     </div>
-
-    <!-- Liste des clausiers -->
     <div *ngIf="clausiers.length > 0" class="clausier-grid">
       <div *ngFor="let clausier of clausiers" class="clausier-card">
         <div class="clausier-header">
@@ -85,9 +78,7 @@
             (click)="confirmDeleteClausier(clausier.id, clausier.nom)">
           </i>
         </div>
-        
-        <!-- Affichage du fichier PDF -->
-        <div class="files-section">
+                <div class="files-section">
           <h5>Fichier PDF :</h5>
           <div *ngIf="clausier.file; else noFile" class="file-item">
             <i class="pi pi-file-pdf"></i>
@@ -103,12 +94,57 @@
       </div>
     </div>
   </div>
+<div *ngIf="activeTab === 'exclusions'" class="tab-content">
+  <div class="add-garantie">
+    <label for="brancheExclusion">Branche :</label>
+    <select
+      id="brancheExclusion"
+      [(ngModel)]="selectedExclusionBranche"
+      (change)="loadExclusionsGlobales()">
+
+      <option [ngValue]="null">-- Sélectionner une branche --</option>
+      <option
+        *ngFor="let b of Branche"
+        [ngValue]="b.value">
+        {{ b.label }}
+      </option>
+    </select>
+  </div>
+  <div class="add-garantie" *ngIf="selectedExclusionBranche">
+    <input
+      type="text"
+      placeholder="Nouvelle exclusion globale..."
+      [(ngModel)]="newExclusionLibelle" />
+
+    <button (click)="addExclusionGlobal()">
+      <i class="pi pi-plus"></i> Ajouter
+    </button>
+  </div>
+
+  <div *ngIf="exclusionsGlobales.length === 0 && selectedExclusionBranche" class="empty">
+    Aucune exclusion globale pour cette branche.
+  </div>
+
+  <div *ngIf="exclusionsGlobales.length > 0" class="garantie-list">
+    <div *ngFor="let e of exclusionsGlobales" class="garantie-card">
+      <div class="garantie-item">
+        <span>{{ e.libelle }}</span>
+
+        <i
+          class="pi pi-trash delete-icon"
+          title="Supprimer"
+          (click)="confirmDeleteExclusion(e.id)">
+        </i>
+      </div>
+    </div>
+  </div>
+
+</div>
 
   <p-confirmDialog></p-confirmDialog>
   <p-toast></p-toast>
 </div>
 
-<!-- Popup de sélection de branche (pour garanties) -->
 <div *ngIf="displayBrancheDialog" class="popup-overlay">
   <div class="p-dialog popup-content">
     <h3>Sélectionner la branche</h3>
@@ -123,6 +159,193 @@
     <div class="popup-actions">
       <button (click)="onBrancheSelected()">Valider</button>
       <button (click)="displayBrancheDialog = false">Annuler</button>
+    </div>
+  </div>
+</div> -->
+
+<div class="garantie-container">
+  <h2>Gestion des Garanties et Clausiers</h2>
+
+  <!-- ================= Slider de navigation ================= -->
+  <div class="slider-nav">
+    <button
+      [class.active]="activeTab === 'garanties'"
+      (click)="activeTab = 'garanties'">
+      Garanties
+    </button>
+
+    <button
+      [class.active]="activeTab === 'clausiers'"
+      (click)="activeTab = 'clausiers'">
+      Clausiers
+    </button>
+
+    <button
+      [class.active]="activeTab === 'exclusions'"
+      (click)="openExclusionDialog()">
+      Exclusions globales
+    </button>
+  </div>
+
+  <!-- ================= Section Garanties ================= -->
+  <div *ngIf="activeTab === 'garanties'" class="tab-content">
+
+    <div class="add-garantie">
+      <input
+        type="text"
+        placeholder="Nouvelle garantie..."
+        [(ngModel)]="newGarantieLibelle" />
+      <button (click)="addGarantie()">
+        <i class="pi pi-plus"></i> Ajouter
+      </button>
+    </div>
+
+    <div *ngIf="garanties.length === 0" class="empty">
+      Aucune garantie disponible.
+    </div>
+
+    <div *ngIf="garanties.length > 0" class="garantie-list">
+      <div
+        *ngFor="let g of garanties"
+        class="garantie-card"
+        (click)="openBrancheDialog(g.id)">
+        <div class="garantie-item">
+          <span>{{ g.libelle }}</span>
+          <i
+            class="pi pi-trash delete-icon"
+            (click)="confirmDelete(g.id, g.libelle); $event.stopPropagation()">
+          </i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= Section Clausiers ================= -->
+  <div *ngIf="activeTab === 'clausiers'" class="tab-content">
+
+    <div class="add-garantie">
+      <input
+        type="text"
+        placeholder="Nom du clausier..."
+        [(ngModel)]="newClausierLibelle" />
+
+      <input
+        type="file"
+        #fileInput
+        accept=".pdf"
+        (change)="onFileSelected($event)"
+        hidden />
+
+      <button (click)="fileInput.click()">
+        <i class="pi pi-upload"></i> Choisir PDF
+      </button>
+    </div>
+
+    <div *ngIf="clausiers.length === 0" class="empty">
+      Aucun clausier disponible.
+    </div>
+
+    <div *ngIf="clausiers.length > 0" class="clausier-grid">
+      <div *ngFor="let c of clausiers" class="clausier-card">
+        <div class="clausier-header">
+          <h4>{{ c.nom }}</h4>
+          <i
+            class="pi pi-trash delete-icon"
+            (click)="confirmDeleteClausier(c.id, c.nom)">
+          </i>
+        </div>
+
+        <div class="files-section">
+          <div *ngIf="c.file; else noFile" class="file-item">
+            <i class="pi pi-file-pdf"></i>
+            <span>{{ c.nom }}</span>
+            <i class="pi pi-download" (click)="downloadPdf(c)"></i>
+          </div>
+
+          <ng-template #noFile>
+            <div class="no-files">Aucun fichier PDF</div>
+          </ng-template>
+        </div>
+      </div>
+    </div>
+  </div>
+
+ <!-- ================= Section Exclusions Globales ================= -->
+<div *ngIf="activeTab === 'exclusions'" class="tab-content">
+
+  <h3>Exclusions globales</h3>
+
+  <!-- Ajout exclusion globale -->
+  <div class="add-exclusion">
+    <input
+      type="text"
+      placeholder="Nouvelle exclusion globale..."
+      [(ngModel)]="newExclusionLibelle" />
+
+    <button (click)="addExclusionGlobal()">
+      <i class="pi pi-plus"></i> Ajouter
+    </button>
+  </div>
+
+  <!-- Message si aucune exclusion -->
+  <div *ngIf="exclusionsGlobales.length === 0" class="empty">
+    Aucune exclusion globale pour cette branche.
+  </div>
+
+  <!-- ✅ Card unique contenant toutes les exclusions -->
+  <div *ngIf="exclusionsGlobales.length > 0" class="exclusion-card">
+    <h4>Liste des exclusions</h4>
+
+    <div class="exclusion-list">
+      <div *ngFor="let e of exclusionsGlobales" class="exclusion-item">
+        <span>{{ e.libelle }}</span>
+
+        <i
+          class="pi pi-trash delete-icon"
+          (click)="confirmDeleteExclusion(e.id)"
+          title="Supprimer">
+        </i>
+      </div>
+    </div>
+  </div>
+</div>
+
+<p-confirmDialog></p-confirmDialog>
+<p-toast></p-toast>
+
+<!-- ================= Modale Branche – Garanties ================= -->
+<div *ngIf="displayBrancheDialog" class="popup-overlay">
+  <div class="p-dialog popup-content">
+    <h3>Sélectionner la branche</h3>
+
+    <select [(ngModel)]="selectedBranche">
+      <option *ngFor="let b of Branche" [ngValue]="b.value">
+        {{ b.label }}
+      </option>
+    </select>
+
+    <div class="popup-actions">
+      <button (click)="onBrancheSelected()">Valider</button>
+      <button (click)="displayBrancheDialog = false">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= Modale Branche – Exclusions ================= -->
+<div *ngIf="displayExclusionDialog" class="popup-overlay">
+  <div class="p-dialog popup-content">
+    <h3>Sélectionner la branche</h3>
+
+    <select [(ngModel)]="selectedExclusionBranche">
+      <option [ngValue]="null">-- Sélectionner --</option>
+      <option *ngFor="let b of Branche" [ngValue]="b.value">
+        {{ b.label }}
+      </option>
+    </select>
+
+    <div class="popup-actions">
+      <button (click)="confirmExclusionBranche()">Valider</button>
+      <button (click)="displayExclusionDialog = false">Annuler</button>
     </div>
   </div>
 </div>

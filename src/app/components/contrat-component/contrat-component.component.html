@@ -405,8 +405,11 @@
                 <strong>Paramètres :</strong><br>
                 • Dommages Corporels: {{ rc.limiteAnnuelleDomCorporels }}<br>
                 • Dommages Matériels: {{ rc.limiteAnnuelleDomMateriels }}<br>
-                • Limite/sinistre: {{ rc.limiteParSinistre }}<br>
+                • limite Par Sinistre Corporels: {{ rc.limiteParSinistreCorporels }}<br>
+                • limite Par Sinistre Materiels: {{ rc.limiteParSinistreMateriels }}<br>
                 • Franchise: {{ rc.franchise }}<br>
+                • Maximum: {{ rc.maximum }}<br>
+                • Minimum: {{ rc.minimum }}<br>
                 • Prime NET: {{ rc.primeNET }}
               </div>
               <div style="margin-top: 0.5rem;">
@@ -431,11 +434,8 @@
         </div>
       </div>
 
-      <!-- Formulaire pour ajouter/modifier une RC -->
       <div class="contrat-section">
         <h4>{{ rcExploitations.length > 0 ? 'Ajouter une autre RC Exploitation' : 'Configurer une RC Exploitation' }}</h4>
-
-        <!-- Paramètres de la RC -->
         <div class="form-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
           <div class="form-group">
             <label>Limite annuelle Dommages Corporels</label>
@@ -448,13 +448,25 @@
           </div>
 
           <div class="form-group">
-            <label>Limite par sinistre</label>
-            <input type="number" [(ngModel)]="currentRcExploitation.limiteParSinistre">
+            <label>Limite par sinistre Corporels</label>
+            <input type="number" [(ngModel)]="currentRcExploitation.limiteParSinistreCorporels">
+          </div>
+          <div class="form-group">
+            <label>Limite par sinistre Materiels</label>
+            <input type="number" [(ngModel)]="currentRcExploitation.limiteParSinistreMateriels">
           </div>
 
           <div class="form-group">
             <label>Franchise</label>
             <input type="number" [(ngModel)]="currentRcExploitation.franchise">
+          </div>
+          <div class="form-group">
+            <label>Maximum</label>
+            <input type="number" [(ngModel)]="currentRcExploitation.maximum">
+          </div>
+  <div class="form-group">
+            <label>Minimum</label>
+            <input type="number" [(ngModel)]="currentRcExploitation.minimum">
           </div>
 
           <div class="form-group">
@@ -462,8 +474,6 @@
             <input type="number" [(ngModel)]="currentRcExploitation.primeNET">
           </div>
         </div>
-
-        <!-- Sélection des situations -->
         <h5>Sélectionner les situations pour cette RC :</h5>
         <div class="situations-list">
           <div *ngFor="let s of situationRisques" class="situation-item" style="padding: 0.5rem; border-bottom: 1px solid #eee;">
@@ -489,6 +499,8 @@
             </label>
           </div>
         </div>
+
+    
 
         <!-- Exclusions -->
         <div class="exclusions-section" style="margin-top: 2rem;">

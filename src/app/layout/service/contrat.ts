@@ -37,6 +37,8 @@ export interface Exclusion {
   id: number;
   nom: string;
   branche: Branche;
+  garantie: Garantie; 
+
 }
 export interface AdherentDTO {
   codeId: string;
@@ -103,8 +105,11 @@ export interface RcConfigurationDTO {
   objetDeLaGarantie: string;
   limiteAnnuelleDomCorporels: number;
   limiteAnnuelleDomMateriels: number;
-  limiteParSinistre: number;
+  limiteParSinistreCorporels: number;
+  limiteParSinistreMateriels: number;
   franchise: number;
+  minimum : number;
+  maximum : number;
   primeNET: number;
   exclusionsRcIds: number[];
   sectionIds?: number[]; // Rendre optionnel
@@ -152,7 +157,8 @@ export interface HistoriqueContratDTO {
 export enum Branche {
   M = 'M',
   R = 'R',
-  I = 'I'
+  I = 'I',
+  Q = 'Q'
 }
 
 export interface ContratVerrouille {
@@ -183,8 +189,11 @@ export interface ExclusionRCResponseDTO {
 export interface RCExploitationResponseDTO {
   limiteAnnuelleDomCorporels: number;
   limiteAnnuelleDomMateriels: number;
-  limiteParSinistre: number;
+  limiteParSinistreCorporels: number;
+  limiteParSinistreMateriels: number;
   franchise: number;
+  minimum : number;
+  maximum : number;
   primeNET: number;
 
   objetDeLaGarantie: string;
@@ -217,6 +226,12 @@ export interface SectionResponseDTO {
   garanties: GarantieResponseDTO[];
   rcExploitationActive: boolean;
   rcExploitation: RCExploitationResponseDTO;
+}
+export interface ExclusionGlobale {
+  id?: number;          
+  libelle: string;
+  branche: string;
+  service: number | null;
 }
 
 export interface ContratResponseDTO {
@@ -261,6 +276,7 @@ export class ContratService {
 private readonly BASE_URL = 'https://172.23.0.12:8082/contrat';
 private readonly CATALOGUE_URL = `${this.BASE_URL}/catalogue`;
 private readonly EXTRACT_API_URL = 'https://172.23.0.12:5001/extract';
+  private readonly exclusionGlobaleApiUrl = `${this.CATALOGUE_URL}/exclusion-globale`;
 
 // URLs spécifiques
 private readonly garantieApiUrl = `${this.CATALOGUE_URL}/garantie`;
@@ -618,4 +634,36 @@ uploadPdf(file: File): Observable<{ lines: string[] }> {
   const formData = new FormData();
   formData.append('file', file);
   return this.http.post<{ lines: string[] }>(this.EXTRACT_API_URL, formData);
-}}
+}
+getExclusionsGlobalesByBranche(branche: Branche): Observable<Exclusion[]> {
+    return this.http.get<Exclusion[]>(`${this.exclusionGlobaleApiUrl}/branche/${branche}`, { headers: this.getHeaders() })
+      .pipe(
+        catchError(err => {
+          console.error('Erreur récupération exclusions globales par branche', err);
+          return throwError(() => err);
+        })
+      );
+  }
+
+  // 🔹 Ajouter une exclusion globale
+addExclusionGlobale(exclusion: ExclusionGlobale): Observable<ExclusionGlobale> {
+  const headers = this.getHeaders(); // méthode qui récupère le token
+  return this.http.post<ExclusionGlobale>(
+    this.exclusionGlobaleApiUrl, 
+    exclusion, 
+    { headers }
+  );
+}
+
+  // 🔹 Supprimer une exclusion globale par ID
+  deleteExclusionGlobale(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.exclusionGlobaleApiUrl}/${id}`, { headers: this.getHeaders() })
+      .pipe(
+        catchError(err => {
+          console.error('Erreur suppression exclusion globale', err);
+          return throwError(() => err);
+        })
+      );
+  }
+
+}
