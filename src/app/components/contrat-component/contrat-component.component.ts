@@ -1153,8 +1153,6 @@ get selectedSituationsNames(): string {
 
 
 submit() {
-
-
   // Construction des sections AVEC garanties
   const sections = this.situationRisques.map((situation, index) => {
     
@@ -1230,7 +1228,7 @@ submit() {
     return config;
   });
 
-  const formattedStartTime = this.formatStartTimeForBackend(this.startTime);
+const formattedStartTime = this.formatStartTimeForBackend(this.startTime);
 const extensionsPayload = (this.extensions || [])
   .filter(e => e.titre?.trim() || e.texte?.trim())
   .map(e => ({
