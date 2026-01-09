@@ -627,7 +627,8 @@ loadClausiers() {
     }
   }
   
-  ajouterExclusionPersonnalisee(garantie: GarantieComposant) {
+/*   ajouterExclusionPersonnalisee(garantie: GarantieComposant) {
+    
   if (!garantie.nouvelleExclusion || !garantie.nouvelleExclusion.trim()) {
     this.messageService.add({ severity: 'warn', summary: 'Attention', detail: 'Veuillez saisir le nom de l\'exclusion' });
     return;
@@ -682,6 +683,79 @@ loadClausiers() {
     },
     error: (error) => {
       console.error('Erreur lors de la création de l\'exclusion:', error);
+      this.messageService.add({ 
+        severity: 'error', 
+        summary: 'Erreur', 
+        detail: 'Erreur lors de l\'ajout de l\'exclusion' 
+      });
+    }
+  });
+} */
+ajouterExclusionPersonnalisee(garantie: GarantieComposant) {
+
+  console.log('🟡 Garantie reçue:', garantie);
+  console.log('🟡 sousGarantieId:', garantie?.sousGarantieId);
+  console.log('🟡 branche sélectionnée:', this.branche);
+
+  if (!garantie.nouvelleExclusion || !garantie.nouvelleExclusion.trim()) {
+    console.warn('⚠️ Exclusion vide');
+    this.messageService.add({ severity: 'warn', summary: 'Attention', detail: 'Veuillez saisir le nom de l\'exclusion' });
+    return;
+  }
+
+  if (!garantie.sousGarantieId) {
+    console.error('❌ sousGarantieId est NULL ou UNDEFINED');
+    this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Garantie non sélectionnée' });
+    return;
+  }
+
+  if (!this.branche) {
+    console.error('❌ Branche non sélectionnée');
+    this.messageService.add({ 
+      severity: 'error', 
+      summary: 'Erreur', 
+      detail: 'Veuillez sélectionner une branche avant d\'ajouter une exclusion' 
+    });
+    return;
+  }
+
+  const nouvelleExclusion = {
+    nom: garantie.nouvelleExclusion.trim(),
+    garantie: {
+      id: garantie.garantieParentId 
+    },
+    branche: this.branche
+  };
+
+  console.log('🟢 Payload envoyé au backend:', nouvelleExclusion);
+  console.log('🟢 garantie.id réel (si existe):', (garantie as any).id);
+
+  this.contratService.createExclusion(nouvelleExclusion).subscribe({
+    next: (exclusionCreee: Exclusion) => {
+      console.log('✅ Exclusion créée avec succès:', exclusionCreee);
+
+      if (!garantie.exclusionsOptions) {
+        garantie.exclusionsOptions = [];
+      }
+      if (!garantie.exclusionsIds) {
+        garantie.exclusionsIds = [];
+      }
+
+      garantie.exclusionsOptions.push(exclusionCreee);
+      garantie.exclusionsIds.push(exclusionCreee.id);
+
+      garantie.nouvelleExclusion = '';
+
+      this.messageService.add({ 
+        severity: 'success', 
+        summary: 'Succès', 
+        detail: `Exclusion ajoutée avec succès pour la branche ${this.branche}` 
+      });
+    },
+    error: (error) => {
+      console.error('❌ Erreur backend:', error);
+      console.error('❌ Payload fautif:', nouvelleExclusion);
+
       this.messageService.add({ 
         severity: 'error', 
         summary: 'Erreur', 

@@ -273,9 +273,9 @@ export interface Tarif {
 })
 export class ContratService {
 
-private readonly BASE_URL = 'https://172.23.0.12:8082/contrat';
+private readonly BASE_URL = 'https://localhost:8082/contrat';
 private readonly CATALOGUE_URL = `${this.BASE_URL}/catalogue`;
-private readonly EXTRACT_API_URL = 'https://172.23.0.12:5001/extract';
+private readonly EXTRACT_API_URL = 'https://localhost:5000/extract';
   private readonly exclusionGlobaleApiUrl = `${this.CATALOGUE_URL}/exclusion-globale`;
 
 // URLs spécifiques
