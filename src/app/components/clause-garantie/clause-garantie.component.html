@@ -1,0 +1,42 @@
+<div class="clause-sous-garantie-container">
+  <h2>Clauses pour {{ sousGarantieNom }}</h2>
+
+  <!-- Ajouter un clausier -->
+  <div class="add-garantie">
+    <input type="text" placeholder="Nom du clausier..." [(ngModel)]="newClausierLibelle" />
+    <input type="file" #fileInput accept=".pdf" (change)="onFileSelected($event)" hidden />
+    <button (click)="fileInput.click()">
+      <i class="pi pi-upload"></i> Choisir PDF
+    </button>
+    <button (click)="ajouterClausier()">
+      <i class="pi pi-plus"></i> Ajouter
+    </button>
+  </div>
+
+  <!-- Message si aucun clausier -->
+  <div *ngIf="clausiers.length === 0" class="empty">
+    Aucun clausier pour cette sous-garantie.
+  </div>
+
+  <!-- Grille des clausiers -->
+  <div *ngIf="clausiers.length > 0" class="clausier-grid">
+    <div *ngFor="let c of clausiers" class="clausier-card">
+      <div class="clausier-header">
+        <h4>{{ c.titre }}</h4>
+        <i class="pi pi-trash delete-icon" (click)="confirmDeleteClausier(c.id!, c.titre)"></i>
+      </div>
+
+      <div class="files-section">
+        <div *ngIf="c.pdf; else noFile" class="file-item">
+          <i class="pi pi-file-pdf"></i>
+          <span>{{ c.titre }}</span>
+          <i class="pi pi-download" (click)="downloadPdf(c)"></i>
+        </div>
+
+        <ng-template #noFile>
+          <div class="no-files">Aucun fichier PDF</div>
+        </ng-template>
+      </div>
+    </div>
+  </div>
+</div>

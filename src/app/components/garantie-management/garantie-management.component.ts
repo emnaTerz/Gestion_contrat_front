@@ -318,11 +318,14 @@ deleteExclusionGlobal(id: number) {
     }
   });
 }
+
 confirmDeleteExclusion(id: number) {
   this.confirmationService.confirm({
     message: 'Voulez-vous vraiment supprimer cette exclusion globale ?',
     header: 'Confirmation',
     icon: 'pi pi-exclamation-triangle',
+    acceptLabel: 'Oui',   // texte du bouton accepter
+    rejectLabel: 'Non',   // texte du bouton refuser
     accept: () => {
       this.deleteExclusionGlobal(id);
     }

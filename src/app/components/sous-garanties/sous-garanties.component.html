@@ -43,15 +43,30 @@
     </div>
 
     <!-- Liste scrollable -->
-    <div *ngIf="filteredItems.length > 0" class="item-list">
+   <!--  <div *ngIf="filteredItems.length > 0" class="item-list">
       <div *ngFor="let item of filteredItems" class="item-card">
         <span>{{ item.nom }}</span>
-        <!-- Bouton corbeille -->
+    
         <i class="pi pi-trash delete-icon" 
            (click)="confirmDelete(item)" 
            [title]="getDeleteTitle()"></i>
       </div>
-    </div>
+    </div> -->
+<div *ngIf="filteredItems.length > 0" class="item-list">
+  <div *ngFor="let item of filteredItems" class="item-card">
+    
+    <!-- Nom cliquable -->
+    <span class="sous-garantie-link" (click)="ouvrirClauses(item)">
+      {{ item.nom }}
+    </span>
+
+    <!-- Bouton corbeille -->
+    <i class="pi pi-trash delete-icon" 
+       (click)="confirmDelete(item)" 
+       [title]="getDeleteTitle()"></i>
+  </div>
+</div>
+
   </div>
 </div>
 

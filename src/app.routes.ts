@@ -17,6 +17,7 @@ import { Contrat260Component } from '@/components/contrat260/contrat260.componen
 import { Contrat268Component } from '@/components/contrat268/contrat268.component';
 import { AttestationComponent } from '@/components/attestation/attestation.component';
 import { AttestationQComponent } from '@/components/attestation-q/attestation-q.component';
+import { ClauseGarantieComponent } from '@/components/clause-garantie/clause-garantie.component';
 
 
 export const appRoutes: Routes = [
@@ -31,6 +32,8 @@ export const appRoutes: Routes = [
             { path: 'action-history', component: ActionHistoryComponent, canActivate: [AuthGuard], data: { expectedRole: 'ADMIN' } },
             { path: 'garanties', component: GarantieManagementComponent, canActivate: [AuthGuard], data: { expectedRole: 'ADMIN' } }, 
             { path: 'sous-garanties', component: SousGarantiesComponent, canActivate: [AuthGuard], data: { expectedRole: 'ADMIN' } }, 
+            { path: 'sous-clause-garantie/:id', component: ClauseGarantieComponent, canActivate: [AuthGuard], data: { expectedRole: 'ADMIN' } }, 
+
             { path: 'users', component: UsersComponent, canActivate: [AuthGuard], data: { expectedRole: 'ADMIN' } },
             {  path: 'contrat/creation/260',component: Contrat260Component, canActivate: [AuthGuard], data: { expectedRole: ['USER', 'ADMIN'] }  },
             {  path: 'contrat/creation/268',component: Contrat268Component, canActivate: [AuthGuard], data: { expectedRole: ['USER', 'ADMIN'] }  },

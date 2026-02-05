@@ -16,7 +16,7 @@ export interface SousGarantie {
   nom: string;
   garantie: Garantie; 
   branche: Branche;
-  garantieParent: Garantie;
+  garantieParent?: Garantie;
 
   // Pour stocker les exclusions
   exclusionsOptions?: Exclusion[];
@@ -215,6 +215,14 @@ export interface GarantieResponseDTO {
     libelle: string;
   };
 }
+export interface ClauseGarantie {
+  id?: number;
+  titre: string;
+  texte: string;
+  sousGarantieId?: number;         // utile pour envoyer au backend
+  sousGarantie?: SousGarantie;     // facultatif, peut être récupéré depuis le backend
+  pdf?: File | Blob;
+}
 export interface SectionResponseDTO {
   id: number;
   identification: string;
@@ -273,9 +281,9 @@ export interface Tarif {
 })
 export class ContratService {
 
-private readonly BASE_URL = 'https://localhost:8082/contrat';
+private readonly BASE_URL = 'https://172.0.23.12:8082/contrat';
 private readonly CATALOGUE_URL = `${this.BASE_URL}/catalogue`;
-private readonly EXTRACT_API_URL = 'https://localhost:5000/extract';
+private readonly EXTRACT_API_URL = 'https://172.0.23.12:5000/extract';
   private readonly exclusionGlobaleApiUrl = `${this.CATALOGUE_URL}/exclusion-globale`;
 
 // URLs spécifiques
@@ -665,5 +673,37 @@ addExclusionGlobale(exclusion: ExclusionGlobale): Observable<ExclusionGlobale> {
         })
       );
   }
+getClausesBySousGarantie(sousGarantieId: number): Observable<ClauseGarantie[]> {
+    const token = localStorage.getItem('token'); // ou récupère ton JWT comme tu veux
+    const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
+
+    return this.http.get<ClauseGarantie[]>(
+      `${this.CATALOGUE_URL}/clause-garantie/sous-garantie/${sousGarantieId}`,
+      { headers }
+    );
+  }
+
+createClauseFormData(formData: FormData): Observable<ClauseGarantie> {
+  return this.http.post<ClauseGarantie>(
+    `${this.CATALOGUE_URL}/clause-garantie`,
+    formData,
+    {
+      headers: this.getHeaders() // ✅
+    }
+  );
+}
+  // 🔹 Supprimer une clause
+  deleteClause(id: number): Observable<void> {
+    return this.http.delete<void>(
+      `${this.CATALOGUE_URL}/clause-garantie/${id}`,
+      { headers: this.getHeaders() }
+    );
+  }
+ downloadClausePdf(id: number) {
+  return this.http.get(`${this.CATALOGUE_URL}/clause-garantie/${id}/pdf`, {
+    responseType: 'blob' // Très important pour recevoir un PDF valide
+  });
+}
+
 
 }

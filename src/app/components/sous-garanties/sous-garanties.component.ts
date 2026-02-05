@@ -2,7 +2,7 @@ import { Branche, ContratService, Exclusion, SousGarantie } from '@/layout/servi
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
@@ -45,6 +45,7 @@ mode: 'Garanties' | 'Exclusions' = 'Garanties';
   nouvelItemNom: string = '';
    constructor(
     private route: ActivatedRoute,
+    private router: Router,
     private sousGarantieService: ContratService,
      private messageService: MessageService 
   
@@ -66,6 +67,16 @@ mode: 'Garanties' | 'Exclusions' = 'Garanties';
     }
   });
 }
+ouvrirClauses(item: SousGarantie) {
+  if (!item) return;
+  
+  // maintenant on est sûr que TS accepte que garantieParent peut être absent
+  this.router.navigate(['/sous-clause-garantie', item.id], {
+    queryParams: { nomSousGarantie: item.nom }
+  });
+}
+
+
  switchMode(newMode: 'Garanties' | 'Exclusions') {
   // 🔒 Interdiction Garanties si branche Q
   if (this.branche === Branche.Q && newMode === 'Garanties') {

@@ -56,7 +56,7 @@ export interface ResetPasswordDTO {
   providedIn: 'root'
 })
 export class UserService {
-  private apiUrl = 'https://172.23.0.12:8082/api'; // Assure-toi que le path correspond
+  private apiUrl = 'https://172.0.23.12:8082/api'; // Assure-toi que le path correspond
 
   constructor(private http: HttpClient) {}
 
